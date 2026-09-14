@@ -16,6 +16,7 @@ import {
 import { newCommandId } from "~/lib/utils";
 import { readNativeApi } from "~/nativeApi";
 import { useStore } from "~/store";
+import { getActiveUiLanguage } from "~/uiLanguage";
 
 import { RunningChatsQuitDialog, type RunningChatsQuitDecision } from "./RunningChatsQuitDialog";
 
@@ -110,7 +111,7 @@ export function RunningChatsQuitCoordinator() {
     }
 
     return subscribe((request) => {
-      const running = listRunningChatsFromDesktopStore(useStore.getState());
+      const running = listRunningChatsFromDesktopStore(useStore.getState(), getActiveUiLanguage());
       if (running.length === 0) {
         reply({ requestId: request.requestId, phase: "decision", allow: true });
         return;

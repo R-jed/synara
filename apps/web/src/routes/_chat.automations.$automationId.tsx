@@ -426,7 +426,7 @@ function AutomationDetailView() {
 
   const deleteDefinition = async () => {
     const confirmed = await ensureNativeApi().dialogs.confirm(
-      `${t("Delete")} "${definition.name}"?`,
+      language === "zh-CN" ? `删除自动化“${definition.name}”？` : `Delete "${definition.name}"?`,
     );
     if (!confirmed) return;
     deleteMutation.mutate(definition, {
@@ -1076,7 +1076,9 @@ function AutomationDetailView() {
         )}
         confirmLabel={
           pendingWorktreeChange
-            ? `${t("Switch to")} ${t(worktreeModeLabel(pendingWorktreeChange))}`
+            ? language === "zh-CN"
+              ? `切换到${t(worktreeModeLabel(pendingWorktreeChange))}`
+              : `${t("Switch to")} ${t(worktreeModeLabel(pendingWorktreeChange))}`
             : t("Switch")
         }
         onConfirm={confirmWorktreeChange}
@@ -1095,13 +1097,19 @@ function AutomationDetailView() {
         detail={
           pendingModeChange?.mode === "heartbeat"
             ? t("Each run appends a turn to the thread you pick and waits for it to go idle.")
-            : `${t("The automation stops writing to")} ${
-                continuedThreadTitle ? `“${continuedThreadTitle}”` : t("its thread")
-              }; ${t("the thread itself is kept.")}`
+            : language === "zh-CN"
+              ? `自动化将停止写入${
+                  continuedThreadTitle ? `“${continuedThreadTitle}”` : "当前关联的对话"
+                }；对话本身会保留。`
+              : `${t("The automation stops writing to")} ${
+                  continuedThreadTitle ? `“${continuedThreadTitle}”` : t("its thread")
+                }; ${t("the thread itself is kept.")}`
         }
         confirmLabel={
           pendingModeChange
-            ? `${t("Switch to")} ${t(MODE_LABELS[pendingModeChange.mode])}`
+            ? language === "zh-CN"
+              ? `切换到${t(MODE_LABELS[pendingModeChange.mode])}`
+              : `${t("Switch to")} ${t(MODE_LABELS[pendingModeChange.mode])}`
             : t("Switch")
         }
         confirmDisabled={

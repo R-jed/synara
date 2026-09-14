@@ -7,13 +7,27 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { isFileDrag, resolveDroppedFolder } from "../lib/folderDrop";
+import { type DroppedFolderError, isFileDrag, resolveDroppedFolder } from "../lib/folderDrop";
+import { translateUiText, useUiLanguage, type ResolvedUiLanguage } from "../uiLanguage";
+
+export function droppedFolderErrorMessage(
+  error: DroppedFolderError,
+  language: ResolvedUiLanguage,
+): string {
+  return translateUiText(
+    language,
+    error === "not-folder"
+      ? "Drop a folder, not a file."
+      : "Could not read the folder's path. Use browse or type it instead.",
+  );
+}
 
 export function useWindowFolderDrop(options: {
   readonly enabled: boolean;
   readonly onFolder: (path: string) => void;
   readonly onError: (message: string) => void;
 }): boolean {
+  const { language } = useUiLanguage();
   const [isDropTarget, setIsDropTarget] = useState(false);
   // Latest callbacks through refs so the listeners bind once per `enabled` flip.
   const onFolderRef = useRef(options.onFolder);
@@ -48,7 +62,7 @@ export function useWindowFolderDrop(options: {
       const dropped = event.dataTransfer ? resolveDroppedFolder(event.dataTransfer) : null;
       if (!dropped) return;
       if ("error" in dropped) {
-        onErrorRef.current(dropped.error);
+        onErrorRef.current(droppedFolderErrorMessage(dropped.error, language));
         return;
       }
       onFolderRef.current(dropped.path);
@@ -64,7 +78,7 @@ export function useWindowFolderDrop(options: {
       window.removeEventListener("dragleave", handleDragLeave, true);
       window.removeEventListener("drop", handleDrop, true);
     };
-  }, [options.enabled]);
+  }, [language, options.enabled]);
 
   return isDropTarget;
 }

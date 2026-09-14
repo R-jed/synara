@@ -119,7 +119,7 @@ export default function ProjectScriptsControl({
   onUpdateScript,
   onDeleteScript,
 }: ProjectScriptsControlProps) {
-  const { t, tError } = useUiLanguage();
+  const { language, t, tError } = useUiLanguage();
   const preferredScriptId = preferredScriptIdProp ?? null;
   const showInlineControls = showInlineControlsProp ?? true;
   const hideInlineLabel = hideInlineLabelProp ?? false;
@@ -481,7 +481,7 @@ export default function ProjectScriptsControl({
         <AlertDialogPopup>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t("Delete action")} "{name}"?
+              {language === "zh-CN" ? `删除操作“${name}”？` : `Delete action "${name}"?`}
             </AlertDialogTitle>
             <AlertDialogDescription>{t("This action cannot be undone.")}</AlertDialogDescription>
           </AlertDialogHeader>

@@ -78,6 +78,10 @@ import {
   pullRequestActionMutationOptions,
   pullRequestDetailQueryOptions,
 } from "~/lib/pullRequestReactQuery";
+import {
+  buildPullRequestMergeConfirmCopy,
+  pullRequestMergeMethodLabel,
+} from "~/lib/pullRequestConfirmCopy";
 import { type PullRequestContextScope } from "~/lib/pullRequestContext";
 import { formatRelativeTimeForLanguage } from "~/lib/relativeTime";
 import { cn } from "~/lib/utils";
@@ -114,12 +118,6 @@ const MENU_TRAILING_CLASS_NAME = "shrink-0 pl-3 text-muted-foreground tabular-nu
 /** The root menu opens to the left of the docked panel, so submenus keep cascading that way
  *  instead of folding back over the panel. Base UI flips them when there is no room. */
 const SUBMENU_SIDE = "inline-start";
-
-const MERGE_METHOD_LABELS: Record<PullRequestMergeMethod, string> = {
-  merge: "Merge commit",
-  squash: "Squash and merge",
-  rebase: "Rebase and merge",
-};
 
 const ACTION_SUCCESS_TITLES: Record<PullRequestAction, string> = {
   merge: "Pull request merged",
@@ -319,7 +317,7 @@ export function EnvironmentPullRequestSection({
   onOpenUrl: (url: string) => void;
   onClose: () => void;
 }) {
-  const { t, tError } = useUiLanguage();
+  const { language, t, tError } = useUiLanguage();
   const showDiffColors = showDiffColorsProp ?? true;
   const openPane = useRightDockStore((store) => store.openPane);
   const queryClient = useQueryClient();
@@ -461,6 +459,17 @@ export function EnvironmentPullRequestSection({
   const actionPending = actionMutation.isPending;
   const detail = detailQuery.data ?? null;
   const stackAssessment = detail?.stack ? assessPullRequestStack(detail.stack) : null;
+  const mergeConfirmCopy =
+    confirmMerge === null
+      ? null
+      : buildPullRequestMergeConfirmCopy({
+          language,
+          number: displayPr.number,
+          mergeMethod: confirmMerge,
+          baseBranch: detail?.stack?.baseBranch ?? displayPr.baseBranch,
+          stackTargetCount:
+            detail?.stack && stackAssessment ? stackAssessment.mergeTargetCount : null,
+        });
   // Merge is gated on the detail query: the git snapshot knows nothing about allowed merge
   // methods, stack state, or review blockers, so offering Merge before detail resolves could
   // send an action GitHub rejects. Until then the entry stays disabled with a status hint.
@@ -762,7 +771,7 @@ export function EnvironmentPullRequestSection({
                       <MenuItem key={method} onClick={() => setConfirmMerge(method)}>
                         <MenuRowLabel
                           icon={<GitMergeIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-                          label={t(MERGE_METHOD_LABELS[method])}
+                          label={t(pullRequestMergeMethodLabel(method))}
                         />
                       </MenuItem>
                     ))}
@@ -860,17 +869,9 @@ export function EnvironmentPullRequestSection({
         <AlertDialogPopup>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {detail?.stack && stackAssessment
-                ? `${t("Merge")} ${stackAssessment.mergeTargetCount} ${t(
-                    stackAssessment.mergeTargetCount === 1 ? "pull request" : "pull requests",
-                  )}?`
-                : t("Merge pull request?")}
+              {mergeConfirmCopy?.title ?? t("Merge pull request?")}
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              {detail?.stack
-                ? `${t("This will atomically merge every open pull request through")} #${displayPr.number} ${t("into")} ${detail.stack.baseBranch} ${t("using")} ${confirmMerge ?? "merge"}.`
-                : `${t("This will merge")} #${displayPr.number} ${t("into")} ${displayPr.baseBranch} ${t("using")} ${confirmMerge ?? "merge"}.`}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{mergeConfirmCopy?.description ?? ""}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogClose render={<Button variant="outline" size="sm" />}>

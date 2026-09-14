@@ -71,6 +71,10 @@ import {
   pullRequestDetailQueryOptions,
   pullRequestQueryErrorState,
 } from "~/lib/pullRequestReactQuery";
+import {
+  buildPullRequestMergeConfirmCopy,
+  pullRequestMergeMethodLabel,
+} from "~/lib/pullRequestConfirmCopy";
 import { type PullRequestContextDraft } from "~/lib/pullRequestContext";
 import { cn } from "~/lib/utils";
 import { useUiLanguage } from "~/uiLanguage";
@@ -341,8 +345,21 @@ export function PullRequestDetailPanel({
   const pendingAction = actionMutation.isPending
     ? (actionMutation.variables?.action ?? null)
     : null;
-  const stackAssessment = detail?.stack ? assessPullRequestStack(detail.stack) : null;
+  const detailStack = detail?.stack ?? null;
+  const stackAssessment = detailStack ? assessPullRequestStack(detailStack) : null;
   const stackMergeTargetCount = stackAssessment?.mergeTargetCount ?? 0;
+  const mergeConfirmCopy =
+    confirmAction === "merge"
+      ? buildPullRequestMergeConfirmCopy({
+          language,
+          number: input.number,
+          mergeMethod: selectedMergeMethod,
+          baseBranch: detailStack?.baseBranch ?? null,
+          stackTargetCount: detailStack ? stackMergeTargetCount : null,
+          stackHasHigherPullRequests:
+            detailStack !== null && detailStack.position < detailStack.size,
+        })
+      : null;
   const mergeBlocker = detail ? pullRequestMergeBlocker(detail, stackAssessment, language) : null;
 
   return (
@@ -447,7 +464,11 @@ export function PullRequestDetailPanel({
                         {allowedMethods.map((method) => (
                           <MenuRadioItem key={method} value={method} disabled={actionPending}>
                             <GitMergeIcon className="size-3.5 shrink-0" />
-                            <span className="capitalize">{method}</span>
+                            <span className={language === "zh-CN" ? undefined : "capitalize"}>
+                              {language === "zh-CN"
+                                ? t(pullRequestMergeMethodLabel(method))
+                                : method}
+                            </span>
                           </MenuRadioItem>
                         ))}
                       </MenuRadioGroup>
@@ -641,23 +662,15 @@ export function PullRequestDetailPanel({
           <AlertDialogHeader>
             <AlertDialogTitle>
               {confirmAction === "merge"
-                ? detail?.stack
-                  ? `${t("Merge")} ${stackMergeTargetCount} ${t(stackMergeTargetCount === 1 ? "pull request?" : "pull requests?")}`
-                  : t("Merge pull request?")
+                ? (mergeConfirmCopy?.title ?? t("Merge pull request?"))
                 : t("Close pull request?")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmAction === "merge"
-                ? detail?.stack
-                  ? `${t("This will atomically merge every open pull request through ")}#${input.number}${t(" into ")}${detail.stack.baseBranch}${t(" using ")}${selectedMergeMethod}.${
-                      detail.stack.position < detail.stack.size
-                        ? t(
-                            " Pull requests above it will remain open and GitHub will retarget them.",
-                          )
-                        : ""
-                    }`
-                  : `${t("This will merge ")}#${input.number}${t(" using ")}${selectedMergeMethod}.`
-                : `${t("This will close ")}#${input.number}${t(" without merging it.")}`}
+                ? (mergeConfirmCopy?.description ?? "")
+                : language === "zh-CN"
+                  ? `这会关闭 #${input.number}，不会进行合并。`
+                  : `This will close #${input.number} without merging it.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

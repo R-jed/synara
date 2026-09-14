@@ -7,7 +7,7 @@ import {
   formatCostUsd,
 } from "../../lib/contextWindow";
 import type { RateLimitStatus } from "./RateLimitBanner";
-import { useUiLanguage } from "~/uiLanguage";
+import { useUiLanguage, type ResolvedUiLanguage } from "~/uiLanguage";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -20,13 +20,33 @@ import {
 } from "../ui/dialog";
 import { ContextWindowMeter } from "./ContextWindowMeter";
 
-function formatRateLimitMessage(
+export function formatRateLimitMessage(
   rateLimitStatus: RateLimitStatus,
+  language: ResolvedUiLanguage,
   t: (text: string) => string,
 ): string {
-  const resetSuffix = rateLimitStatus.resetsAt
-    ? ` ${t("Resets at")} ${new Date(rateLimitStatus.resetsAt).toLocaleTimeString()}.`
-    : "";
+  let resetTime: string | null = null;
+  if (rateLimitStatus.resetsAt) {
+    const resetDate = new Date(rateLimitStatus.resetsAt);
+    if (!Number.isNaN(resetDate.getTime())) {
+      resetTime = new Intl.DateTimeFormat(language, {
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(resetDate);
+    }
+  }
+  if (language === "zh-CN") {
+    const resetSuffix = resetTime ? `重置时间：${resetTime}。` : "";
+    if (rateLimitStatus.status === "rejected") {
+      return `已达到速率限制。${resetSuffix}`;
+    }
+    const utilization =
+      typeof rateLimitStatus.utilization === "number"
+        ? `（已用 ${Math.round(rateLimitStatus.utilization * 100)}%）`
+        : "";
+    return `即将达到速率限制${utilization}。${resetSuffix}`;
+  }
+  const resetSuffix = resetTime ? ` ${t("Resets at")} ${resetTime}.` : "";
   if (rateLimitStatus.status === "rejected") {
     return `${t("Rate limit reached.")}${resetSuffix}`;
   }
@@ -64,7 +84,7 @@ export function ComposerSlashStatusDialog(props: {
   activeContextWindowLabel?: string | null;
   pendingContextWindowLabel?: string | null;
 }) {
-  const { t } = useUiLanguage();
+  const { language, t } = useUiLanguage();
   const {
     open,
     onOpenChange,
@@ -193,7 +213,7 @@ export function ComposerSlashStatusDialog(props: {
             <p className="text-xs text-muted-foreground">{t("Rate Limits")}</p>
             {rateLimitStatus ? (
               <p className="text-sm text-foreground">
-                {formatRateLimitMessage(rateLimitStatus, t)}
+                {formatRateLimitMessage(rateLimitStatus, language, t)}
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">

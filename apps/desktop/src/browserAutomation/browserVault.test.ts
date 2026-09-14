@@ -23,6 +23,15 @@ const origin = "https://login.example.test";
 const page = (url = origin) => ({ getURL: () => url, isDestroyed: () => false });
 
 describe("browser vault", () => {
+  it("exposes capture failures as a stable error code instead of UI copy", async () => {
+    const { vault } = await fixture();
+    vault.reportCaptureFailure();
+    expect((await vault.snapshot()).error).toBe("password-saving-unavailable");
+    vault.reportCaptureReady();
+    expect((await vault.snapshot()).error).toBeNull();
+    vault.dispose();
+  });
+
   it.each([false, true])(
     "preserves saved passwords when provenance persistence fails (update=%s)",
     async (update) => {

@@ -406,7 +406,7 @@ export function BranchToolbarBranchSelector({
   onComposerFocusRequest,
   variant: variantProp,
 }: BranchToolbarBranchSelectorProps) {
-  const { t, tError } = useUiLanguage();
+  const { language, t, tError } = useUiLanguage();
   const variant = variantProp ?? "toolbar";
   const isPanel = variant === "panel";
   const queryClient = useQueryClient();
@@ -988,8 +988,9 @@ export function BranchToolbarBranchSelector({
           <DialogHeader>
             <DialogTitle>{t("Create Branch")}</DialogTitle>
             <DialogDescription>
-              {t("Create and switch to a new branch from")}{" "}
-              {resolvedActiveBranch ?? currentGitBranch ?? t("the current HEAD")}.
+              {language === "zh-CN"
+                ? `从“${resolvedActiveBranch ?? currentGitBranch ?? t("the current HEAD")}”创建并切换到新分支。`
+                : `Create and switch to a new branch from ${resolvedActiveBranch ?? currentGitBranch ?? t("the current HEAD")}.`}
             </DialogDescription>
           </DialogHeader>
           <DialogPanel className="space-y-3">

@@ -4,6 +4,7 @@ import { join } from "node:path";
 import {
   BrowserAutomationErrorMessages,
   BrowserVaultSettings,
+  type BrowserVaultErrorCode,
   type BrowserVaultSavePrompt,
   type BrowserVaultSnapshot,
 } from "@synara/contracts";
@@ -41,7 +42,7 @@ export class BrowserVault {
     { prompt: BrowserVaultSavePrompt; resolve(choice: "save" | "dismiss"): void }
   >();
   private writing = Promise.resolve();
-  private captureError: string | null = null;
+  private captureError: BrowserVaultErrorCode | null = null;
 
   constructor(
     private readonly home: string,
@@ -283,7 +284,7 @@ export class BrowserVault {
 
   reportCaptureFailure(): void {
     if (this.captureError) return;
-    this.captureError = "Password saving is unavailable. Reopen the browser and try again.";
+    this.captureError = "password-saving-unavailable";
     this.changed();
   }
 

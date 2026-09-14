@@ -28,6 +28,9 @@ export const BrowserVaultSavePrompt = Schema.Struct({
 });
 export type BrowserVaultSavePrompt = typeof BrowserVaultSavePrompt.Type;
 
+export const BrowserVaultErrorCode = Schema.Literal("password-saving-unavailable");
+export type BrowserVaultErrorCode = typeof BrowserVaultErrorCode.Type;
+
 export const BrowserVaultSnapshot = Schema.Struct({
   protection: Schema.Struct({
     configured: Schema.Boolean,
@@ -37,7 +40,7 @@ export const BrowserVaultSnapshot = Schema.Struct({
   logins: Schema.Array(BrowserVaultLogin),
   settings: BrowserVaultSettings,
   pending: Schema.Array(BrowserVaultSavePrompt),
-  error: Schema.NullOr(Schema.String),
+  error: Schema.NullOr(BrowserVaultErrorCode),
 });
 export type BrowserVaultSnapshot = typeof BrowserVaultSnapshot.Type;
 

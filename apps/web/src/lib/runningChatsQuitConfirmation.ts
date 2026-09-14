@@ -3,6 +3,8 @@
 // Layer: UI logic helper
 // Depends on: Sidebar-equivalent "working" signals (running/connecting/live tail).
 
+import type { ResolvedUiLanguage } from "../uiLanguagePreference";
+
 export interface RunningChatQuitCandidate {
   readonly id: string;
   readonly title: string;
@@ -36,9 +38,13 @@ export interface RunningChatsQuitStoreSlice {
 
 const UNTITLED_CHAT_TITLE = "Untitled thread";
 
-export function runningChatDisplayTitle(title: string | null | undefined): string {
+export function runningChatDisplayTitle(
+  title: string | null | undefined,
+  language: ResolvedUiLanguage = "en",
+): string {
   const trimmed = title?.trim();
-  return trimmed && trimmed.length > 0 ? trimmed : UNTITLED_CHAT_TITLE;
+  if (trimmed && trimmed.length > 0) return trimmed;
+  return language === "zh-CN" ? "未命名对话" : UNTITLED_CHAT_TITLE;
 }
 
 export function isRunningChatForQuit(thread: {
@@ -54,6 +60,7 @@ export function isRunningChatForQuit(thread: {
 
 export function listRunningChatsForQuit(
   threads: ReadonlyArray<RunningChatQuitCandidate>,
+  language: ResolvedUiLanguage = "en",
 ): ReadonlyArray<RunningChatQuitSummary> {
   const seen = new Set<string>();
   const chats: RunningChatQuitSummary[] = [];
@@ -62,13 +69,14 @@ export function listRunningChatsForQuit(
       continue;
     }
     seen.add(thread.id);
-    chats.push({ id: thread.id, title: runningChatDisplayTitle(thread.title) });
+    chats.push({ id: thread.id, title: runningChatDisplayTitle(thread.title, language) });
   }
   return chats.sort(compareRunningChatSummaries);
 }
 
 export function listRunningChatsFromDesktopStore(
   state: RunningChatsQuitStoreSlice,
+  language: ResolvedUiLanguage = "en",
 ): ReadonlyArray<RunningChatQuitSummary> {
   const candidates: RunningChatQuitCandidate[] = Object.values(state.sidebarThreadSummaryById);
   const listedIds = new Set(candidates.map((thread) => thread.id));
@@ -84,13 +92,23 @@ export function listRunningChatsFromDesktopStore(
     });
   }
 
-  return listRunningChatsForQuit(candidates);
+  return listRunningChatsForQuit(candidates, language);
 }
 
 export function runningChatsQuitCopy(
   chats: ReadonlyArray<RunningChatQuitSummary>,
   appName = "Synara",
+  language: ResolvedUiLanguage = "en",
 ): RunningChatsQuitCopy {
+  if (language === "zh-CN") {
+    return {
+      title: chats.length === 1 ? "仍有一个对话正在运行" : "仍有对话正在运行",
+      description: `关闭 ${appName} 会停止正在进行的工作。`,
+      resumeLabel: chats.length === 1 ? "下次自动继续此对话" : "下次自动继续这些对话",
+      stayLabel: "取消",
+      quitLabel: "退出",
+    };
+  }
   return {
     title: chats.length === 1 ? "A chat is still running" : "Chats are still running",
     description: `Work in progress will stop when ${appName} is closed.`,

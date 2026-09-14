@@ -12,10 +12,12 @@ vi.mock("electron", () => ({
 }));
 
 import { showDesktopConfirmDialog } from "./confirmDialog";
+import { setDesktopUiLanguage } from "./uiLanguage";
 
 describe("showDesktopConfirmDialog", () => {
   beforeEach(() => {
     showMessageBoxMock.mockReset();
+    setDesktopUiLanguage("en");
   });
 
   it("returns false and does not open a dialog for empty messages", async () => {
@@ -51,6 +53,19 @@ describe("showDesktopConfirmDialog", () => {
       expect.objectContaining({
         buttons: ["No", "Yes"],
         message: "Delete worktree?",
+      }),
+    );
+  });
+
+  it("localizes the native confirmation buttons in Simplified Chinese", async () => {
+    setDesktopUiLanguage("zh-CN");
+    showMessageBoxMock.mockResolvedValue({ response: 1 });
+
+    await expect(showDesktopConfirmDialog("删除此项目？", null)).resolves.toBe(true);
+    expect(showMessageBoxMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        buttons: ["否", "是"],
+        message: "删除此项目？",
       }),
     );
   });

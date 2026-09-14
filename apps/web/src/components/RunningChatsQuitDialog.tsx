@@ -26,6 +26,7 @@ import {
   type RunningChatsQuitCopy,
 } from "~/lib/runningChatsQuitConfirmation";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 
 export interface RunningChatsQuitDecision {
   /** Remember the listed chats and continue them automatically on the next launch. */
@@ -56,7 +57,9 @@ export function RunningChatsQuitDialog({
   onStay,
   onQuit,
 }: RunningChatsQuitDialogProps) {
-  const copy = chats && chats.length > 0 ? runningChatsQuitCopy(chats, APP_DISPLAY_NAME) : null;
+  const { language } = useUiLanguage();
+  const copy =
+    chats && chats.length > 0 ? runningChatsQuitCopy(chats, APP_DISPLAY_NAME, language) : null;
 
   return (
     <AlertDialog

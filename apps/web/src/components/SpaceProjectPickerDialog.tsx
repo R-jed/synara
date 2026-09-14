@@ -137,7 +137,7 @@ export function SpaceProjectPickerDialog(props: {
         <DialogHeader>
           <DialogTitle>
             {language === "zh-CN"
-              ? `将项目移到${props.targetSpace?.name ?? t("space")}`
+              ? `将项目移到“${props.targetSpace?.name ?? t("space")}”`
               : `${t("Move projects to")} ${props.targetSpace?.name ?? t("space")}`}
           </DialogTitle>
           <DialogDescription>

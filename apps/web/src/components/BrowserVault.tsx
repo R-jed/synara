@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { BrowserVaultSettings, BrowserVaultSnapshot } from "@synara/contracts";
+import type {
+  BrowserVaultErrorCode,
+  BrowserVaultSettings,
+  BrowserVaultSnapshot,
+} from "@synara/contracts";
 import { CentralIcon } from "~/lib/central-icons";
 import { readNativeApi } from "~/nativeApi";
 import { useUiLanguage } from "~/uiLanguage";
@@ -8,6 +12,16 @@ import { Dialog, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "./u
 import { DisclosureRegion } from "./ui/DisclosureRegion";
 import { Switch } from "./ui/switch";
 import { BrowserVaultMaster } from "./BrowserVaultMaster";
+
+export function browserVaultErrorMessage(
+  error: BrowserVaultErrorCode,
+  t: (text: string) => string,
+): string {
+  switch (error) {
+    case "password-saving-unavailable":
+      return t("Password saving is unavailable. Reopen the browser and try again.");
+  }
+}
 import { BrowserCookieImport, type BrowserCookieDestination } from "./BrowserCookieImport";
 
 const OPEN_EVENT = "synara:open-browser-vault";
@@ -50,6 +64,7 @@ export function BrowserVaultDialog() {
     { kind: "setup" | "unlock" } | { kind: "reveal"; id: string } | null
   >(null);
   const [destination, setDestination] = useState<BrowserCookieDestination>();
+  const snapshotError = snapshot?.error ? browserVaultErrorMessage(snapshot.error, t) : null;
   const revision = useRef(0);
   const mounted = useRef(false);
   const lastPrompt = useRef<string | undefined>(undefined);
@@ -128,12 +143,12 @@ export function BrowserVaultDialog() {
           </DialogTitle>
         </DialogHeader>
         <DialogPanel>
-          {error || snapshot?.error ? (
+          {error || snapshotError ? (
             <div
               className="flex items-center justify-between gap-3 py-3 text-sm text-destructive"
               role="alert"
             >
-              <span>{error ?? snapshot?.error}</span>
+              <span>{error ?? snapshotError}</span>
               <Button
                 size="sm"
                 variant="ghost"

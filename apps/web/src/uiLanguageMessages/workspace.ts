@@ -592,6 +592,11 @@ export const WORKSPACE_ZH_CN_MESSAGES: Readonly<Record<string, string>> = {
   "Unable to move the selected projects.": "无法移动所选项目。",
   "No projects yet": "暂无项目",
   "No matching projects": "没有匹配的项目",
+  "Drop a folder, not a file.": "请拖入文件夹，而不是文件。",
+  "Could not read the folder's path. Use browse or type it instead.":
+    "无法读取文件夹路径。请使用浏览按钮选择，或直接输入路径。",
+  "Password saving is unavailable. Reopen the browser and try again.":
+    "密码保存暂不可用。请重新打开浏览器后重试。",
   "No projects yet.": "暂无项目。",
   "No matching projects.": "没有匹配的项目。",
   "Void is empty": "Void 中暂无项目",

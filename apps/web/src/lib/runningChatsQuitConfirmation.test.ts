@@ -22,6 +22,7 @@ describe("running chats quit confirmation", () => {
 
   it("falls back to Untitled thread for blank titles", () => {
     expect(runningChatDisplayTitle("  ")).toBe("Untitled thread");
+    expect(runningChatDisplayTitle("  ", "zh-CN")).toBe("未命名对话");
     expect(runningChatDisplayTitle("Fix the tray")).toBe("Fix the tray");
   });
 
@@ -70,6 +71,26 @@ describe("running chats quit confirmation", () => {
       stayLabel: "Cancel",
       quitLabel: "Quit",
     });
+  });
+
+  it("builds complete Simplified Chinese quit confirmation copy", () => {
+    expect(runningChatsQuitCopy([{ id: "a", title: "修复侧栏" }], "Synara", "zh-CN")).toEqual({
+      title: "仍有一个对话正在运行",
+      description: "关闭 Synara 会停止正在进行的工作。",
+      resumeLabel: "下次自动继续此对话",
+      stayLabel: "取消",
+      quitLabel: "退出",
+    });
+    expect(
+      runningChatsQuitCopy(
+        [
+          { id: "a", title: "一" },
+          { id: "b", title: "二" },
+        ],
+        "Synara",
+        "zh-CN",
+      ).title,
+    ).toBe("仍有对话正在运行");
   });
 
   it("builds the continuation prompt from the app name", () => {

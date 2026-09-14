@@ -487,7 +487,7 @@ export default function ChatView({
   onChangeThreadInSplitPane,
   onCloseThreadPane,
 }: ChatViewProps) {
-  const { t, tError } = useUiLanguage();
+  const { language, t, tError } = useUiLanguage();
   // Prop defaults are resolved here instead of in the destructuring pattern: an
   // AssignmentPattern in the parameter list makes React Compiler bail out (silently —
   // `panicThreshold` is unset) on this entire component, the hottest one in the app.
@@ -3510,7 +3510,9 @@ export default function ChatView({
       }
       const confirmed = await api.dialogs.confirm(
         [
-          `${t("Revert this thread to checkpoint")} ${turnCount}?`,
+          language === "zh-CN"
+            ? `将此对话恢复到检查点 ${turnCount}？`
+            : `Revert this thread to checkpoint ${turnCount}?`,
           t("This will discard newer messages and turn diffs in this thread."),
           t("This action cannot be undone."),
         ].join("\n"),
@@ -3543,6 +3545,7 @@ export default function ChatView({
       isRevertingCheckpoint,
       isSendBusy,
       setThreadError,
+      language,
       t,
       tError,
     ],

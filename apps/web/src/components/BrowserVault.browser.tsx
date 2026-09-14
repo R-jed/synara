@@ -362,4 +362,19 @@ describe("browser saved logins", () => {
     expect(harness.api?.remove).toHaveBeenCalledWith("credential-1");
     await expect.element(page.getByText("No saved logins.")).toBeVisible();
   });
+
+  it("renders capture error codes as user-facing copy", async () => {
+    state = { ...state, error: "password-saving-unavailable" };
+    await render(
+      <>
+        <BrowserVaultButton />
+        <BrowserVaultDialog />
+      </>,
+    );
+    await page.getByRole("button", { name: "Saved logins", exact: true }).click();
+    await expect
+      .element(page.getByText("Password saving is unavailable. Reopen the browser and try again."))
+      .toBeVisible();
+    expect(document.body.textContent).not.toContain("password-saving-unavailable");
+  });
 });

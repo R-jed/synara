@@ -76,7 +76,7 @@ function PullRequestThreadDialogContent({
 }: Omit<PullRequestThreadDialogProps, "open"> & {
   onBusyChange: (busy: boolean) => void;
 }) {
-  const { t } = useUiLanguage();
+  const { language, t } = useUiLanguage();
   const queryClient = useQueryClient();
   const referenceInputRef = useRef<HTMLInputElement>(null);
   const [reference, setReference] = useState(initialReference ?? "");
@@ -211,7 +211,11 @@ function PullRequestThreadDialogContent({
           <span className="text-xs font-medium text-foreground">{t("Pull request")}</span>
           <Input
             ref={referenceInputRef}
-            placeholder="https://github.com/owner/repo/pull/42 or #42"
+            placeholder={
+              language === "zh-CN"
+                ? "https://github.com/owner/repo/pull/42 或 #42"
+                : "https://github.com/owner/repo/pull/42 or #42"
+            }
             value={reference}
             onChange={(event) => {
               setReferenceDirty(true);
@@ -235,7 +239,7 @@ function PullRequestThreadDialogContent({
               <div className="min-w-0">
                 <p className="truncate font-medium text-sm">{resolvedPullRequest.title}</p>
                 <p className="truncate text-muted-foreground text-xs">
-                  #{resolvedPullRequest.number} · {resolvedPullRequest.headBranch} to{" "}
+                  #{resolvedPullRequest.number} · {resolvedPullRequest.headBranch} →{" "}
                   {resolvedPullRequest.baseBranch}
                 </p>
               </div>

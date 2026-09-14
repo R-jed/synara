@@ -280,7 +280,7 @@ function AutomationsRouteView() {
 
   const deleteDefinition = async (definition: AutomationDefinition) => {
     const confirmed = await ensureNativeApi().dialogs.confirm(
-      `${t("Delete")} “${definition.name}”?`,
+      language === "zh-CN" ? `删除自动化“${definition.name}”？` : `Delete "${definition.name}"?`,
     );
     if (!confirmed) return;
     deleteMutation.mutate(definition);

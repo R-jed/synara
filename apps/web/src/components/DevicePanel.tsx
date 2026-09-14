@@ -107,7 +107,7 @@ export default function DevicePanel(props: {
   onClosePanel: () => void;
   onRequestLive?: () => void;
 }) {
-  const { t, tError } = useUiLanguage();
+  const { language, t, tError } = useUiLanguage();
   const { threadId, runtimeMode, isVisible } = props;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const threadState = useDeviceStateStore(selectThreadDeviceState(threadId));
@@ -859,7 +859,9 @@ export default function DevicePanel(props: {
         <AlertDialogPopup>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t("Shut down")} {attachedDevice?.name ?? t("this simulator")}?
+              {language === "zh-CN"
+                ? `关闭“${attachedDevice?.name ?? t("this simulator")}”？`
+                : `Shut down ${attachedDevice?.name ?? t("this simulator")}?`}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t(
@@ -946,7 +948,7 @@ function DeviceBootLimitDialog(props: {
   onDismiss: () => void;
   onShutdown: (candidate: DeviceDescriptor) => void;
 }) {
-  const { t } = useUiLanguage();
+  const { language, t } = useUiLanguage();
   const { state } = props;
 
   return (
@@ -954,7 +956,9 @@ function DeviceBootLimitDialog(props: {
       <DialogPopup>
         <DialogHeader>
           <DialogTitle>
-            {t("Shut down a simulator to start")} {props.deviceName}
+            {language === "zh-CN"
+              ? `关闭一个模拟器后再启动“${props.deviceName}”`
+              : `Shut down a simulator to start ${props.deviceName}`}
           </DialogTitle>
           {/*
             The cap is about memory, and saying so is what makes it read as a
@@ -963,11 +967,9 @@ function DeviceBootLimitDialog(props: {
             and one of them is about to lose whatever is on it.
           */}
           <DialogDescription>
-            {t("Synara keeps at most")} {state?.limit ?? 0}{" "}
-            {t(
-              "simulators running at once, because each one holds a few gigabytes of memory. Pick one to shut down; anything running on it closes, and",
-            )}{" "}
-            {props.deviceName} {t("starts in its place.")}
+            {language === "zh-CN"
+              ? `Synara 最多同时运行 ${state?.limit ?? 0} 个模拟器，因为每个都会占用数 GB 内存。请选择一个关闭；其上运行的内容都会退出，关闭后，“${props.deviceName}”会接替启动。`
+              : `Synara keeps at most ${state?.limit ?? 0} simulators running at once, because each one holds a few gigabytes of memory. Pick one to shut down; anything running on it closes, and ${props.deviceName} starts in its place.`}
           </DialogDescription>
         </DialogHeader>
         <ul className="space-y-1">
