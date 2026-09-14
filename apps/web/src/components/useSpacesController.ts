@@ -28,6 +28,7 @@ import { useStore } from "../store";
 import type { Project, SidebarThreadSummary, Space } from "../types";
 import { useVoidSpaceStore } from "../voidSpaceStore";
 import { useWorkspacePathsStore } from "../workspacePathsStore";
+import { useUiLanguage } from "../uiLanguage";
 import { sortThreadsForSidebar } from "./Sidebar.logic";
 import type { SpaceEditorMode, SpaceEditorValue } from "./SpaceEditorDialog";
 import { useRouteSpaceSync } from "./useRouteSpaceSync";
@@ -69,6 +70,7 @@ export function useSpacesController(input: {
   /** Space moves are offered from the project context menu; the menu closes on action. */
   onCloseProjectContextMenu: () => void;
 }) {
+  const { language, t, tError } = useUiLanguage();
   const {
     activateThreadFromSidebarIntent,
     activeRouteProject,
@@ -293,8 +295,8 @@ export function useSpacesController(input: {
         } catch (error) {
           toastManager.add({
             type: "error",
-            title: `${value.name} was created, but the project was not moved`,
-            description: error instanceof Error ? error.message : "Try moving the project again.",
+            title: `${t("Created space")} “${value.name}”，${t("but the project was not moved")}`,
+            description: tError(error, "Try moving the project again."),
           });
           return;
         }
@@ -320,6 +322,8 @@ export function useSpacesController(input: {
       setVoidSpace,
       spaceEditorState,
       spaces,
+      t,
+      tError,
     ],
   );
 
@@ -332,9 +336,13 @@ export function useSpacesController(input: {
         (project) => (project.spaceId ?? null) === spaceId,
       ).length;
       const confirmed = await api.dialogs.confirm(
-        projectCount > 0
-          ? `Delete “${space.name}”?\n\n${projectCount} project${projectCount === 1 ? "" : "s"} will move to Void.`
-          : `Delete “${space.name}”?`,
+        language === "zh-CN"
+          ? projectCount > 0
+            ? `删除“${space.name}”？\n\n${projectCount} 个项目将移动到 Void。`
+            : `删除“${space.name}”？`
+          : projectCount > 0
+            ? `Delete “${space.name}”?\n\n${projectCount} project${projectCount === 1 ? "" : "s"} will move to Void.`
+            : `Delete “${space.name}”?`,
       );
       if (!confirmed) return;
 
@@ -356,8 +364,8 @@ export function useSpacesController(input: {
       } catch (error) {
         toastManager.add({
           type: "error",
-          title: "Unable to delete space",
-          description: error instanceof Error ? error.message : "Try again.",
+          title: t("Unable to delete space"),
+          description: tError(error, "Try again."),
         });
       }
     },
@@ -365,29 +373,35 @@ export function useSpacesController(input: {
       activeRouteProject,
       activeSpaceId,
       isOnKanban,
+      language,
       navigate,
       ordinarySpaceProjects,
       projectById,
       routeProjectId,
       selectSpaceForNavigation,
       spaces,
+      t,
+      tError,
       workspacePaths,
     ],
   );
 
-  const handleRenameSpace = useCallback(async (space: Space, name: string) => {
-    const api = readNativeApi();
-    if (!api || space.name === name) return;
-    try {
-      await updateSpace({ api, spaceId: space.id, name });
-    } catch (error) {
-      toastManager.add({
-        type: "error",
-        title: "Unable to rename space",
-        description: error instanceof Error ? error.message : "Try again.",
-      });
-    }
-  }, []);
+  const handleRenameSpace = useCallback(
+    async (space: Space, name: string) => {
+      const api = readNativeApi();
+      if (!api || space.name === name) return;
+      try {
+        await updateSpace({ api, spaceId: space.id, name });
+      } catch (error) {
+        toastManager.add({
+          type: "error",
+          title: t("Unable to rename space"),
+          description: tError(error, "Try again."),
+        });
+      }
+    },
+    [t, tError],
+  );
 
   const handleRenameVoid = useCallback(
     (name: string) => {
@@ -417,12 +431,12 @@ export function useSpacesController(input: {
         }
         toastManager.add({
           type: "error",
-          title: "Unable to confirm space order",
-          description: error instanceof Error ? error.message : "Try again.",
+          title: t("Unable to confirm space order"),
+          description: tError(error, "Try again."),
         });
       });
     },
-    [reorderSpacesLocally],
+    [reorderSpacesLocally, t, tError],
   );
 
   const handleBulkMoveProjects = useCallback(
@@ -453,8 +467,8 @@ export function useSpacesController(input: {
       } catch (error) {
         toastManager.add({
           type: "error",
-          title: "Unable to move project",
-          description: error instanceof Error ? error.message : "Try again.",
+          title: t("Unable to move project"),
+          description: tError(error, "Try again."),
         });
       }
     },
@@ -465,6 +479,8 @@ export function useSpacesController(input: {
       projectById,
       routeProjectId,
       selectSpaceForNavigation,
+      t,
+      tError,
     ],
   );
 

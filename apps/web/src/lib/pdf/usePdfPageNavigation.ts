@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { useReducedMotion } from "../../hooks/useReducedMotion";
 import { PDF_PAGE_MARGIN_PX } from "./pdfZoom";
 
 // The current page is the last one whose top has scrolled above this fraction
@@ -32,6 +33,7 @@ export function usePdfPageNavigation(input: {
   resetKey: unknown;
 }): PdfPageNavigation {
   const { scrollRoot, numPages, enabled, resetKey } = input;
+  const reduceMotion = useReducedMotion();
   const [currentPageState, setCurrentPageState] = useState<CurrentPageState>({
     resetKey,
     page: 1,
@@ -74,7 +76,7 @@ export function usePdfPageNavigation(input: {
   const jumpToPage = (pageNumber: number) => {
     const clamped = Math.min(Math.max(pageNumber, 1), Math.max(numPages, 1));
     setCurrentPageState({ resetKey, page: clamped });
-    scrollToPage(clamped, "smooth");
+    scrollToPage(clamped, reduceMotion ? "auto" : "smooth");
   };
 
   // Track the page the reader is on from scroll position (rAF-throttled). Pages

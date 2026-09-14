@@ -10,6 +10,7 @@ import { useEditorLaunchers, type EditorLaunchers } from "~/hooks/useEditorLaunc
 import { ChevronDownIcon } from "~/lib/icons";
 import { serverConfigQueryOptions } from "~/lib/serverReactQuery";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   Menu,
   MenuRadioGroup,
@@ -130,11 +131,12 @@ const COMPACT_ACTION_BUTTON_CLASS_NAME =
   "inline-flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-[var(--color-background-button-secondary-hover)] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 disabled:pointer-events-none disabled:opacity-50 data-popup-open:bg-[var(--color-background-button-secondary-hover)] data-popup-open:text-foreground";
 
 function OpenInPickerFrame(props: OpenInPickerFrameProps) {
+  const { t } = useUiLanguage();
   if (props.variant === "compact") {
     return (
       <div
         role="group"
-        aria-label={props.groupLabel}
+        aria-label={t(props.groupLabel)}
         className="flex shrink-0 items-center gap-0.5"
       >
         <button
@@ -144,14 +146,14 @@ function OpenInPickerFrame(props: OpenInPickerFrameProps) {
           onClick={props.primaryAction.onClick}
         >
           {props.primaryAction.icon ?? null}
-          <span className="sr-only">Open</span>
+          <span className="sr-only">{t("Open")}</span>
         </button>
         <Menu {...(props.onMenuOpenChange ? { onOpenChange: props.onMenuOpenChange } : {})}>
           <MenuTrigger
             render={
               <button
                 type="button"
-                aria-label={props.menuLabel}
+                aria-label={t(props.menuLabel)}
                 className={COMPACT_ACTION_BUTTON_CLASS_NAME}
               />
             }
@@ -164,7 +166,7 @@ function OpenInPickerFrame(props: OpenInPickerFrameProps) {
     );
   }
   return (
-    <ChatHeaderSplitGroup label={props.groupLabel}>
+    <ChatHeaderSplitGroup label={t(props.groupLabel)}>
       <ChatHeaderButton
         tone="outline"
         className={CHAT_HEADER_SPLIT_LEADING_CLASS_NAME}
@@ -180,7 +182,7 @@ function OpenInPickerFrame(props: OpenInPickerFrameProps) {
               : "sr-only @sm/header-actions:not-sr-only @sm/header-actions:ml-0.5",
           )}
         >
-          Open
+          {t("Open")}
         </span>
       </ChatHeaderButton>
       <ChatHeaderSplitDivider />
@@ -188,7 +190,7 @@ function OpenInPickerFrame(props: OpenInPickerFrameProps) {
         <MenuTrigger
           render={
             <ChatHeaderIconButton
-              label={props.menuLabel}
+              label={t(props.menuLabel)}
               tone="outline"
               className={CHAT_HEADER_SPLIT_TRAILING_CLASS_NAME}
             />
@@ -274,6 +276,7 @@ function OpenInPickerMenuPopup({
   additionalMenuItems: ReactNode;
   menuEditorOrder: ReadonlyArray<EditorId> | undefined;
 }) {
+  const { t } = useUiLanguage();
   const { options, preferredEditor, openFavoriteShortcutLabel, setDefaultEditor, openInEditor } =
     launchers;
   const displayedOptions = menuEditorOrder
@@ -285,7 +288,9 @@ function OpenInPickerMenuPopup({
 
   return (
     <ComposerPickerMenuPopup align="end" side="bottom" className="w-44 min-w-44">
-      {displayedOptions.length === 0 && <MenuItem disabled>No installed editors found</MenuItem>}
+      {displayedOptions.length === 0 && (
+        <MenuItem disabled>{t("No installed editors found")}</MenuItem>
+      )}
       <MenuRadioGroup
         value={preferredEditor ?? ""}
         onValueChange={(value) => setDefaultEditor(value as EditorId)}

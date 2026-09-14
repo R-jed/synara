@@ -9,6 +9,7 @@
 import type { GitPullRequestMergeability, PullRequestState } from "@synara/contracts";
 
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   PR_STATE_PRESENTATION_ICONS,
   resolvePrStatePresentation,
@@ -47,15 +48,16 @@ export function PullRequestStateGlyph({
   size?: keyof typeof SIZE_CLASS_NAME;
   className?: string;
 }) {
+  const { t } = useUiLanguage();
   const size = sizeProp ?? "sm";
   const presentation = resolvePrStatePresentation({ state, isDraft, mergeability });
   const Icon = PR_STATE_PRESENTATION_ICONS[presentation.iconKind];
   return (
     <span
       className={cn("flex shrink-0 items-center justify-center", SIZE_CLASS_NAME[size], className)}
-      title={pullRequestStateLabel(state, isDraft, mergeability)}
+      title={t(pullRequestStateLabel(state, isDraft, mergeability))}
       role="img"
-      aria-label={presentation.label}
+      aria-label={t(presentation.label)}
     >
       <Icon className={cn("size-full", presentation.colorClass)} aria-hidden="true" />
     </span>

@@ -23,9 +23,10 @@ import { type ComponentType, useEffect, useState, type KeyboardEvent } from "rea
 import { useQuery } from "@tanstack/react-query";
 import { FolderClosed } from "./FolderClosed";
 import { ProviderIcon as SharedProviderIcon } from "./ProviderIcon";
-import { formatRelativeTime } from "~/lib/relativeTime";
+import { formatRelativeTimeForLanguage } from "~/lib/relativeTime";
 import { readNativeApi } from "~/nativeApi";
 import { getNavigatorPlatform, isMacPlatform } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { Kbd, KbdGroup } from "./ui/kbd";
 import {
   appendBrowsePathSegment,
@@ -283,15 +284,20 @@ function ProviderIcon(props: { provider: ProviderKind }) {
   );
 }
 
-function threadMatchLabel(input: {
-  matchKind: "message" | "project" | "title";
-  messageMatchCount: number;
-}): string | null {
+function threadMatchLabel(
+  input: {
+    matchKind: "message" | "project" | "title";
+    messageMatchCount: number;
+  },
+  t: (text: string) => string,
+): string | null {
   if (input.matchKind === "message") {
-    return input.messageMatchCount > 1 ? `${input.messageMatchCount} chat hits` : "Chat match";
+    return input.messageMatchCount > 1
+      ? `${input.messageMatchCount} ${t("chat hits")}`
+      : t("Chat match");
   }
   if (input.matchKind === "project") {
-    return "Project match";
+    return t("Project match");
   }
   return null;
 }
@@ -349,6 +355,7 @@ function HighlightedText(props: { text: string; query: string; className?: strin
 }
 
 export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
+  const { language, t, tError } = useUiLanguage();
   const { activeTheme, resolvedTheme, setCodeThemeId, setTheme, theme } = useTheme();
   const [query, setQuery] = useState("");
   const [highlightedItemValue, setHighlightedItemValue] = useState<string | null>(null);
@@ -470,15 +477,15 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
     matchedCurrentThemes.length > 0 ||
     matchedProjects.length > 0 ||
     matchedThreads.length > 0;
-  const importFieldLabel = importProvider === "codex" ? "Thread ID" : "Session ID";
+  const importFieldLabel = importProvider === "codex" ? t("Thread ID") : t("Session ID");
   const importPlaceholder =
     importProvider === "claudeAgent"
-      ? "Paste a Claude session id"
+      ? t("Paste a Claude session id")
       : importProvider === "cursor"
-        ? "Paste a Cursor session id"
+        ? t("Paste a Cursor session id")
         : importProvider === "opencode"
-          ? "Paste an OpenCode session id"
-          : "Paste a Codex thread id";
+          ? t("Paste an OpenCode session id")
+          : t("Paste a Codex thread id");
 
   const hasHighlightedFolderItem =
     highlightedItemValue !== null && highlightedItemValue.startsWith("folder:");
@@ -497,7 +504,7 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
     exactBrowseEntry === null &&
     !isBrowseFetching;
 
-  const browseSubmitLabel = willCreateMissingFolder ? "Create & Add" : "Add";
+  const browseSubmitLabel = willCreateMissingFolder ? t("Create & Add") : t("Add");
 
   const resolveBrowseSubmitPath = (): string => {
     if (highlightedFolderPath) {
@@ -512,16 +519,16 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
   const submitBrowsePath = async () => {
     if (isAddingProject) return;
     if (trimmedQuery.length === 0 && !highlightedFolderPath) {
-      setAddProjectError("Enter a folder path.");
+      setAddProjectError(t("Enter a folder path."));
       return;
     }
     if (unsupportedWindowsPath) {
-      setAddProjectError("Windows paths are not supported on this platform.");
+      setAddProjectError(t("Windows paths are not supported on this platform."));
       return;
     }
     if (!highlightedFolderPath && isExplicitRelativeProjectPath(trimmedQuery)) {
       setAddProjectError(
-        "Relative paths are not supported. Use an absolute path or start with ~/.",
+        t("Relative paths are not supported. Use an absolute path or start with ~/."),
       );
       return;
     }
@@ -538,7 +545,7 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
         props.onOpenChange(false);
       })
       .catch((cause: unknown) => {
-        setAddProjectError(cause instanceof Error ? cause.message : "Failed to add project.");
+        setAddProjectError(tError(cause, "Failed to add project."));
       })
       .finally(() => {
         setIsAddingProject(false);
@@ -583,7 +590,7 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
         props.onOpenChange(false);
       })
       .catch((error: unknown) => {
-        setImportError(error instanceof Error ? error.message : "Failed to import thread.");
+        setImportError(tError(error, "Failed to import thread."));
       })
       .finally(() => {
         setIsImporting(false);
@@ -609,16 +616,18 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                   <LuArrowLeft className="size-4" />
                 </Button>
                 <div>
-                  <p className="text-sm font-medium text-foreground">Import thread from provider</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {t("Import thread from provider")}
+                  </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Create a local app thread and resume it from an existing provider id.
+                    {t("Create a local app thread and resume it from an existing provider id.")}
                   </p>
                 </div>
               </div>
             </div>
             <div className="space-y-4 px-4 py-4">
               <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">Provider</p>
+                <p className="text-xs font-medium text-muted-foreground">{t("Provider")}</p>
                 <div className="flex gap-2">
                   {props.importProviders.map((provider) => (
                     <Button
@@ -644,7 +653,7 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                 </div>
                 {props.importProviders.length === 0 ? (
                   <p className="text-xs text-muted-foreground">
-                    No connected providers expose chat import in this build.
+                    {t("No connected providers expose chat import in this build.")}
                   </p>
                 ) : null}
               </div>
@@ -666,12 +675,12 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                 />
                 <p className="text-xs text-muted-foreground">
                   {importProvider === "claudeAgent"
-                    ? "Claude resumes a persisted session by session id."
+                    ? t("Claude resumes a persisted session by session id.")
                     : importProvider === "cursor"
-                      ? "Cursor resumes a persisted session by session id."
+                      ? t("Cursor resumes a persisted session by session id.")
                       : importProvider === "opencode"
-                        ? "OpenCode resumes a persisted session by session id."
-                        : "Codex resumes a persisted thread by thread id."}
+                        ? t("OpenCode resumes a persisted session by session id.")
+                        : t("Codex resumes a persisted thread by thread id.")}
                 </p>
               </div>
               {importError ? (
@@ -687,7 +696,7 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                     props.onOpenChange(false);
                   }}
                 >
-                  Cancel
+                  {t("Cancel")}
                 </Button>
                 <Button
                   disabled={
@@ -697,7 +706,7 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                   }
                   onClick={submitImport}
                 >
-                  {isImporting ? "Importing..." : "Import"}
+                  {isImporting ? t("Importing...") : t("Import")}
                 </Button>
               </div>
             </div>
@@ -716,8 +725,8 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                   <CommandInput
                     placeholder={
                       isBrowsing
-                        ? "Enter project path (e.g. ~/projects/my-app)"
-                        : "Search projects, threads, and actions"
+                        ? t("Enter project path (e.g. ~/projects/my-app)")
+                        : t("Search projects, threads, and actions")
                     }
                     value={query}
                     onChange={(event) => setQuery(event.currentTarget.value)}
@@ -751,7 +760,7 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                       onClick={() => void submitBrowsePath()}
                       title={
                         hasHighlightedFolderItem
-                          ? `${browseSubmitLabel} highlighted folder (${submitModifierLabel} Enter)`
+                          ? `${browseSubmitLabel} ${t("highlighted folder")} (${submitModifierLabel} Enter)`
                           : `${browseSubmitLabel} (Enter)`
                       }
                     >
@@ -806,7 +815,9 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
 
                   {!isBrowsing && matchedActions.length > 0 ? (
                     <CommandGroup>
-                      <CommandGroupLabel className="pt-0 pb-1.5 pl-3">Suggested</CommandGroupLabel>
+                      <CommandGroupLabel className="pt-0 pb-1.5 pl-3">
+                        {t("Suggested")}
+                      </CommandGroupLabel>
                       {matchedActions.map((action) => {
                         const onSelect = action.run ?? actionHandler(action.id, props);
                         const Icon = action.icon ?? ACTION_ICONS[action.id];
@@ -833,7 +844,7 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                           >
                             {Icon ? <PaletteIcon icon={Icon} /> : null}
                             <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-                              {action.label}
+                              {t(action.label)}
                             </span>
                             {action.shortcutLabel ? (
                               <ShortcutKbd
@@ -856,7 +867,7 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                   {!isBrowsing && matchedThreads.length > 0 ? (
                     <CommandGroup>
                       <CommandGroupLabel className="py-1.5 pl-3">
-                        {query ? "Threads" : "Recent"}
+                        {query ? t("Threads") : t("Recent")}
                       </CommandGroupLabel>
                       {matchedThreads.map(
                         ({ id, matchKind, messageMatchCount, snippet, thread }) => (
@@ -879,7 +890,7 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                               <div className="flex items-baseline gap-3">
                                 <div className="min-w-0 flex-1 truncate text-[length:var(--app-font-size-ui,12px)] text-foreground">
                                   <HighlightedText
-                                    text={thread.title || "Untitled thread"}
+                                    text={thread.title || t("Untitled thread")}
                                     query={query}
                                   />
                                 </div>
@@ -888,11 +899,16 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                                     project. Space stays searchable — it just does not
                                     get to eat the name the user is scanning for. */}
                                 <span className="w-24 shrink-0 truncate text-right text-[length:var(--app-font-size-ui-meta,10px)] text-muted-foreground/79">
-                                  {thread.projectName}
+                                  {thread.projectNameIsFallback
+                                    ? t("Unknown project")
+                                    : thread.projectName}
                                 </span>
                                 {thread.updatedAt || thread.createdAt ? (
                                   <span className="w-10 shrink-0 text-right text-[length:var(--app-font-size-ui-timestamp,10px)] text-muted-foreground/79">
-                                    {formatRelativeTime(thread.updatedAt ?? thread.createdAt)}
+                                    {formatRelativeTimeForLanguage(
+                                      thread.updatedAt ?? thread.createdAt,
+                                      language,
+                                    )}
                                   </span>
                                 ) : (
                                   <span className="w-10 shrink-0" />
@@ -904,16 +920,16 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                                     <HighlightedText text={snippet} query={query} />
                                   </div>
                                   <div className="flex w-[8.5rem] shrink-0 justify-end">
-                                    {threadMatchLabel({ matchKind, messageMatchCount }) ? (
+                                    {threadMatchLabel({ matchKind, messageMatchCount }, t) ? (
                                       <span className="truncate text-[length:var(--app-font-size-ui-meta,10px)] text-muted-foreground/58">
-                                        {threadMatchLabel({ matchKind, messageMatchCount })}
+                                        {threadMatchLabel({ matchKind, messageMatchCount }, t)}
                                       </span>
                                     ) : null}
                                   </div>
                                 </div>
-                              ) : threadMatchLabel({ matchKind, messageMatchCount }) ? (
+                              ) : threadMatchLabel({ matchKind, messageMatchCount }, t) ? (
                                 <div className="mt-0.5 text-[length:var(--app-font-size-ui-meta,10px)] text-muted-foreground/58">
-                                  {threadMatchLabel({ matchKind, messageMatchCount })}
+                                  {threadMatchLabel({ matchKind, messageMatchCount }, t)}
                                 </div>
                               ) : null}
                             </div>
@@ -931,7 +947,7 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
 
                   {!isBrowsing && matchedProjects.length > 0 ? (
                     <CommandGroup>
-                      <CommandGroupLabel className="py-1.5 pl-3">Projects</CommandGroupLabel>
+                      <CommandGroupLabel className="py-1.5 pl-3">{t("Projects")}</CommandGroupLabel>
                       {matchedProjects.map(({ id, project }) => (
                         <CommandItem
                           key={id}
@@ -949,7 +965,7 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-baseline gap-3">
                               <div className="min-w-0 flex-1 truncate text-[length:var(--app-font-size-ui,12px)] text-foreground">
-                                {project.name || "Untitled project"}
+                                {project.name || t("Untitled project")}
                               </div>
                               {/* Opening a project from here can switch Space, so the
                                   destination is worth naming. It rides in the same right-hand
@@ -976,7 +992,9 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                     <>
                       {themeCommandItems.length > 0 ? (
                         <CommandGroup>
-                          <CommandGroupLabel className="py-1.5 pl-3">Configure</CommandGroupLabel>
+                          <CommandGroupLabel className="py-1.5 pl-3">
+                            {t("Configure")}
+                          </CommandGroupLabel>
                           {themeCommandItems.map((themeCommandItem) => (
                             <CommandItem
                               key={themeCommandItem.id}
@@ -993,7 +1011,7 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                             >
                               <PaletteIcon icon={THEME_MODE_ICONS[themeCommandItem.mode]} />
                               <span className="min-w-0 flex-1 truncate text-[length:var(--app-font-size-ui,12px)] text-foreground">
-                                {themeCommandItem.label}
+                                {t(themeCommandItem.label)}
                               </span>
                               <span
                                 className="flex size-3.5 shrink-0 items-center justify-center"
@@ -1010,7 +1028,7 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                       {matchedCurrentThemes.length > 0 ? (
                         <CommandGroup>
                           <CommandGroupLabel className="py-1.5 pl-3">
-                            {resolvedTheme === "dark" ? "Dark themes" : "Light themes"}
+                            {resolvedTheme === "dark" ? t("Dark themes") : t("Light themes")}
                           </CommandGroupLabel>
                           {matchedCurrentThemes.map((themeItem) => {
                             const seed =
@@ -1043,8 +1061,8 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                                 </span>
                                 <span className="shrink-0 text-[length:var(--app-font-size-ui-meta,10px)] text-muted-foreground/79">
                                   {resolvedTheme === "dark"
-                                    ? "Dark color theme"
-                                    : "Light color theme"}
+                                    ? t("Dark color theme")
+                                    : t("Light color theme")}
                                 </span>
                                 <span
                                   className="flex size-3.5 shrink-0 items-center justify-center"
@@ -1069,20 +1087,20 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                   {isBrowsing ? (
                     unsupportedWindowsPath ? (
                       <div className="py-10 text-center text-sm text-muted-foreground/79">
-                        Windows paths are not supported on this platform.
+                        {t("Windows paths are not supported on this platform.")}
                       </div>
                     ) : (
                       <>
                         {!canBrowseUp && filteredBrowseEntries.length === 0 && !isBrowseFetching ? (
                           <div className="px-3 py-2 text-sm text-muted-foreground">
-                            No matching folders.
+                            {t("No matching folders.")}
                           </div>
                         ) : null}
                         {willCreateMissingFolder ? (
                           <div className="mx-3 mt-2 rounded-md border border-dashed border-[color:var(--color-border)] px-3 py-2 text-sm text-muted-foreground">
-                            Press Enter to create{" "}
-                            <span className="text-foreground">{trimmedQuery}</span> and add it as a
-                            project.
+                            {t("Press Enter to create")}{" "}
+                            <span className="text-foreground">{trimmedQuery}</span>{" "}
+                            {t("and add it as a project.")}
                           </div>
                         ) : null}
                         {addProjectError ? (
@@ -1095,7 +1113,7 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                   ) : !hasSearchResults ? (
                     <div className="flex flex-col items-center justify-center gap-2 py-10 text-center text-sm text-muted-foreground/79">
                       <SearchIcon className="size-4 opacity-70" />
-                      <div>No matches.</div>
+                      <div>{t("No matches.")}</div>
                     </div>
                   ) : null}
                 </CommandStatus>
@@ -1106,21 +1124,21 @@ export function SidebarSearchPalette(props: SidebarSearchPaletteProps) {
                   <>
                     <span>
                       {isAddingProject
-                        ? "Adding project..."
-                        : "Type a path, ↑↓ to navigate folders."}
+                        ? t("Adding project...")
+                        : t("Type a path, ↑↓ to navigate folders.")}
                     </span>
                     <span>
                       {hasHighlightedFolderItem
-                        ? `Enter to open · ${submitModifierLabel}+Enter to add`
+                        ? `${t("Enter to open")} · ${submitModifierLabel}+Enter ${t("to add")}`
                         : hasHighlightedBrowseItem
-                          ? "Enter to go up"
-                          : "Enter to add project"}
+                          ? t("Enter to go up")
+                          : t("Enter to add project")}
                     </span>
                   </>
                 ) : (
                   <>
-                    <span>Jump to threads, projects, actions, or appearance.</span>
-                    <span>Enter to open</span>
+                    <span>{t("Jump to threads, projects, actions, or appearance.")}</span>
+                    <span>{t("Enter to open")}</span>
                   </>
                 )}
               </CommandFooter>

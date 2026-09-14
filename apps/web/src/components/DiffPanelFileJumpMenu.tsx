@@ -9,6 +9,7 @@ import { useState } from "react";
 
 import { SearchIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { filterRenderableFilesForSearch } from "./DiffPanel.logic";
 import { ComposerPickerMenuPopup } from "./chat/ComposerPickerMenuPopup";
 import { PickerPanelShell } from "./chat/PickerPanelShell";
@@ -79,6 +80,7 @@ export function DiffPanelFileJumpMenu(props: {
   resolvedTheme: "light" | "dark";
   onSelectFile: (filePath: string) => void;
 }) {
+  const { t } = useUiLanguage();
   const [fileSearchQuery, setFileSearchQuery] = useState("");
 
   const filteredFiles = filterRenderableFilesForSearch(props.renderableFiles, fileSearchQuery);
@@ -97,8 +99,8 @@ export function DiffPanelFileJumpMenu(props: {
             variant="ghost"
             size="icon-xs"
             className="text-muted-foreground hover:text-foreground"
-            label="Jump to file"
-            title="Jump to file"
+            label={t("Jump to file")}
+            title={t("Jump to file")}
           >
             <SearchIcon className="size-3.5" />
           </IconButton>
@@ -111,7 +113,7 @@ export function DiffPanelFileJumpMenu(props: {
         className="w-[min(24rem,calc(100vw-2rem))] min-w-[18rem]"
       >
         <PickerPanelShell
-          searchPlaceholder="Jump to file"
+          searchPlaceholder={t("Jump to file")}
           query={fileSearchQuery}
           onQueryChange={setFileSearchQuery}
           stopSearchKeyPropagation
@@ -121,9 +123,13 @@ export function DiffPanelFileJumpMenu(props: {
           listMaxHeightClassName="max-h-64"
         >
           {props.renderableFiles.length === 0 ? (
-            <p className="px-2.5 py-3 text-[11px] text-muted-foreground">No files in this diff.</p>
+            <p className="px-2.5 py-3 text-[11px] text-muted-foreground">
+              {t("No files in this diff.")}
+            </p>
           ) : filteredFiles.length === 0 ? (
-            <p className="px-2.5 py-3 text-[11px] text-muted-foreground">No matching files.</p>
+            <p className="px-2.5 py-3 text-[11px] text-muted-foreground">
+              {t("No matching files.")}
+            </p>
           ) : (
             filteredFiles.map((fileDiff) => {
               const filePath = resolveFileDiffPath(fileDiff);

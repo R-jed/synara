@@ -6,6 +6,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { SearchIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { Input } from "../ui/input";
 import {
   COMPOSER_PICKER_MODEL_LIST_SCROLL_CLASS_NAME,
@@ -51,6 +52,7 @@ export function PickerPanelShell(props: {
    */
   variant?: "default" | "plain";
 }) {
+  const { t } = useUiLanguage();
   const {
     searchPlaceholder: searchPlaceholderProp,
     query: queryProp,
@@ -65,7 +67,7 @@ export function PickerPanelShell(props: {
     listMaxHeightClassName,
     variant: variantProp,
   } = props;
-  const searchPlaceholder = searchPlaceholderProp ?? "Search";
+  const searchPlaceholder = searchPlaceholderProp ?? t("Search");
   const query = queryProp ?? "";
   const stopSearchKeyPropagation = stopSearchKeyPropagationProp ?? false;
   const autoFocusSearch = autoFocusSearchProp ?? false;

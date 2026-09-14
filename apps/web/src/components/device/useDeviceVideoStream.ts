@@ -189,12 +189,12 @@ export function useDeviceVideoStream(input: {
           }
           paint(videoFrame);
         },
-        error: (error) => {
+        error: () => {
           // A decoder error is recoverable: asking the server to rebuild the
           // capture session yields fresh parameter sets and an IDR, which
           // reconfigures this decoder rather than waiting out the encoder's
           // next natural keyframe (up to two seconds away).
-          failStream(error instanceof Error ? error.message : "The video decoder failed.");
+          failStream("The video decoder failed.");
           source?.requestResync();
         },
       });
@@ -203,10 +203,8 @@ export function useDeviceVideoStream(input: {
         // helper writes out of VideoToolbox. Supplying one would switch the
         // decoder to length-prefixed AVCC samples and every frame would fail.
         next.configure({ codec, optimizeForLatency: true });
-      } catch (error) {
-        failStream(
-          error instanceof Error ? error.message : "The video decoder could not be configured.",
-        );
+      } catch {
+        failStream("The video decoder could not be configured.");
         return;
       }
       decoder = next;
@@ -233,8 +231,8 @@ export function useDeviceVideoStream(input: {
             data,
           }),
         );
-      } catch (error) {
-        failStream(error instanceof Error ? error.message : "A video frame could not be decoded.");
+      } catch {
+        failStream("A video frame could not be decoded.");
         source?.requestResync();
       }
     };

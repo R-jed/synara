@@ -151,6 +151,12 @@ import { arraysShallowEqual } from "../storeNormalization";
 import { providerModelDiscoveryInvalidationFingerprint } from "../lib/providerDiscoveryInvalidation";
 import { providerDiscoveryQueryKeys } from "../lib/providerDiscoveryReactQuery";
 import { didProviderEnablementChange, useAppSettings } from "../appSettings";
+import {
+  type ResolvedUiLanguage,
+  useUiLanguage,
+  useUiLanguageBootstrap,
+  useUiLanguageRuntime,
+} from "../uiLanguage";
 import { getNavigatorPlatform } from "../lib/utils";
 import {
   getNotifiableProviderUpdateStatuses,
@@ -243,6 +249,8 @@ export const Route = createRootRouteWithContext<{
 });
 
 function RootRouteView() {
+  useUiLanguageBootstrap();
+  const { t } = useUiLanguage();
   useAppTypography();
   useAppDensity();
   useChatWidth();
@@ -299,9 +307,7 @@ function RootRouteView() {
       <>
         <div className="flex h-screen flex-col bg-background text-foreground">
           <div className="flex flex-1 items-center justify-center">
-            <p className="text-sm text-muted-foreground">
-              Connecting to {APP_DISPLAY_NAME} server...
-            </p>
+            <p className="text-sm text-muted-foreground">{t("Connecting to Synara server...")}</p>
           </div>
         </div>
         {desktopChrome}
@@ -311,6 +317,7 @@ function RootRouteView() {
 
   return (
     <>
+      <UiLanguageCoordinator />
       <ToastProvider position="top-center">
         <AnchoredToastProvider>
           <GitProgressToastPreviewDev />
@@ -336,19 +343,35 @@ function RootRouteView() {
   );
 }
 
+function UiLanguageCoordinator() {
+  const { settings } = useAppSettings();
+  useUiLanguageRuntime(settings.uiLanguage);
+  return null;
+}
+
 function TransportCompatibilityView({ issue }: { issue: WsCompatibilityError }) {
+  const { t, tError } = useUiLanguage();
   const title =
     issue.action === "update-client"
-      ? "This Synara client needs an update."
+      ? t("This Synara client needs an update.")
       : issue.action === "update-server"
-        ? "The Synara server needs an update."
-        : "Synara needs to reconnect with a matching build.";
+        ? t("The Synara server needs an update.")
+        : t("Synara needs to reconnect with a matching build.");
   const guidance =
     issue.action === "update-client"
-      ? "Update or reload this client, then reconnect."
+      ? t("Update or reload this client, then reconnect.")
       : issue.action === "update-server"
-        ? "Update or restart the server, then reload this client."
-        : "Reload the app. If this repeats, restart Synara so the client and server use matching builds.";
+        ? t("Update or restart the server, then reload this client.")
+        : t(
+            "Reload the app. If this repeats, restart Synara so the client and server use matching builds.",
+          );
+  const messageFallback =
+    issue.action === "update-client"
+      ? t("Update or reload this client, then reconnect.")
+      : issue.action === "update-server"
+        ? t("Update or restart the server, then reload this client.")
+        : t("Reload app");
+  const message = tError(issue.message, messageFallback);
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-10 text-foreground sm:px-6">
@@ -359,10 +382,10 @@ function TransportCompatibilityView({ issue }: { issue: WsCompatibilityError }) 
       <section className="relative w-full max-w-xl rounded-2xl border border-border/80 bg-card/90 p-6 shadow-2xl shadow-black/20 backdrop-blur-md sm:p-8">
         <p className="text-[11px] font-semibold text-muted-foreground">{APP_DISPLAY_NAME}</p>
         <h1 className="mt-3 text-2xl font-semibold sm:text-3xl">{title}</h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{issue.message}</p>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{message}</p>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{guidance}</p>
         <p className="mt-4 text-xs text-muted-foreground/80">
-          Client {APP_VERSION} · Server {issue.serverBuild}
+          {t("Client")} {APP_VERSION} · {t("Server")} {issue.serverBuild}
         </p>
         <div className="mt-5">
           <Button
@@ -370,7 +393,7 @@ function TransportCompatibilityView({ issue }: { issue: WsCompatibilityError }) 
             className={dialogActionButtonClassName}
             onClick={() => window.location.reload()}
           >
-            Reload app
+            {t("Reload app")}
           </Button>
         </div>
       </section>
@@ -452,6 +475,9 @@ async function runProviderUpdateAll(params: {
   isUpdatingAllRef: { current: boolean };
   progressToastDismissedRef: { current: boolean };
   setIsUpdatingAll: (value: boolean) => void;
+  language: ResolvedUiLanguage;
+  translate: (text: string) => string;
+  translateError: (error: unknown, fallback?: string) => string;
 }): Promise<void> {
   const {
     providers,
@@ -460,6 +486,9 @@ async function runProviderUpdateAll(params: {
     isUpdatingAllRef,
     progressToastDismissedRef,
     setIsUpdatingAll,
+    language,
+    translate,
+    translateError,
   } = params;
   const activeNotificationKey = providerUpdateNotificationKey(providers);
   if (isUpdatingAllRef.current || providers.length === 0 || !activeNotificationKey) {
@@ -474,11 +503,15 @@ async function runProviderUpdateAll(params: {
     trackedToast?.toastId ??
     toastManager.add({
       type: "loading",
-      title: "Updating providers...",
+      title: translate("Updating providers..."),
       description:
         providers.length === 1
-          ? `Updating ${PROVIDER_DISPLAY_NAMES[providers[0]!.provider]}.`
-          : `Updating ${providers.length} providers.`,
+          ? language === "zh-CN"
+            ? `正在更新 ${PROVIDER_DISPLAY_NAMES[providers[0]!.provider]}。`
+            : `Updating ${PROVIDER_DISPLAY_NAMES[providers[0]!.provider]}.`
+          : language === "zh-CN"
+            ? `正在更新 ${providers.length} 个提供商。`
+            : `Updating ${providers.length} providers.`,
       timeout: 0,
     });
   activeToastRef.current = { kind: "update", key: activeNotificationKey, toastId };
@@ -492,11 +525,15 @@ async function runProviderUpdateAll(params: {
 
   toastManager.update(toastId, {
     type: "loading",
-    title: "Updating providers...",
+    title: translate("Updating providers..."),
     description:
       providers.length === 1
-        ? `Updating ${PROVIDER_DISPLAY_NAMES[providers[0]!.provider]}.`
-        : `Updating ${providers.length} providers.`,
+        ? language === "zh-CN"
+          ? `正在更新 ${PROVIDER_DISPLAY_NAMES[providers[0]!.provider]}。`
+          : `Updating ${PROVIDER_DISPLAY_NAMES[providers[0]!.provider]}.`
+        : language === "zh-CN"
+          ? `正在更新 ${providers.length} 个提供商。`
+          : `Updating ${providers.length} providers.`,
     actionProps: undefined,
     data: { onClose: dismissProgressToast },
     timeout: 0,
@@ -517,18 +554,23 @@ async function runProviderUpdateAll(params: {
         if (updateState?.status === "failed" || updateState?.status === "unchanged") {
           failures.push({
             provider,
-            reason: updateState.message ?? "The update command did not complete successfully.",
+            reason: updateState.message
+              ? translateError(
+                  updateState.message,
+                  "The update command did not complete successfully.",
+                )
+              : translate("The update command did not complete successfully."),
           });
         } else if (refreshed?.versionAdvisory?.status === "behind_latest") {
           failures.push({
             provider,
-            reason: "The provider still appears outdated after updating.",
+            reason: translate("The provider still appears outdated after updating."),
           });
         }
       } catch (error) {
         failures.push({
           provider,
-          reason: error instanceof Error ? error.message : "The update request failed.",
+          reason: translateError(error, "The update request failed."),
         });
       }
     }
@@ -536,8 +578,7 @@ async function runProviderUpdateAll(params: {
     for (const provider of providers) {
       failures.push({
         provider,
-        reason:
-          error instanceof Error ? error.message : "The provider update request could not start.",
+        reason: translateError(error, "The provider update request could not start."),
       });
     }
   } finally {
@@ -575,11 +616,13 @@ async function runProviderUpdateAll(params: {
       type: "error",
       title:
         failures.length === providers.length
-          ? "Provider updates failed"
-          : "Some provider updates failed",
+          ? translate("Provider updates failed")
+          : translate("Some provider updates failed"),
       description:
         manualCommands.length > 0
-          ? `${failureLines}\n\nCopy the command${manualCommands.length === 1 ? "" : "s"} below to update manually in a terminal.`
+          ? language === "zh-CN"
+            ? `${failureLines}\n\n请复制下面的命令，在终端中手动更新。`
+            : `${failureLines}\n\nCopy the command${manualCommands.length === 1 ? "" : "s"} below to update manually in a terminal.`
           : failureLines,
       data: {
         onClose: dismissProgressToast,
@@ -595,9 +638,13 @@ async function runProviderUpdateAll(params: {
     type: "success",
     title:
       providers.length === 1
-        ? `${PROVIDER_DISPLAY_NAMES[providers[0]!.provider]} updated`
-        : `${providers.length} providers updated`,
-    description: "New sessions will use the refreshed provider tools.",
+        ? language === "zh-CN"
+          ? `${PROVIDER_DISPLAY_NAMES[providers[0]!.provider]} 已更新`
+          : `${PROVIDER_DISPLAY_NAMES[providers[0]!.provider]} updated`
+        : language === "zh-CN"
+          ? `${providers.length} 个提供商已更新`
+          : `${providers.length} providers updated`,
+    description: translate("New sessions will use the refreshed provider tools."),
     data: { onClose: dismissProgressToast },
     timeout: 6000,
   });
@@ -608,6 +655,7 @@ function ProviderUpdateNotifications({
 }: {
   readonly liveVersionCheckCompleted: boolean;
 }) {
+  const { language, t, tError } = useUiLanguage();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { settings } = useAppSettings();
@@ -642,6 +690,9 @@ function ProviderUpdateNotifications({
       isUpdatingAllRef,
       progressToastDismissedRef,
       setIsUpdatingAll,
+      language,
+      translate: t,
+      translateError: tError,
     });
 
   useEffect(() => {
@@ -671,12 +722,20 @@ function ProviderUpdateNotifications({
     const providerName = PROVIDER_DISPLAY_NAMES[firstProvider.provider];
     const title =
       outdatedProviders.length === 1
-        ? `${providerName} update available`
-        : `${outdatedProviders.length} provider updates available`;
+        ? language === "zh-CN"
+          ? `${providerName} 有可用更新`
+          : `${providerName} update available`
+        : language === "zh-CN"
+          ? `${outdatedProviders.length} 个提供商有可用更新`
+          : `${outdatedProviders.length} provider updates available`;
     const description =
       outdatedProviders.length === 1
-        ? `${providerName} has a newer version available.`
-        : `${providerName} and ${additionalCount} more provider${additionalCount === 1 ? "" : "s"} have newer versions available.`;
+        ? language === "zh-CN"
+          ? `${providerName} 有更新版本可用。`
+          : `${providerName} has a newer version available.`
+        : language === "zh-CN"
+          ? `${providerName} 以及另外 ${additionalCount} 个提供商有更新版本可用。`
+          : `${providerName} and ${additionalCount} more provider${additionalCount === 1 ? "" : "s"} have newer versions available.`;
 
     let toastId!: ProviderUpdateToastId;
     const closeTrackedPrompt = () => {
@@ -691,7 +750,7 @@ function ProviderUpdateNotifications({
       description,
       timeout: 0,
       actionProps: {
-        children: "Review updates",
+        children: t("Review updates"),
         onClick: () => {
           if (activeToastRef.current?.toastId === toastId) {
             toastManager.close(toastId);
@@ -706,7 +765,7 @@ function ProviderUpdateNotifications({
       data: {
         onClose: closeTrackedPrompt,
         secondaryActionProps: {
-          children: "Update all",
+          children: t("Update all"),
           onClick: () => {
             void updateAll(oneClickProviders);
           },
@@ -714,7 +773,16 @@ function ProviderUpdateNotifications({
       },
     });
     activeToastRef.current = { kind: "prompt", key: notificationKey, toastId };
-  }, [isUpdatingAll, navigate, notificationKey, oneClickProviders, outdatedProviders, updateAll]);
+  }, [
+    isUpdatingAll,
+    language,
+    navigate,
+    notificationKey,
+    oneClickProviders,
+    outdatedProviders,
+    t,
+    updateAll,
+  ]);
 
   return null;
 }
@@ -863,8 +931,11 @@ function GlobalWhatsNewSurface() {
 }
 
 function RootRouteErrorView({ error, reset }: ErrorComponentProps) {
+  const { t, tError } = useUiLanguage();
   const message = errorMessage(error);
   const details = errorDetails(error);
+  const localizedMessage = tError(message, "An unexpected router error occurred.");
+  const localizedDetails = tError(details, "No additional error details are available.");
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-10 text-foreground sm:px-6">
@@ -875,12 +946,12 @@ function RootRouteErrorView({ error, reset }: ErrorComponentProps) {
 
       <section className="relative w-full max-w-xl rounded-2xl border border-border/80 bg-card/90 p-6 shadow-2xl shadow-black/20 backdrop-blur-md sm:p-8">
         <p className="text-[11px] font-semibold text-muted-foreground">{APP_DISPLAY_NAME}</p>
-        <h1 className="mt-3 text-2xl font-semibold sm:text-3xl">Something went wrong.</h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{message}</p>
+        <h1 className="mt-3 text-2xl font-semibold sm:text-3xl">{t("Something went wrong.")}</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{localizedMessage}</p>
 
         <div className="mt-5 flex flex-wrap gap-2">
           <Button size="sm" className={dialogActionButtonClassName} onClick={() => reset()}>
-            Try again
+            {t("Try again")}
           </Button>
           <Button
             size="sm"
@@ -888,17 +959,17 @@ function RootRouteErrorView({ error, reset }: ErrorComponentProps) {
             className={dialogActionButtonClassName}
             onClick={() => window.location.reload()}
           >
-            Reload app
+            {t("Reload app")}
           </Button>
         </div>
 
         <details className="group mt-5 overflow-hidden rounded-lg border border-border/70 bg-background/55">
           <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium text-muted-foreground">
-            <span className="group-open:hidden">Show error details</span>
-            <span className="hidden group-open:inline">Hide error details</span>
+            <span className="group-open:hidden">{t("Show error details")}</span>
+            <span className="hidden group-open:inline">{t("Hide error details")}</span>
           </summary>
           <pre className="max-h-56 overflow-auto border-t border-border/70 bg-background/80 px-3 py-2 text-xs text-foreground/85">
-            {details}
+            {localizedDetails}
           </pre>
         </details>
       </section>
@@ -1110,6 +1181,7 @@ function releaseOrphanedThreadDetail(input: {
 
 function EventRouter() {
   useDeviceEventBridge();
+  const { t, tError } = useUiLanguage();
   const syncServerShellSnapshot = useStore((store) => store.syncServerShellSnapshot);
   const syncServerThreadDetailHotPath = useStore((store) => store.syncServerThreadDetailHotPath);
   const applyShellEvent = useStore((store) => store.applyShellEvent);
@@ -2301,26 +2373,25 @@ function EventRouter() {
 
       toastManager.add({
         type: "warning",
-        title: "Invalid keybindings configuration",
-        description: issue.message,
+        title: t("Invalid keybindings configuration"),
+        description: tError(issue.message, "Invalid keybindings configuration"),
         actionProps: {
-          children: "Open keybindings.json",
+          children: t("Open keybindings.json"),
           onClick: () => {
             void queryClient
               .ensureQueryData(serverConfigQueryOptions())
               .then((config) => {
                 const editor = resolveAndPersistPreferredEditor(config.availableEditors);
                 if (!editor) {
-                  throw new Error("No available editors found.");
+                  throw new Error(t("No available editors found."));
                 }
                 return api.shell.openInEditor(config.keybindingsConfigPath, editor);
               })
               .catch((error) => {
                 toastManager.add({
                   type: "error",
-                  title: "Unable to open keybindings file",
-                  description:
-                    error instanceof Error ? error.message : "Unknown error opening file.",
+                  title: t("Unable to open keybindings file"),
+                  description: tError(error, "Unknown error opening file."),
                 });
               });
           },
@@ -2521,6 +2592,8 @@ function EventRouter() {
     setServerWorkspacePaths,
     syncServerShellSnapshot,
     syncServerThreadDetailHotPath,
+    t,
+    tError,
   ]);
 
   useLayoutEffect(() => {

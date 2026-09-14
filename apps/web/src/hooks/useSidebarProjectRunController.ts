@@ -19,6 +19,7 @@ import { projectDiscoverScriptsQueryOptions } from "../lib/projectReactQuery";
 import { serverQueryKeys, sidebarLocalServersQueryOptions } from "../lib/serverReactQuery";
 import { newCommandId } from "../lib/utils";
 import { readNativeApi } from "../nativeApi";
+import { useUiLanguage } from "../uiLanguage";
 import { useProjectRunStore, type ProjectRunState } from "../projectRunStore";
 import {
   selectPrimaryProjectRunCommand,
@@ -47,6 +48,7 @@ export function useSidebarProjectRunController(input: {
   readonly homeDir: string | null;
   readonly chatWorkspaceRoot: string | null;
 }) {
+  const { t, tError } = useUiLanguage();
   const queryClient = useQueryClient();
   const projectRunsByProjectId = useProjectRunStore((state) => state.runsByProjectId);
   const storeUpsertProjectRun = useProjectRunStore((state) => state.upsertRun);
@@ -174,8 +176,8 @@ export function useSidebarProjectRunController(input: {
         storeRemoveProjectRun(projectId);
         toastManager.add({
           type: "error",
-          title: `Failed to run "${project.name}"`,
-          description: error instanceof Error ? error.message : "Unable to start the run command.",
+          title: `${t("Failed to run")} “${project.name}”`,
+          description: tError(error, "Unable to start the run command."),
         });
       }
     },
@@ -185,6 +187,8 @@ export function useSidebarProjectRunController(input: {
       queryClient,
       storeRemoveProjectRun,
       storeUpsertProjectRun,
+      t,
+      tError,
     ],
   );
 
@@ -207,31 +211,34 @@ export function useSidebarProjectRunController(input: {
         }
         toastManager.add({
           type: "error",
-          title: "Failed to stop run",
-          description: error instanceof Error ? error.message : "Unable to stop the dev server.",
+          title: t("Failed to stop run"),
+          description: tError(error, "Unable to stop the dev server."),
         });
       } finally {
         void queryClient.invalidateQueries({ queryKey: serverQueryKeys.localServers() });
       }
     },
-    [queryClient, storeRemoveProjectRun],
+    [queryClient, storeRemoveProjectRun, t, tError],
   );
 
-  const openProjectRunServer = useCallback(async (projectId: ProjectId) => {
-    const api = readNativeApi();
-    const server = serverByProjectIdRef.current.get(projectId);
-    const url = server ? firstLocalServerUrl(server) : null;
-    if (!api || !server || !url) return;
-    try {
-      await api.shell.openExternal(url);
-    } catch (error) {
-      toastManager.add({
-        type: "error",
-        title: `Unable to open ${localServerAddressLabel(server)}`,
-        description: error instanceof Error ? error.message : "Unable to open the local server.",
-      });
-    }
-  }, []);
+  const openProjectRunServer = useCallback(
+    async (projectId: ProjectId) => {
+      const api = readNativeApi();
+      const server = serverByProjectIdRef.current.get(projectId);
+      const url = server ? firstLocalServerUrl(server) : null;
+      if (!api || !server || !url) return;
+      try {
+        await api.shell.openExternal(url);
+      } catch (error) {
+        toastManager.add({
+          type: "error",
+          title: `${t("Unable to open")} ${localServerAddressLabel(server)}`,
+          description: tError(error, "Unable to open the local server."),
+        });
+      }
+    },
+    [t, tError],
+  );
 
   const persistProjectRunCommand = useCallback(
     async (projectId: ProjectId, command: string) => {

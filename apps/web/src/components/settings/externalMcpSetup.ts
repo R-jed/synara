@@ -168,27 +168,31 @@ export function buildExternalMcpSetupPrompt(input: {
   return sections.join("\n\n");
 }
 
-export function describeExternalMcpProjects(input: {
-  readonly projectScope?: ExternalMcpProjectScope | undefined;
-  readonly allowedProjects: ReadonlyArray<{ readonly title: string }>;
-}): string {
-  if (input.projectScope === "all") return "All projects, including future ones";
+export function describeExternalMcpProjects(
+  input: {
+    readonly projectScope?: ExternalMcpProjectScope | undefined;
+    readonly allowedProjects: ReadonlyArray<{ readonly title: string }>;
+  },
+  translate: (text: string) => string = (text) => text,
+): string {
+  if (input.projectScope === "all") return translate("All projects, including future ones");
   const titles = input.allowedProjects.map((project) => project.title);
-  return titles.length > 0 ? titles.join(", ") : "No projects";
+  return titles.length > 0 ? titles.join(", ") : translate("No projects");
 }
 
 export function describeExternalMcpPermissions(
   capabilities: ReadonlyArray<ExternalMcpCapability>,
+  translate: (text: string) => string = (text) => text,
 ): string {
-  const descriptions = ["Create and follow its own tasks"];
+  const descriptions = [translate("Create and follow its own tasks")];
   if (capabilities.includes("tasks:read-project")) {
-    descriptions.push("Read other tasks in selected projects");
+    descriptions.push(translate("Read other tasks in selected projects"));
   }
   if (capabilities.includes("runtime:local")) {
-    descriptions.push("Use the shared local checkout");
+    descriptions.push(translate("Use the shared local checkout"));
   }
   if (capabilities.includes("runtime:full-access")) {
-    descriptions.push("Run without approval prompts");
+    descriptions.push(translate("Run without approval prompts"));
   }
   return descriptions.join(" · ");
 }

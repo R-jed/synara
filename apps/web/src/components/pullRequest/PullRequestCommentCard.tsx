@@ -13,8 +13,9 @@ import { useState } from "react";
 
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "~/components/ui/collapsible";
 import { DisclosureChevron } from "~/components/ui/DisclosureChevron";
-import { formatRelativeTime } from "~/lib/relativeTime";
+import { formatRelativeTimeForLanguage } from "~/lib/relativeTime";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   PR_BODY_TEXT_CLASS_NAME,
   PR_FINE_TEXT_CLASS_NAME,
@@ -44,6 +45,7 @@ export function PullRequestCommentCard({
    *  dozens of markdown trees. */
   defaultOpen?: boolean;
 }) {
+  const { language, t } = useUiLanguage();
   const defaultOpen = defaultOpenProp ?? true;
   const [open, setOpen] = useState(defaultOpen);
   const finding = parseFindingComment(comment.body);
@@ -63,7 +65,7 @@ export function PullRequestCommentCard({
         <span
           className={cn(PR_FINE_TEXT_CLASS_NAME, "shrink-0 tabular-nums text-muted-foreground")}
         >
-          {formatRelativeTime(comment.createdAt)}
+          {formatRelativeTimeForLanguage(comment.createdAt, language)}
         </span>
         <DisclosureChevron open={open} />
       </CollapsibleTrigger>
@@ -91,13 +93,13 @@ export function PullRequestCommentCard({
                   severityToneClassName(finding.severity),
                 )}
               >
-                {finding.severity} Severity
+                {t(finding.severity)} {t("Severity")}
               </p>
             </div>
           ) : null}
           <PullRequestMarkdown
             text={finding ? finding.body : comment.body}
-            fallback="_No review body._"
+            fallback={t("_No review body._")}
             cwd={workspaceRoot}
           />
           <div className="mt-2 flex justify-end">
@@ -109,7 +111,7 @@ export function PullRequestCommentCard({
                 "rounded px-1.5 py-0.5 font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground",
               )}
             >
-              Reply
+              {t("Reply")}
             </button>
           </div>
         </div>

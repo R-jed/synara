@@ -8,6 +8,7 @@
 import type { CSSProperties } from "react";
 
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 
 interface ReviewChangesButtonProps {
   onClick: () => void;
@@ -22,7 +23,8 @@ export const ReviewChangesButton = function ReviewChangesButton({
   style,
   label: labelProp,
 }: ReviewChangesButtonProps) {
-  const label = labelProp ?? "Review";
+  const { t } = useUiLanguage();
+  const label = labelProp ?? t("Review");
   return (
     <button
       type="button"

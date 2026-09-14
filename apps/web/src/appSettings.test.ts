@@ -579,6 +579,26 @@ describe("terminal font family settings", () => {
   it("strips characters that could break the terminal font CSS variable", () => {
     expect(normalizeTerminalFontFamily("Fira; Code{}\n<>")).toBe("Fira Code");
   });
+
+  it("keeps an exact terminal font face only while it matches the selected family", () => {
+    const face = {
+      family: "Fira Code",
+      fullName: "Fira Code Medium",
+      postscriptName: "FiraCode-Medium",
+      style: "Medium",
+    };
+    const matching = AppSettingsSchema.makeUnsafe({
+      terminalFontFamily: "Fira Code",
+      terminalFontFace: face,
+    });
+    const mismatched = AppSettingsSchema.makeUnsafe({
+      terminalFontFamily: "Menlo",
+      terminalFontFace: face,
+    });
+
+    expect(normalizeStoredAppSettings(matching).terminalFontFace).toEqual(face);
+    expect(normalizeStoredAppSettings(mismatched).terminalFontFace).toBeNull();
+  });
 });
 
 describe("sidebar sort defaults", () => {
@@ -1099,6 +1119,7 @@ describe("AppSettingsSchema", () => {
       sidebarThreadSortOrder: DEFAULT_SIDEBAR_THREAD_SORT_ORDER,
       showStudioSection: true,
       showAutomationRunThreads: true,
+      uiLanguage: "system",
       timestampFormat: DEFAULT_TIMESTAMP_FORMAT,
       customCodexModels: [],
       customClaudeModels: [],

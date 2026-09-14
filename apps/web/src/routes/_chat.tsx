@@ -52,6 +52,7 @@ import {
 } from "~/components/ui/sidebar";
 import type { SidebarResizableOptions } from "~/components/ui/sidebar";
 import { cn, getNavigatorPlatform, isMacPlatform } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 
 const EMPTY_KEYBINDINGS: ResolvedKeybindingsConfig = [];
 const THREAD_SIDEBAR_WIDTH_STORAGE_KEY = "chat_thread_sidebar_width";
@@ -72,6 +73,7 @@ const MAINTENANCE_EVENT_STALE_MS = 5 * 60 * 1000;
 type MaintenanceToastId = ReturnType<typeof toastManager.add>;
 
 function ThreadRetentionMaintenanceToast() {
+  const { language, t } = useUiLanguage();
   const toastIdRef = useRef<MaintenanceToastId | null>(null);
 
   useEffect(() => {
@@ -93,8 +95,8 @@ function ThreadRetentionMaintenanceToast() {
       if (state === "started") {
         toastIdRef.current = toastManager.add({
           type: "loading",
-          title: "Archiving old chats...",
-          description: "Preparing background maintenance.",
+          title: t("Archiving old chats..."),
+          description: t("Preparing background maintenance."),
           timeout: 0,
           data: { allowCrossThreadVisibility: true },
         });
@@ -106,18 +108,22 @@ function ThreadRetentionMaintenanceToast() {
           toastIdRef.current ??
           toastManager.add({
             type: "loading",
-            title: "Archiving old chats...",
+            title: t("Archiving old chats..."),
             timeout: 0,
             data: { allowCrossThreadVisibility: true },
           });
         toastIdRef.current = toastId;
         toastManager.update(toastId, {
           type: "loading",
-          title: "Archiving old chats...",
+          title: t("Archiving old chats..."),
           description:
             totalCount && totalCount > 0
-              ? `${archivedCount ?? 0} of ${totalCount} chats archived.`
-              : `${archivedCount ?? 0} chats archived.`,
+              ? language === "zh-CN"
+                ? `已归档 ${archivedCount ?? 0}/${totalCount} 个聊天。`
+                : `${archivedCount ?? 0} of ${totalCount} chats archived.`
+              : language === "zh-CN"
+                ? `已归档 ${archivedCount ?? 0} 个聊天。`
+                : `${archivedCount ?? 0} chats archived.`,
           timeout: 0,
           data: { allowCrossThreadVisibility: true },
         });
@@ -130,8 +136,8 @@ function ThreadRetentionMaintenanceToast() {
         if (toastId) {
           toastManager.update(toastId, {
             type: "warning",
-            title: "Chat maintenance paused",
-            description: error ?? "Old chats will be retried later.",
+            title: t("Chat maintenance paused"),
+            description: error ?? t("Old chats will be retried later."),
             timeout: 6000,
             data: { allowCrossThreadVisibility: true },
           });
@@ -139,8 +145,8 @@ function ThreadRetentionMaintenanceToast() {
         }
         toastManager.add({
           type: "warning",
-          title: "Chat maintenance paused",
-          description: error ?? "Old chats will be retried later.",
+          title: t("Chat maintenance paused"),
+          description: error ?? t("Old chats will be retried later."),
           timeout: 6000,
           data: { allowCrossThreadVisibility: true },
         });
@@ -152,16 +158,18 @@ function ThreadRetentionMaintenanceToast() {
       if (!toastId) return;
       toastManager.update(toastId, {
         type: "success",
-        title: "Old chats archived",
+        title: t("Old chats archived"),
         description:
           archivedCount && archivedCount > 0
-            ? `${archivedCount} old chats moved to Settings → Archived, where you can restore them.`
-            : "No old chats needed archiving.",
+            ? language === "zh-CN"
+              ? `${archivedCount} 个旧聊天已移到“设置 → 已归档”，可在那里恢复。`
+              : `${archivedCount} old chats moved to Settings → Archived, where you can restore them.`
+            : t("No old chats needed archiving."),
         timeout: 3500,
         data: { allowCrossThreadVisibility: true },
       });
     });
-  }, []);
+  }, [language, t]);
 
   return null;
 }
@@ -203,6 +211,7 @@ function isRecentViewSwitcherCommitKey(event: KeyboardEvent): boolean {
 }
 
 function ChatRouteGlobalShortcuts() {
+  const { tError } = useUiLanguage();
   const navigate = useNavigate();
   const isStudioRoute = useLocation({
     select: (location) => location.pathname.startsWith("/studio"),
@@ -449,7 +458,10 @@ function ChatRouteGlobalShortcuts() {
           if (!providerAvailability.usable) {
             toastManager.add({
               type: "error",
-              title: providerAvailability.unavailableReason,
+              title: tError(
+                providerAvailability.unavailableReason,
+                "Could not start the chat. Try again.",
+              ),
             });
             return;
           }
@@ -489,6 +501,7 @@ function ChatRouteGlobalShortcuts() {
     refreshProviderStatuses,
     recentSwitcherState,
     selectedThreadIdsSize,
+    tError,
     terminalOpen,
     terminalWorkspaceOpen,
     toggleSidebar,

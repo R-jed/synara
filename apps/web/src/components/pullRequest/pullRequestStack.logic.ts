@@ -109,12 +109,29 @@ export function assessPullRequestStack(stack: PullRequestStack): PullRequestStac
 export function pullRequestMergeBlocker(
   detail: Pick<PullRequestDetail, "mergeability" | "stackMetadataIncomplete">,
   stackAssessment: PullRequestStackAssessment | null,
+  language: "en" | "zh-CN" = "en",
 ): string | null {
   if (detail.stackMetadataIncomplete === true) {
-    return "Stack details are temporarily unavailable. Refresh before merging.";
+    return language === "zh-CN"
+      ? "暂时无法获取堆栈详情。请刷新后再合并。"
+      : "Stack details are temporarily unavailable. Refresh before merging.";
   }
   if (stackAssessment?.canAttemptMerge === false) {
+    if (language === "zh-CN") {
+      const blocker = stackAssessment.blocker;
+      if (!blocker) return "此堆栈尚未达到可合并状态。";
+      const closed = /^#(\d+) is closed without being merged\.$/u.exec(blocker)?.[1];
+      if (closed) return `#${closed} 已关闭但尚未合并。`;
+      const draft = /^#(\d+) is still a draft\.$/u.exec(blocker)?.[1];
+      if (draft) return `#${draft} 仍是草稿。`;
+      const pending = /^#(\d+) is not ready to merge\.$/u.exec(blocker)?.[1];
+      if (pending) return `#${pending} 尚未达到可合并状态。`;
+      return "此堆栈尚未达到可合并状态。";
+    }
     return stackAssessment.blocker ?? "This stack is not ready to merge.";
   }
-  return detail.mergeability === "conflicting" ? "Resolve merge conflicts before merging" : null;
+  if (detail.mergeability !== "conflicting") return null;
+  return language === "zh-CN"
+    ? "请先解决合并冲突再执行合并"
+    : "Resolve merge conflicts before merging";
 }

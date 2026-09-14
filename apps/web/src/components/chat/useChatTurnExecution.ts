@@ -20,6 +20,7 @@ import { useCallback } from "react";
 import { promoteThreadCreate } from "~/lib/threadCreatePromotion";
 import { newCommandId, randomUUID } from "~/lib/utils";
 import { readNativeApi } from "~/nativeApi";
+import { useUiLanguage } from "~/uiLanguage";
 import { dispatchThreadNotes } from "~/pinnedMessages";
 import {
   mergeProjectInstructionsIntoThreadNotes,
@@ -193,6 +194,7 @@ export function useChatTurnExecution({
   scheduleFailedWorktreeSetupDispatchReset,
   resetLocalDispatch,
 }: ChatTurnExecutionInput) {
+  const { t, tError } = useUiLanguage();
   return useCallback(
     async (preparedTurn: PreparedChatTurn): Promise<boolean> => {
       let {
@@ -788,10 +790,7 @@ export function useChatTurnExecution({
           setComposerTrigger(detectComposerTrigger(promptForSend, promptForSend.length));
         }
         if (!setupCancelled) {
-          setThreadError(
-            threadIdForSend,
-            err instanceof Error ? err.message : "Failed to send message.",
-          );
+          setThreadError(threadIdForSend, tError(err, "Failed to send message."));
         }
       });
       sendInFlightRef.current = false;
@@ -855,6 +854,8 @@ export function useChatTurnExecution({
       worktreeSetupResolutionRef,
       scheduleFailedWorktreeSetupDispatchReset,
       resetLocalDispatch,
+      t,
+      tError,
     ],
   );
 }

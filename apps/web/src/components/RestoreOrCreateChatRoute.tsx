@@ -26,6 +26,7 @@ import type { StartContainerChatResult } from "../lib/startContainerChat";
 import { readNativeApi } from "../nativeApi";
 import { useSplitViewStore } from "../splitViewStore";
 import { EMPTY_THREAD_IDS, useStore } from "../store";
+import { useUiLanguage } from "../uiLanguage";
 
 export type RestoreRouteResolverInput = {
   // Split views currently known to the client. Callers that support split-view restore should
@@ -47,6 +48,7 @@ export function RestoreOrCreateChatRoute({
   readonly resolveRestoreRoute: RestoreRouteResolver;
   readonly createFreshChat: () => Promise<StartContainerChatResult>;
 }) {
+  const { tError } = useUiLanguage();
   const navigate = useNavigate();
   const threadsHydrated = useStore((store) => store.threadsHydrated);
   const threadIds = useStore((state) => state.threadIds ?? EMPTY_THREAD_IDS);
@@ -159,7 +161,7 @@ export function RestoreOrCreateChatRoute({
       if (cancelled || result.ok) {
         return;
       }
-      setErrorMessage(result.error);
+      setErrorMessage(tError(result.error));
     })();
 
     return () => {
@@ -175,6 +177,7 @@ export function RestoreOrCreateChatRoute({
     splitViewsHydrated,
     threadIds.length,
     threadsHydrated,
+    tError,
   ]);
 
   return (

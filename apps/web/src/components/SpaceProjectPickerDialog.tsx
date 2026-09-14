@@ -12,6 +12,7 @@ import { cn } from "~/lib/utils";
 import { useSpacesUiStore } from "~/spacesUiStore";
 import { useVoidSpace } from "~/voidSpaceStore";
 import { useWorkspacePathsStore } from "~/workspacePathsStore";
+import { useUiLanguage } from "~/uiLanguage";
 import { ProjectSidebarIcon } from "./ProjectSidebarIcon";
 import { SpaceIcon } from "./SpaceIcon";
 import { Button } from "./ui/button";
@@ -36,6 +37,7 @@ export function SpaceProjectPickerDialog(props: {
     projectIds: ReadonlyArray<ProjectId>,
   ) => Promise<ReadonlyArray<ProjectId> | void> | ReadonlyArray<ProjectId> | void;
 }) {
+  const { t, tError } = useUiLanguage();
   const [query, setQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<ProjectId>>(() => new Set());
   const [submitting, setSubmitting] = useState(false);
@@ -111,7 +113,7 @@ export function SpaceProjectPickerDialog(props: {
       }
       props.onOpenChange(false);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to move the selected projects.");
+      setError(tError(cause, "Unable to move the selected projects."));
       setSubmitting(false);
     }
   };
@@ -119,26 +121,28 @@ export function SpaceProjectPickerDialog(props: {
   // Three different nothings: no projects at all, none left to move, none matching the search.
   const emptyMessage =
     props.projects.length === 0
-      ? "No projects yet."
+      ? t("No projects yet.")
       : movableProjects.length === 0
         ? `Every project is already in ${props.targetSpace?.name ?? "this space"}.`
-        : "No matching projects.";
+        : t("No matching projects.");
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
       <DialogPopup className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Move projects to {props.targetSpace?.name ?? "space"}</DialogTitle>
+          <DialogTitle>
+            {t("Move projects to")} {props.targetSpace?.name ?? t("space")}
+          </DialogTitle>
           <DialogDescription>
-            Choose existing projects. Their chats and pinned state move with them.
+            {t("Choose existing projects. Their chats and pinned state move with them.")}
           </DialogDescription>
         </DialogHeader>
         <DialogPanel className="space-y-3">
           <SearchInput
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search projects"
-            aria-label="Search projects"
+            placeholder={t("Search projects")}
+            aria-label={t("Search projects")}
           />
           <div className="max-h-72 space-y-3 overflow-y-auto">
             {candidates.length === 0 ? (
@@ -212,13 +216,13 @@ export function SpaceProjectPickerDialog(props: {
         </DialogPanel>
         <DialogFooter>
           <Button variant="ghost" onClick={() => props.onOpenChange(false)} disabled={submitting}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button onClick={() => void submit()} disabled={selectedIds.size === 0 || submitting}>
             {submitting
-              ? "Moving…"
+              ? t("Moving…")
               : selectedIds.size === 0
-                ? "Move projects"
+                ? t("Move projects")
                 : `Move ${selectedIds.size} project${selectedIds.size === 1 ? "" : "s"}`}
           </Button>
         </DialogFooter>

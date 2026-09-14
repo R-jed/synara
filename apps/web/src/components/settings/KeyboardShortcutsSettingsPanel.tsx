@@ -26,6 +26,7 @@ import {
   buildShortcutSheetSections,
   filterShortcutSheetSections,
   listEditableShortcutDefinitions,
+  localizeShortcutSheetText,
   type ShortcutSheetContext,
   type ShortcutSheetEntry,
 } from "~/shortcutsSheet";
@@ -34,6 +35,7 @@ import {
   SETTINGS_CARD_ROW_DESCRIPTION_CLASS_NAME,
   SETTINGS_CARD_ROW_TITLE_CLASS_NAME,
 } from "~/settingsPanelStyles";
+import { useUiLanguage } from "~/uiLanguage";
 import { SettingsCard, SettingsEmptyState } from "./SettingsPanelPrimitives";
 
 // Stable empty reference while the server config query is still loading.
@@ -53,6 +55,7 @@ const DEFAULT_NEW_SHORTCUT_COMMAND =
   EDITABLE_SHORTCUT_DEFINITIONS[0]?.command ?? ("sidebar.toggle" as KeybindingCommand);
 
 export function KeyboardShortcutsSettingsPanel() {
+  const { language, t, tError } = useUiLanguage();
   const [query, setQuery] = useState("");
   const [editingCommand, setEditingCommand] = useState<KeybindingCommand | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -76,7 +79,17 @@ export function KeyboardShortcutsSettingsPanel() {
     context: SETTINGS_SHORTCUT_CONTEXT,
   });
 
-  const filteredSections = filterShortcutSheetSections(sections, query);
+  const localizedSections = sections.map((section) => ({
+    ...section,
+    title: localizeShortcutSheetText(section.title, language, t),
+    description: localizeShortcutSheetText(section.description, language, t),
+    entries: section.entries.map((entry) => ({
+      ...entry,
+      label: localizeShortcutSheetText(entry.label, language, t),
+      description: localizeShortcutSheetText(entry.description, language, t),
+    })),
+  }));
+  const filteredSections = filterShortcutSheetSections(localizedSections, query);
   const beginEditing = (entry: ShortcutSheetEntry) => {
     if (!entry.command || !entry.binding) return;
     setIsAdding(false);
@@ -110,7 +123,7 @@ export function KeyboardShortcutsSettingsPanel() {
     event.stopPropagation();
     const next = keybindingFromKeyboardEvent(event.nativeEvent);
     if (!next) {
-      setCaptureError("Use up to two modifiers and one key.");
+      setCaptureError(t("Use up to two modifiers and one key."));
       return;
     }
     setCaptureError(null);
@@ -133,16 +146,15 @@ export function KeyboardShortcutsSettingsPanel() {
       );
       toastManager.add({
         type: "success",
-        title: "Shortcut saved",
-        description: "The change is now persisted in keybindings.json.",
+        title: t("Shortcut saved"),
+        description: t("The change is now persisted in keybindings.json."),
       });
       cancelCapture();
     } catch (error) {
       toastManager.add({
         type: "error",
-        title: "Could not save shortcut",
-        description:
-          error instanceof Error ? error.message : "Check the shortcut format and try again.",
+        title: t("Could not save shortcut"),
+        description: tError(error, "Check the shortcut format and try again."),
       });
     } finally {
       setIsSaving(false);
@@ -152,58 +164,59 @@ export function KeyboardShortcutsSettingsPanel() {
   return (
     <div className="space-y-4">
       <div className="rounded-lg bg-muted/45 px-3 py-2.5 text-[12px] leading-relaxed text-muted-foreground">
-        Capture up to two modifiers and one key. Changes are saved directly to{" "}
+        {t("Capture up to two modifiers and one key. Changes are saved directly to")}{" "}
         <code>keybindings.json</code>.
       </div>
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-[13px] font-medium text-foreground">Keybindings</h3>
+          <h3 className="text-[13px] font-medium text-foreground">{t("Keybindings")}</h3>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
-            Customize built-in commands and their context conditions.
+            {t("Customize built-in commands and their context conditions.")}
           </p>
         </div>
         <Button size="sm" variant="outline" onClick={beginAdding} disabled={isAdding || isSaving}>
-          Set keybinding
+          {t("Set keybinding")}
         </Button>
       </div>
       {isAdding ? (
         <div className="space-y-2 rounded-lg border border-border/70 bg-muted/20 p-3">
           <div className="grid gap-2 sm:grid-cols-3">
             <label className="space-y-1 text-[11px] text-muted-foreground">
-              <span className="block">Command</span>
+              <span className="block">{t("Command")}</span>
               <select
                 className="h-8 w-full rounded-lg border border-border/80 bg-background px-2 text-xs text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring/60"
                 value={newCommand}
-                aria-label="Command for new keybinding"
+                aria-label={t("Command for new keybinding")}
                 onChange={(event) => setNewCommand(event.target.value as KeybindingCommand)}
               >
                 {EDITABLE_SHORTCUT_DEFINITIONS.map((definition) => (
                   <option key={definition.command} value={definition.command}>
-                    {definition.label} · {definition.command}
+                    {localizeShortcutSheetText(definition.label, language, t)} ·{" "}
+                    {definition.command}
                   </option>
                 ))}
               </select>
             </label>
             <label className="space-y-1 text-[11px] text-muted-foreground">
-              <span className="block">Press a key or combo</span>
+              <span className="block">{t("Press a key or combo")}</span>
               <Input
                 size="sm"
                 nativeInput
                 autoFocus
                 readOnly
-                placeholder="Press a key..."
-                aria-label="Press a key or combination"
+                placeholder={t("Press a key...")}
+                aria-label={t("Press a key or combination")}
                 value={keyValue}
                 onKeyDown={captureKeyDown}
               />
             </label>
             <label className="space-y-1 text-[11px] text-muted-foreground">
-              <span className="block">Condition (optional)</span>
+              <span className="block">{t("Condition (optional)")}</span>
               <Input
                 size="sm"
                 nativeInput
-                placeholder="For example, !terminalFocus"
-                aria-label="Condition for new keybinding"
+                placeholder={t("For example, !terminalFocus")}
+                aria-label={t("Condition for new keybinding")}
                 value={whenValue}
                 onChange={(event) => setWhenValue(event.target.value)}
               />
@@ -211,14 +224,14 @@ export function KeyboardShortcutsSettingsPanel() {
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-[11px] text-muted-foreground">
-              {captureError ?? "Use up to two modifiers and one key."}
+              {captureError ?? t("Use up to two modifiers and one key.")}
             </p>
             <div className="flex gap-2">
               <Button size="sm" disabled={!keyValue || isSaving} onClick={() => void saveBinding()}>
-                {isSaving ? "Saving..." : "Save keybinding"}
+                {isSaving ? t("Saving...") : t("Save keybinding")}
               </Button>
               <Button size="sm" variant="outline" disabled={isSaving} onClick={cancelCapture}>
-                Cancel
+                {t("Cancel")}
               </Button>
             </div>
           </div>
@@ -230,9 +243,9 @@ export function KeyboardShortcutsSettingsPanel() {
           size="sm"
           variant="soft"
           nativeInput
-          placeholder="Search shortcuts..."
+          placeholder={t("Search shortcuts...")}
           value={query}
-          aria-label="Search shortcuts"
+          aria-label={t("Search shortcuts")}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Escape" && query.length > 0) {
@@ -252,8 +265,8 @@ export function KeyboardShortcutsSettingsPanel() {
       {filteredSections.length > 0 ? (
         <SettingsCard>
           <div className="flex items-center justify-between gap-4 px-3 py-2 text-[11px] font-medium text-muted-foreground">
-            <span>Command</span>
-            <span>Keybinding</span>
+            <span>{t("Command")}</span>
+            <span>{t("Keybinding")}</span>
           </div>
           {filteredSections.flatMap((section) => {
             const muted = section.tone === "muted";
@@ -278,7 +291,7 @@ export function KeyboardShortcutsSettingsPanel() {
                       <ShortcutKbd shortcutLabel={entry.shortcutLabel} groupClassName="shrink-0" />
                       {command ? (
                         <Button size="xs" variant="outline" onClick={() => beginEditing(entry)}>
-                          Edit
+                          {t("Edit")}
                         </Button>
                       ) : null}
                     </div>
@@ -290,16 +303,16 @@ export function KeyboardShortcutsSettingsPanel() {
                         nativeInput
                         autoFocus
                         readOnly
-                        placeholder="Press a key..."
-                        aria-label={`Shortcut for ${entry.label}`}
+                        placeholder={t("Press a key...")}
+                        aria-label={`${t("Shortcut for")} ${entry.label}`}
                         value={keyValue}
                         onKeyDown={captureKeyDown}
                       />
                       <Input
                         size="sm"
                         nativeInput
-                        placeholder="Optional condition, e.g. !terminalFocus"
-                        aria-label={`Condition for ${entry.label}`}
+                        placeholder={t("Optional condition, e.g. !terminalFocus")}
+                        aria-label={`${t("Condition for")} ${entry.label}`}
                         value={whenValue}
                         onChange={(event) => setWhenValue(event.target.value)}
                       />
@@ -309,7 +322,7 @@ export function KeyboardShortcutsSettingsPanel() {
                           disabled={!keyValue.trim() || isSaving}
                           onClick={() => void saveBinding()}
                         >
-                          {isSaving ? "Saving..." : "Save"}
+                          {isSaving ? t("Saving...") : t("Save")}
                         </Button>
                         <Button
                           size="sm"
@@ -317,7 +330,7 @@ export function KeyboardShortcutsSettingsPanel() {
                           disabled={isSaving}
                           onClick={cancelCapture}
                         >
-                          Cancel
+                          {t("Cancel")}
                         </Button>
                       </div>
                     </div>
@@ -328,7 +341,9 @@ export function KeyboardShortcutsSettingsPanel() {
           })}
         </SettingsCard>
       ) : (
-        <SettingsEmptyState>No shortcuts match &ldquo;{query}&rdquo;.</SettingsEmptyState>
+        <SettingsEmptyState>
+          {t("No shortcuts match")} &ldquo;{query}&rdquo;.
+        </SettingsEmptyState>
       )}
     </div>
   );

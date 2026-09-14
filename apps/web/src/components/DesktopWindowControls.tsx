@@ -6,6 +6,7 @@ import { useDesktopCustomTitleBarActive } from "~/hooks/useDesktopCustomTitleBar
 import { isElectron } from "~/env";
 import { Maximize2, Minimize2, MinusIcon, XIcon } from "~/lib/icons";
 import { cn, getNavigatorPlatform, isWindowsPlatform } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 
 const DEFAULT_WINDOW_STATE: DesktopWindowState = {
   isMaximized: false,
@@ -53,6 +54,7 @@ function CaptionSvg({ children }: { children: ReactNode }) {
 }
 
 export function DesktopWindowControls({ className }: { className?: string }) {
+  const { t } = useUiLanguage();
   const [windowState, setWindowState] = useState<DesktopWindowState>(DEFAULT_WINDOW_STATE);
   const customTitleBarActive = useDesktopCustomTitleBarActive();
   const platform = getNavigatorPlatform();
@@ -84,8 +86,8 @@ export function DesktopWindowControls({ className }: { className?: string }) {
     <div className={cn("flex h-[46px] items-stretch [-webkit-app-region:no-drag]", className)}>
       <button
         type="button"
-        aria-label="Minimize"
-        title="Minimize"
+        aria-label={t("Minimize")}
+        title={t("Minimize")}
         className={CAPTION_BUTTON_CLASS}
         onClick={() => {
           void controls.minimize();
@@ -101,8 +103,8 @@ export function DesktopWindowControls({ className }: { className?: string }) {
       </button>
       <button
         type="button"
-        aria-label={isMaximized ? "Restore" : "Maximize"}
-        title={isMaximized ? "Restore" : "Maximize"}
+        aria-label={t(isMaximized ? "Restore" : "Maximize")}
+        title={t(isMaximized ? "Restore" : "Maximize")}
         className={CAPTION_BUTTON_CLASS}
         onClick={() => {
           void controls.toggleMaximize().then(setWindowState);
@@ -118,8 +120,8 @@ export function DesktopWindowControls({ className }: { className?: string }) {
       </button>
       <button
         type="button"
-        aria-label="Close"
-        title="Close"
+        aria-label={t("Close")}
+        title={t("Close")}
         className={cn(CAPTION_BUTTON_CLASS, CLOSE_BUTTON_CLASS)}
         onClick={() => {
           void controls.close();

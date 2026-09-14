@@ -12,6 +12,7 @@ import { pendingRequestInstanceKey } from "@synara/shared/threadSummary";
 import { type KeyboardEvent, useRef } from "react";
 import { type PendingApproval } from "../../session-logic";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { ComposerChoiceRow, type ComposerChoiceTone } from "./ComposerChoiceRow";
 import { COMPOSER_INPUT_SURFACE_CLASS_NAME } from "./composerPickerStyles";
 
@@ -83,6 +84,7 @@ export const ComposerPendingApprovalPanel = function ComposerPendingApprovalPane
   isResponding,
   onRespond,
 }: ComposerPendingApprovalPanelProps) {
+  const { t } = useUiLanguage();
   const parsed = parseApprovalDetail(approval.detail);
   const requestId = approval.requestId;
   const requestKey = pendingRequestInstanceKey(requestId, approval.lifecycleGeneration);
@@ -135,7 +137,7 @@ export const ComposerPendingApprovalPanel = function ComposerPendingApprovalPane
     >
       <div className="flex items-start justify-between gap-3">
         <p className="min-w-0 text-[13px] font-medium leading-snug text-foreground/90">
-          {KIND_PROMPT[approval.requestKind]}
+          {t(KIND_PROMPT[approval.requestKind])}
           {parsed.tool ? (
             <span className="ml-1.5 text-[11px] font-normal text-muted-foreground/50">
               {parsed.tool}
@@ -157,8 +159,8 @@ export const ComposerPendingApprovalPanel = function ComposerPendingApprovalPane
           <ComposerChoiceRow
             key={action.decision}
             shortcut={index + 1}
-            label={action.label}
-            description={action.description}
+            label={t(action.label)}
+            description={t(action.description)}
             tone={action.tone}
             disabled={isResponding}
             onSelect={() => respondOnce(action.decision)}
@@ -176,6 +178,7 @@ function ApprovalDetail({
   parsed: ParsedApproval;
   permissionProfile?: Record<string, unknown>;
 }) {
+  const { t } = useUiLanguage();
   if (permissionProfile) {
     return (
       <div className="mt-2">
@@ -186,7 +189,7 @@ function ApprovalDetail({
         ) : null}
         <pre
           className="max-h-36 overflow-auto whitespace-pre-wrap break-words rounded-md bg-[var(--color-background-elevated-secondary)] px-2.5 py-2 font-mono text-[11px] leading-relaxed text-foreground/85"
-          title="Requested permission profile"
+          title={t("Requested permission profile")}
         >
           <code>{JSON.stringify(permissionProfile, null, 2)}</code>
         </pre>
@@ -228,7 +231,9 @@ function ApprovalDetail({
   }
 
   return (
-    <p className="mt-2 text-[12px] text-muted-foreground/65">Review the request to continue.</p>
+    <p className="mt-2 text-[12px] text-muted-foreground/65">
+      {t("Review the request to continue.")}
+    </p>
   );
 }
 

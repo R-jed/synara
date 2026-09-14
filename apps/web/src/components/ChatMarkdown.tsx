@@ -76,6 +76,7 @@ import {
   parseComposerChipSegment,
 } from "../lib/remarkComposerChips";
 import { IconButton } from "./ui/icon-button";
+import { useUiLanguage } from "../uiLanguage";
 import { applyActiveChatFindMatch, type ThreadFindRange } from "./chat/threadFind.logic";
 import {
   ChatFindRenderProvider,
@@ -839,6 +840,7 @@ function MarkdownCodeBlock({
   fence: CodeFenceInfo;
   children: ReactNode;
 }) {
+  const { t } = useUiLanguage();
   const [copied, setCopied] = useState(false);
   const [wrap, setWrap] = useState(false);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -876,8 +878,8 @@ function MarkdownCodeBlock({
           <IconButton
             className="chat-markdown-codeblock__action"
             onClick={toggleWrap}
-            title={wrap ? "Disable soft wrap" : "Enable soft wrap"}
-            label={wrap ? "Disable soft wrap" : "Enable soft wrap"}
+            title={t(wrap ? "Disable soft wrap" : "Enable soft wrap")}
+            label={t(wrap ? "Disable soft wrap" : "Enable soft wrap")}
             aria-pressed={wrap}
             data-active={wrap ? "true" : "false"}
             size="icon-xs"
@@ -888,8 +890,8 @@ function MarkdownCodeBlock({
           <IconButton
             className="chat-markdown-codeblock__action"
             onClick={handleCopy}
-            title={copied ? "Copied" : "Copy code"}
-            label={copied ? "Copied" : "Copy code"}
+            title={t(copied ? "Copied" : "Copy code")}
+            label={t(copied ? "Copied" : "Copy code")}
             size="icon-xs"
             variant="ghost"
           >

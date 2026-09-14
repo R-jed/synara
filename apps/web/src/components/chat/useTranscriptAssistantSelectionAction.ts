@@ -14,6 +14,7 @@ import {
   type WheelEventHandler,
 } from "react";
 import { toastManager } from "../ui/toast";
+import { useUiLanguage } from "~/uiLanguage";
 import { type ComposerAssistantSelectionAttachment } from "../../composerDraftStore";
 import {
   createAssistantSelectionAttachment,
@@ -59,6 +60,7 @@ interface UseTranscriptAssistantSelectionActionOptions {
 export function useTranscriptAssistantSelectionAction(
   options: UseTranscriptAssistantSelectionActionOptions,
 ) {
+  const { t } = useUiLanguage();
   const {
     threadId,
     enabled,
@@ -213,7 +215,7 @@ export function useTranscriptAssistantSelectionAction(
       if (getAssistantSelectionValidationError(pendingSelection.selection) === "too-long") {
         toastManager.add({
           type: "warning",
-          title: "Selections can be up to 4,000 characters.",
+          title: t("Selections can be up to 4,000 characters."),
         });
       }
       return;

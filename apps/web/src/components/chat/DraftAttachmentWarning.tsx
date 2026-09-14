@@ -11,6 +11,7 @@ import { forwardRef, type ComponentPropsWithoutRef } from "react";
 
 import { CircleAlertIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 
 /** Accessible label on the warning glyph. */
 export const DRAFT_ATTACHMENT_WARNING_LABEL = "Draft attachment may not persist";
@@ -31,13 +32,14 @@ export const DraftAttachmentWarningIcon = forwardRef<
   HTMLSpanElement,
   DraftAttachmentWarningIconProps
 >(function DraftAttachmentWarningIcon({ variant: variantProp, className, ...rest }, ref) {
+  const { t } = useUiLanguage();
   const variant = variantProp ?? "inline";
   return (
     <span
       ref={ref}
       {...rest}
       role="img"
-      aria-label={DRAFT_ATTACHMENT_WARNING_LABEL}
+      aria-label={t(DRAFT_ATTACHMENT_WARNING_LABEL)}
       className={cn(
         "inline-flex shrink-0 items-center justify-center rounded-full text-amber-600",
         variant === "badge" ? "size-5 bg-[var(--composer-surface)] shadow-sm" : "size-4",

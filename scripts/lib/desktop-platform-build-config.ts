@@ -71,7 +71,7 @@ export function createDesktopPlatformBuildConfig(
 
   if (input.platform === "mac") {
     const mac = {
-      target: input.target === "dmg" ? [input.target, "zip"] : [input.target],
+      target: [input.target],
       icon: MAC_DMG_ICON_PATH,
       category: "public.app-category.developer-tools",
       hardenedRuntime: input.signed === true,
@@ -92,8 +92,7 @@ export function createDesktopPlatformBuildConfig(
       dmg: {
         sign: input.signed === true,
         // The signed release flow notarizes and staples the DMG after electron-builder exits.
-        // Do not emit a blockmap/update entry whose hashes would describe the pre-stapled image;
-        // macOS auto-updates use the separately finalized ZIP artifact.
+        // Do not emit update metadata for this local DMG-only build.
         writeUpdateInfo: false,
       },
       files: ["**/*", MAC_APPSNAP_HELPER_ASAR_EXCLUSION],

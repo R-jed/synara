@@ -25,6 +25,7 @@ import { getLocalFoldersGroupLabel } from "~/lib/localFoldersGroupLabel";
 import { groupItemsBySpace, spaceDisplayName } from "~/lib/spaceGrouping";
 import { useVoidSpace } from "~/voidSpaceStore";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { FolderClosed } from "../FolderClosed";
 import { SpaceIcon } from "../SpaceIcon";
 import { PickerPanelShell } from "./PickerPanelShell";
@@ -159,15 +160,16 @@ export const ProjectPicker = memo(function ProjectPicker({
   resetActionLabel: resetActionLabelProp,
   searchPlaceholder: searchPlaceholderProp,
 }: ProjectPickerProps) {
+  const { t, tError } = useUiLanguage();
   const align = alignProp ?? "start";
   const side = sideProp ?? "bottom";
   const selectionMode = selectionModeProp ?? "workspace-root";
   const showResetToHome = showResetToHomeProp ?? false;
   const selectedProjectId = selectedProjectIdProp ?? null;
   const selectedWorkspaceRoot = selectedWorkspaceRootProp ?? null;
-  const emptyTriggerLabel = emptyTriggerLabelProp ?? "Work in a project";
-  const resetActionLabel = resetActionLabelProp ?? "Don't work in a project";
-  const searchPlaceholder = searchPlaceholderProp ?? "Search projects";
+  const emptyTriggerLabel = emptyTriggerLabelProp ?? t("Work in a project");
+  const resetActionLabel = resetActionLabelProp ?? t("Don't work in a project");
+  const searchPlaceholder = searchPlaceholderProp ?? t("Search projects");
   const projects = useStore((state) => state.projects);
   const spaces = useStore((state) => state.spaces);
   const { settings } = useAppSettings();
@@ -401,7 +403,7 @@ export const ProjectPicker = memo(function ProjectPicker({
       if (cancelled) return;
       const api = readNativeApi();
       if (!api) {
-        setErrorMessage("App is still connecting. Try again in a moment.");
+        setErrorMessage(t("App is still connecting. Try again in a moment."));
         return;
       }
 
@@ -426,7 +428,7 @@ export const ProjectPicker = memo(function ProjectPicker({
           );
         })
         .catch((error) => {
-          setErrorMessage(error instanceof Error ? error.message : "Unable to load folders.");
+          setErrorMessage(tError(error, "Unable to load folders."));
         })
         .finally(() => {
           setIsLoadingDirectories(false);
@@ -436,7 +438,15 @@ export const ProjectPicker = memo(function ProjectPicker({
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [directoryEntries.length, homeDir, isLoadingDirectories, isProjectSelectionMode, open]);
+  }, [
+    directoryEntries.length,
+    homeDir,
+    isLoadingDirectories,
+    isProjectSelectionMode,
+    open,
+    t,
+    tError,
+  ]);
 
   const handleSelectActiveFolder = useCallback(
     (folder: ActiveFolderOption) => {
@@ -451,20 +461,20 @@ export const ProjectPicker = memo(function ProjectPicker({
             setOpen(false);
           })
           .catch((error) => {
-            setErrorMessage(error instanceof Error ? error.message : "Unable to select project.");
+            setErrorMessage(tError(error, "Unable to select project."));
           });
       } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : "Unable to select project.");
+        setErrorMessage(tError(error, "Unable to select project."));
       }
     },
-    [isProjectSelectionMode, onSelectProject, onSelectWorkspaceRoot],
+    [isProjectSelectionMode, onSelectProject, onSelectWorkspaceRoot, tError],
   );
 
   const handleAddNewProject = useCallback(async () => {
     if (isPicking) return;
     const api = readNativeApi();
     if (!api) {
-      setErrorMessage("App is still connecting. Try again in a moment.");
+      setErrorMessage(t("App is still connecting. Try again in a moment."));
       return;
     }
 
@@ -487,9 +497,9 @@ export const ProjectPicker = memo(function ProjectPicker({
       setOpen(false);
     } catch (error) {
       setIsPicking(false);
-      setErrorMessage(error instanceof Error ? error.message : "Unable to open the folder picker.");
+      setErrorMessage(tError(error, "Unable to open the folder picker."));
     }
-  }, [isPicking, onCreateProjectFromPath, onSelectWorkspaceRoot]);
+  }, [isPicking, onCreateProjectFromPath, onSelectWorkspaceRoot, t, tError]);
 
   const handleResetToHome = useCallback(() => {
     if (resetInFlightRef.current) {
@@ -511,24 +521,24 @@ export const ProjectPicker = memo(function ProjectPicker({
         })
         .catch((error) => {
           resetInFlightRef.current = false;
-          setErrorMessage(error instanceof Error ? error.message : "Unable to update project.");
+          setErrorMessage(tError(error, "Unable to update project."));
           setOpen(true);
         });
     } catch (error) {
       resetInFlightRef.current = false;
-      setErrorMessage(error instanceof Error ? error.message : "Unable to update project.");
+      setErrorMessage(tError(error, "Unable to update project."));
       setOpen(true);
     }
-  }, [onResetToHome]);
+  }, [onResetToHome, tError]);
 
   const shouldShowResetToHome = showResetToHome || isProjectSelectionMode;
   const canResetFromTrigger =
     renderTrigger === undefined && selectedFolderOption !== null && onResetToHome !== undefined;
   const addProjectLabel =
-    addActionLabel ?? (isProjectSelectionMode ? "New project" : "Add new project");
+    addActionLabel ?? (isProjectSelectionMode ? t("New project") : t("Add new project"));
   const loadingAddProjectLabel = isProjectSelectionMode
-    ? "Adding project..."
-    : "Opening folder picker...";
+    ? t("Adding project...")
+    : t("Opening folder picker...");
 
   const renderActiveFolderOption = (folder: ActiveFolderOption, index: number) => {
     const selected = isProjectSelectionMode
@@ -695,10 +705,10 @@ export const ProjectPicker = memo(function ProjectPicker({
         >
           <ComboboxEmpty>
             {isLoadingDirectories
-              ? "Loading folders…"
+              ? t("Loading folders…")
               : activeFolderOptions.length === 0 && localFolderOptions.length === 0
-                ? "No folders found"
-                : "No matches"}
+                ? t("No folders found")
+                : t("No matches")}
           </ComboboxEmpty>
           <ComboboxList className="max-h-64">
             {filteredActiveFolderGroups.map((group, groupIndex) => {

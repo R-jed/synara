@@ -13,7 +13,6 @@ import {
   type TurnId,
 } from "@synara/contracts";
 import { isLocalAbsolutePath } from "@synara/shared/path";
-import { pluralize } from "@synara/shared/text";
 import { LegendList, type LegendListRef } from "@legendapp/list/react";
 import {
   memo,
@@ -126,6 +125,8 @@ import {
 } from "~/lib/terminalContext";
 import { cn } from "~/lib/utils";
 import { MUTED_LABEL_TEXT_CLASS_NAME } from "~/surfaceStyles";
+import { useUiLanguage } from "~/uiLanguage";
+import { useReducedMotion } from "~/hooks/useReducedMotion";
 import {
   DEFAULT_CHAT_FONT_SIZE_PX,
   normalizeChatFontSizePx,
@@ -258,6 +259,7 @@ function UserDispatchModeChip({
   dispatchOrigin: TimelineMessage["dispatchOrigin"];
   hasLeadingMedia: boolean;
 }) {
+  const { t } = useUiLanguage();
   const markerKind = resolveUserTurnMarker({ dispatchMode, dispatchOrigin });
   if (!markerKind) {
     return null;
@@ -272,7 +274,7 @@ function UserDispatchModeChip({
       )}
     >
       <Icon className="size-3 shrink-0 text-muted-foreground/75" />
-      <span>{label}</span>
+      <span>{t(label)}</span>
     </div>
   );
 }
@@ -317,6 +319,7 @@ function WorktreeSetupCard({
   pendingAction?: WorktreeSetupResolutionAction | null | undefined;
   onResolve?: ((action: WorktreeSetupResolutionAction) => void) | undefined;
 }) {
+  const { t } = useUiLanguage();
   // The send pipeline only honors a resolution at checkpoints before the turn
   // dispatch, so hide the actions once "Starting session" is underway (or the
   // setup already failed) rather than offering a cancel that can no longer win.
@@ -332,7 +335,7 @@ function WorktreeSetupCard({
           ref={syncAnimationsToTimelineOrigin}
           className="shimmer text-[13px] font-medium text-[var(--color-text-foreground-secondary)]"
         >
-          Preparing worktree...
+          {t("Preparing worktree...")}
         </span>
       </div>
       <ol className="mt-2 flex flex-col">
@@ -364,8 +367,10 @@ function WorktreeSetupCard({
                       : "text-[var(--color-text-foreground-tertiary)] opacity-70",
                 )}
               >
-                {step.label}
-                {step.status === "error" ? " — failed" : ""}
+                {step.id === "run-setup-action" && step.label.startsWith("Running setup action: ")
+                  ? `${t("Running setup action")}: ${step.label.slice("Running setup action: ".length)}`
+                  : t(step.label)}
+                {step.status === "error" ? ` — ${t("failed")}` : ""}
               </span>
             </li>
           );
@@ -379,7 +384,7 @@ function WorktreeSetupCard({
             disabled={pendingAction != null}
             onClick={() => onResolve("work-locally")}
           >
-            {pendingAction === "work-locally" ? "Switching to local..." : "Work locally"}
+            {pendingAction === "work-locally" ? t("Switching to local...") : t("Work locally")}
           </Button>
           <Button
             size="xs"
@@ -387,7 +392,7 @@ function WorktreeSetupCard({
             disabled={pendingAction != null}
             onClick={() => onResolve("cancel")}
           >
-            {pendingAction === "cancel" ? "Cancelling..." : "Cancel"}
+            {pendingAction === "cancel" ? t("Cancelling...") : t("Cancel")}
           </Button>
         </div>
       ) : null}
@@ -572,6 +577,8 @@ export const MessagesTimeline = memo(function MessagesTimeline({
   contentInsetBottomClearancePx,
   findHighlight: findHighlightProp,
 }: MessagesTimelineProps) {
+  const { t } = useUiLanguage();
+  const reduceMotion = useReducedMotion();
   // Prop defaults are resolved in the body rather than in the destructuring pattern:
   // an `AssignmentPattern` in the parameter list makes React Compiler bail out on the
   // entire component (silently, since `panicThreshold` is unset), which would drop
@@ -1029,7 +1036,11 @@ export const MessagesTimeline = memo(function MessagesTimeline({
               ) ?? root);
         const activeMatch = scope.querySelector('[data-chat-find-match="active"]');
         if (activeMatch instanceof HTMLElement) {
-          activeMatch.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+          activeMatch.scrollIntoView({
+            block: "center",
+            inline: "nearest",
+            behavior: reduceMotion ? "auto" : "smooth",
+          });
           return;
         }
         if (narrationId !== undefined) {
@@ -1037,7 +1048,11 @@ export const MessagesTimeline = memo(function MessagesTimeline({
             `[data-chat-find-narration-id="${cssAttributeSelectorValue(narrationId)}"]`,
           );
           if (narration instanceof HTMLElement) {
-            narration.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+            narration.scrollIntoView({
+              block: "center",
+              inline: "nearest",
+              behavior: reduceMotion ? "auto" : "smooth",
+            });
             return;
           }
         }
@@ -1072,7 +1087,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
         controllerRef.current = null;
       }
     };
-  }, [controllerRef, onNavigate, resolvedListRef, setCollapsedWorkExpanded]);
+  }, [controllerRef, onNavigate, reduceMotion, resolvedListRef, setCollapsedWorkExpanded]);
   const tailContentRowId = useMemo(() => {
     for (let index = rows.length - 1; index >= 0; index -= 1) {
       const row = rows[index]!;
@@ -1429,7 +1444,9 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                       style={{ fontSize: `${appTypographyScale.uiSmPx}px` }}
                       onClick={() => handleToggleWorkGroup(groupId)}
                     >
-                      {isExpanded ? "Show less" : `Show ${cappedRenderPlan.hiddenEntryCount} more`}
+                      {isExpanded
+                        ? t("Show less")
+                        : `${t("Show")} ${cappedRenderPlan.hiddenEntryCount} ${t("more")}`}
                     </button>
                   </div>
                 )}
@@ -1458,7 +1475,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                     style={{ fontSize: `${appTypographyScale.uiSmPx}px` }}
                     onClick={() => handleToggleWorkGroup(groupId)}
                   >
-                    {isExpanded ? "Show less" : `Show ${hiddenCount} more`}
+                    {isExpanded ? t("Show less") : `${t("Show")} ${hiddenCount} ${t("more")}`}
                   </button>
                 </div>
               )}
@@ -1723,8 +1740,8 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                         )}
                         {showEditUserMessage && (
                           <MessageActionButton
-                            label="Edit message"
-                            tooltip="Edit and resend"
+                            label={t("Edit message")}
+                            tooltip={t("Edit and resend")}
                             disabled={isRevertingCheckpoint}
                             className={cn(
                               MESSAGE_HOVER_REVEAL_CLASS_NAME,
@@ -1737,8 +1754,8 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                         )}
                         {canRevertAgentWork ? (
                           <MessageActionButton
-                            label="Revert to this message"
-                            tooltip="Revert to this message"
+                            label={t("Revert to this message")}
+                            tooltip={t("Revert to this message")}
                             disabled={isRevertingCheckpoint || isWorking}
                             className={cn(
                               MESSAGE_HOVER_REVEAL_CLASS_NAME,
@@ -1974,8 +1991,8 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                             onClick={() => handleToggleWorkGroup(display.toolGroupId!)}
                           >
                             {display.toolExpanded
-                              ? "Show less"
-                              : `+${cappedRenderPlan.hiddenEntryCount} more tool calls`}
+                              ? t("Show less")
+                              : `+${cappedRenderPlan.hiddenEntryCount} ${t("more tool calls")}`}
                           </button>
                         </div>
                       )}
@@ -2001,8 +2018,8 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                               onClick={() => handleToggleWorkGroup(display.toolGroupId!)}
                             >
                               {display.toolExpanded
-                                ? "Show less"
-                                : `+${display.hiddenToolCount} more tool calls`}
+                                ? t("Show less")
+                                : `+${display.hiddenToolCount} ${t("more tool calls")}`}
                             </button>
                           </div>
                         )}
@@ -2142,8 +2159,8 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                     >
                       <span>
                         {row.collapsedWorkElapsed
-                          ? `Worked for ${row.collapsedWorkElapsed}`
-                          : "Details"}
+                          ? `${t("Worked for")} ${row.collapsedWorkElapsed}`
+                          : t("Details")}
                       </span>
                       <DisclosureChevron
                         open={isCollapsedWorkExpanded}
@@ -2255,9 +2272,8 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                     (sum, file) => sum + (file.deletions ?? 0),
                     0,
                   );
-                  const editedFilesLabel = `Edited ${checkpointFiles.length} ${pluralize(
-                    checkpointFiles.length,
-                    "file",
+                  const editedFilesLabel = `${t("Edited")} ${checkpointFiles.length} ${t(
+                    checkpointFiles.length === 1 ? "file" : "files",
                   )}`;
                   const firstCheckpointFiles = checkpointFiles.slice(0, MAX_VISIBLE_CHANGED_FILES);
                   const overflowCheckpointFiles = checkpointFiles.slice(MAX_VISIBLE_CHANGED_FILES);
@@ -2326,7 +2342,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                               style={{ fontSize: chatTypographyStyle.fontSize }}
                               onClick={() => onUndoTurnFiles(checkpointTurnCounts)}
                             >
-                              Undo
+                              {t("Undo")}
                               <Undo2Icon className="size-3" />
                             </button>
                           )}
@@ -2340,8 +2356,8 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                             aria-expanded={fileChangesExpanded}
                             aria-label={
                               fileChangesExpanded
-                                ? "Collapse changed files list"
-                                : "Expand changed files list"
+                                ? t("Collapse changed files list")
+                                : t("Expand changed files list")
                             }
                             onClick={(event) => {
                               event.preventDefault();
@@ -2380,10 +2396,11 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                             <DisclosureChevron open={fileListExpanded} />
                             <span>
                               {fileListExpanded
-                                ? "Show less"
-                                : `Show ${overflowCheckpointFiles.length} more ${pluralize(
-                                    overflowCheckpointFiles.length,
-                                    "file",
+                                ? t("Show less")
+                                : `${t("Show")} ${overflowCheckpointFiles.length} ${t(
+                                    overflowCheckpointFiles.length === 1
+                                      ? "more file"
+                                      : "more files",
                                   )}`}
                             </span>
                           </button>
@@ -2411,8 +2428,8 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                     ) : null}
                     {showForkAction ? (
                       <MessageActionButton
-                        label="Fork thread from this turn"
-                        tooltip="Fork from here"
+                        label={t("Fork thread from this turn")}
+                        tooltip={t("Fork from here")}
                         onClick={() => onForkFromMessage?.(row.message.id)}
                       >
                         <GitForkIcon className={MESSAGE_ACTION_ICON_CLASS_NAME} />
@@ -2422,8 +2439,8 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                       // Same Central pin glyph in both states — the darker tint is what
                       // signals "this message is pinned".
                       <MessageActionButton
-                        label={pinActionLabel("message", messagePinned)}
-                        tooltip={messagePinned ? "Unpin from panel" : "Pin to panel"}
+                        label={t(pinActionLabel("message", messagePinned))}
+                        tooltip={messagePinned ? t("Unpin from panel") : t("Pin to panel")}
                         aria-pressed={messagePinned}
                         className={messagePinned ? "text-foreground" : undefined}
                         onClick={() => onTogglePinMessage?.(row.message.id)}
@@ -2446,8 +2463,8 @@ export const MessagesTimeline = memo(function MessagesTimeline({
                           <GoalIcon className={MESSAGE_ACTION_ICON_CLASS_NAME} />
                           <span className="truncate">
                             {goalAchievement.elapsedMs !== null
-                              ? `Goal achieved in ${formatClockDuration(goalAchievement.elapsedMs)}`
-                              : "Goal achieved"}
+                              ? `${t("Goal achieved in")} ${formatClockDuration(goalAchievement.elapsedMs)}`
+                              : t("Goal achieved")}
                           </span>
                         </p>
                       </>
@@ -2479,7 +2496,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
             className={cn("-ml-0.5 pb-2", MUTED_LABEL_TEXT_CLASS_NAME)}
             style={{ fontSize: chatTypographyStyle.fontSize }}
           >
-            Working for{" "}
+            {t("Working for")}{" "}
             {nowIso ? (
               (formatClockElapsed(row.createdAt, nowIso) ?? "0s")
             ) : (
@@ -2496,7 +2513,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
           className={cn("shimmer pt-0.5 font-system-ui", MUTED_LABEL_TEXT_CLASS_NAME)}
           style={{ fontSize: `${appTypographyScale.chatPx}px` }}
         >
-          {workingLabel}
+          {t(workingLabel)}
         </div>
       )}
 
@@ -2525,7 +2542,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
     return (
       <div className="flex h-full items-center justify-center">
         <p className="text-sm text-muted-foreground/30">
-          Send a message to start the conversation.
+          {t("Send a message to start the conversation.")}
         </p>
       </div>
     );
@@ -3044,11 +3061,12 @@ const UserImageAttachmentThumbnail = memo(function UserImageAttachmentThumbnail(
   onTimelineImageLoad: () => void;
   resolvedTheme: "light" | "dark";
 }) {
+  const { t } = useUiLanguage();
   return (
     <button
       type="button"
       className="flex size-15 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/70 bg-background/82 text-left shadow-[0_1px_0_rgba(255,255,255,0.2)_inset] transition-colors hover:bg-background/94"
-      aria-label={`Preview ${props.image.name}`}
+      aria-label={`${t("Preview")} ${props.image.name}`}
       title={props.image.name}
       onClick={() => {
         const preview = buildExpandedImagePreview(props.userImages, props.image.id);
@@ -3211,6 +3229,7 @@ const UserMessageEditForm = memo(function UserMessageEditForm(props: {
   onCancel: () => void;
   onSubmit: (value: string) => void;
 }) {
+  const { t } = useUiLanguage();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [draft, setDraft] = useState(props.initialValue);
   const canSubmit = canSubmitUserMessageEdit({
@@ -3271,7 +3290,7 @@ const UserMessageEditForm = memo(function UserMessageEditForm(props: {
         value={draft}
         disabled={props.disabled}
         rows={1}
-        aria-label="Edit message"
+        aria-label={t("Edit message")}
         className="max-h-60 min-h-0 w-full resize-none overflow-y-auto border-0 bg-transparent p-0 font-system-ui text-foreground outline-none placeholder:text-muted-foreground/45 disabled:opacity-70"
         style={props.chatTypographyStyle}
         onChange={(event) => setDraft(event.target.value)}
@@ -3287,7 +3306,7 @@ const UserMessageEditForm = memo(function UserMessageEditForm(props: {
           disabled={props.disabled}
           onClick={props.onCancel}
         >
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button
           type="submit"
@@ -3296,7 +3315,7 @@ const UserMessageEditForm = memo(function UserMessageEditForm(props: {
           style={props.chatTypographyStyle}
           disabled={!canSubmit}
         >
-          Send
+          {t("Send")}
         </Button>
       </div>
     </form>
@@ -3335,6 +3354,7 @@ const UserMessageCollapsibleText = memo(function UserMessageCollapsibleText(prop
   onToggle: () => void;
   children: ReactNode;
 }) {
+  const { t } = useUiLanguage();
   const contentRef = useRef<HTMLDivElement>(null);
   const contentId = useId();
   const [overflowing, setOverflowing] = useState(() => userMessageLikelyOverflows(props.text));
@@ -3382,7 +3402,7 @@ const UserMessageCollapsibleText = memo(function UserMessageCollapsibleText(prop
           aria-controls={contentId}
           onClick={props.onToggle}
         >
-          {props.expanded ? "Show less" : "Show more"}
+          {props.expanded ? t("Show less") : t("Show more")}
         </button>
       )}
     </>

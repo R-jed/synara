@@ -17,6 +17,7 @@ import { useStore } from "../../store";
 import { createSidebarDisplayThreadsSelector } from "../../storeSelectors";
 import { useTerminalStateStore } from "../../terminalStateStore";
 import { useWorkspacePathsStore } from "../../workspacePathsStore";
+import { useUiLanguage } from "../../uiLanguage";
 import { sortProjectsForSidebar } from "../Sidebar.logic";
 import {
   areKanbanComposerDraftSnapshotsEqual,
@@ -36,6 +37,7 @@ const OPTIMISTIC_DISPATCH_TIMEOUT_MS = 30_000;
 const OPTIMISTIC_DISPATCH_EXPIRY_CHECK_MS = 5_000;
 
 export function useKanbanBoard(): KanbanBoard {
+  const { language, t, tError } = useUiLanguage();
   const { settings } = useAppSettings();
   const selectDisplayThreads = createSidebarDisplayThreadsSelector({
     hideAutomationRunThreads: !settings.showAutomationRunThreads,
@@ -129,12 +131,21 @@ export function useKanbanBoard(): KanbanBoard {
       if (outcome === "failed") {
         toastManager.add({
           type: "error",
-          title: "Task didn't start",
-          description: thread.session?.lastError ?? `${entry.title} was moved back to Draft.`,
+          title: t("Task didn't start"),
+          description: thread.session?.lastError
+            ? tError(
+                thread.session.lastError,
+                language === "zh-CN"
+                  ? `${entry.title} 已移回草稿。`
+                  : `${entry.title} was moved back to Draft.`,
+              )
+            : language === "zh-CN"
+              ? `${entry.title} 已移回草稿。`
+              : `${entry.title} was moved back to Draft.`,
         });
       }
     }
-  }, [optimisticDispatchByThreadId, threads]);
+  }, [language, optimisticDispatchByThreadId, t, tError, threads]);
 
   // Safety net: a dispatch whose runtime signal never arrives reverts to Draft
   // instead of leaving a ghost card In Progress forever. Keyed on a boolean so
@@ -164,13 +175,16 @@ export function useKanbanBoard(): KanbanBoard {
         }
         toastManager.add({
           type: "error",
-          title: "Task didn't start",
-          description: `${entry.title} was moved back to Draft.`,
+          title: t("Task didn't start"),
+          description:
+            language === "zh-CN"
+              ? `${entry.title} 已移回草稿。`
+              : `${entry.title} was moved back to Draft.`,
         });
       }
     }, OPTIMISTIC_DISPATCH_EXPIRY_CHECK_MS);
     return () => window.clearInterval(intervalId);
-  }, [hasOptimisticDispatches]);
+  }, [hasOptimisticDispatches, language, t]);
 
   // Project composer drafts down to the few fields the board needs. Empty drafts
   // are dropped so routine composer churn (focus, selections, modes) rarely

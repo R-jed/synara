@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toastManager } from "../components/ui/toast";
 import { describeThreadUnblockResult, unblockThreadFromClient } from "../lib/threadUnblock";
 import { readNativeApi } from "../nativeApi";
+import { useUiLanguage } from "../uiLanguage";
 
 /**
  * Reconciles the blocking deliveries of `threadId` and reports the outcome.
@@ -20,6 +21,7 @@ export function useThreadUnblock(input: {
   readonly threadId: ThreadId | null;
   readonly onUnblocked: (threadId: ThreadId) => void;
 }): { readonly unblockThread: () => void; readonly unblocking: boolean } {
+  const { t, tError } = useUiLanguage();
   const { threadId, onUnblocked } = input;
   const [unblockingThreadId, setUnblockingThreadId] = useState<ThreadId | null>(null);
   const inFlightThreadIdRef = useRef<ThreadId | null>(null);
@@ -42,22 +44,27 @@ export function useThreadUnblock(input: {
         if (!api) throw new Error("Not connected to the Synara server.");
         const result = await unblockThreadFromClient(api.orchestration, threadId);
         onUnblocked(threadId);
-        toastManager.add(describeThreadUnblockResult(result));
+        const notice = describeThreadUnblockResult(result);
+        toastManager.add({
+          ...notice,
+          title: t(notice.title),
+          description: t(notice.description),
+        });
       } catch (error) {
         toastManager.add({
           type: "error",
-          title: "Could not unblock thread",
-          description:
-            error instanceof Error
-              ? error.message
-              : "An unexpected error occurred while clearing the provider failure.",
+          title: t("Could not unblock thread"),
+          description: tError(
+            error,
+            "An unexpected error occurred while clearing the provider failure.",
+          ),
         });
       } finally {
         inFlightThreadIdRef.current = null;
         if (mountedRef.current) setUnblockingThreadId(null);
       }
     })();
-  }, [onUnblocked, threadId]);
+  }, [onUnblocked, t, tError, threadId]);
 
   return {
     unblockThread,

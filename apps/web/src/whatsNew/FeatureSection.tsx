@@ -6,8 +6,10 @@
 // Layer: presentational — no state, no data fetching, no storage.
 
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 
 import type { WhatsNewFeature } from "./logic";
+import { translateWhatsNewText } from "./uiLanguage";
 
 export interface FeatureSectionProps {
   readonly feature: WhatsNewFeature;
@@ -26,15 +28,17 @@ export interface FeatureSectionProps {
  *     muted blurb — think "release note footnote", not body copy.
  */
 export function FeatureSection({ feature, className }: FeatureSectionProps) {
+  const { language } = useUiLanguage();
+  const t = (text: string) => translateWhatsNewText(language, text);
   const hasMedia = feature.image !== undefined || feature.details !== undefined;
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       <div className="flex flex-col gap-1">
         <h3 className="font-heading text-base font-semibold leading-snug text-foreground">
-          {feature.title}
+          {t(feature.title)}
         </h3>
-        <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
+        <p className="text-sm leading-relaxed text-muted-foreground">{t(feature.description)}</p>
       </div>
       {hasMedia && (
         <div className="flex flex-col gap-1.5">
@@ -42,7 +46,7 @@ export function FeatureSection({ feature, className }: FeatureSectionProps) {
             <div className="overflow-hidden rounded-lg border border-border/60 bg-muted/40">
               <img
                 src={feature.image}
-                alt={feature.imageAlt ?? ""}
+                alt={feature.imageAlt ? t(feature.imageAlt) : ""}
                 className="h-auto w-full"
                 loading="lazy"
                 decoding="async"
@@ -50,7 +54,7 @@ export function FeatureSection({ feature, className }: FeatureSectionProps) {
             </div>
           )}
           {feature.details !== undefined && (
-            <p className="text-xs leading-relaxed text-muted-foreground/85">{feature.details}</p>
+            <p className="text-xs leading-relaxed text-muted-foreground/85">{t(feature.details)}</p>
           )}
         </div>
       )}

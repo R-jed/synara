@@ -19,6 +19,7 @@ import { cn } from "~/lib/utils";
 import { Button, buttonVariants } from "~/components/ui/button";
 import { APP_TOOLTIP_SURFACE_CLASS_NAME } from "~/components/chat/composerPickerStyles";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   buildVisibleToastLayout,
   DEFAULT_TOAST_TIMEOUT_MS,
@@ -242,6 +243,7 @@ function ToastActions({
   copyText: string | undefined;
   secondaryActionProps: ThreadToastData["secondaryActionProps"];
 }) {
+  const { t } = useUiLanguage();
   const { copyToClipboard, isCopied } = useCopyToClipboard();
 
   if (!actionProps && !copyText && !secondaryActionProps) return null;
@@ -250,17 +252,17 @@ function ToastActions({
     <div className="mt-2 flex flex-wrap items-center gap-1.5">
       {copyText && (
         <Button
-          aria-label={isCopied ? "Copied error message" : "Copy error message"}
+          aria-label={isCopied ? t("Copied error message") : t("Copy error message")}
           className="self-start rounded-md border-[var(--notification-fg)]/20 bg-[var(--notification-fg)]/10 text-[var(--notification-fg)] hover:bg-[var(--notification-fg)]/20"
           onClick={() => {
             copyToClipboard(copyText, undefined);
           }}
           size="xs"
-          title={isCopied ? "Copied error message" : "Copy error message"}
+          title={isCopied ? t("Copied error message") : t("Copy error message")}
           variant="outline"
         >
           {isCopied ? <CheckIcon className="size-3" /> : <CopyIcon className="size-3" />}
-          <span>{isCopied ? "Copied" : "Copy"}</span>
+          <span>{isCopied ? t("Copied") : t("Copy")}</span>
         </Button>
       )}
       {actionProps && (
@@ -300,11 +302,12 @@ function ToastCloseButton({
   onDismiss: () => void;
   onClose?: (() => void) | undefined;
 }) {
+  const { t } = useUiLanguage();
   const compact = compactProp ?? false;
   return (
     <button
       type="button"
-      aria-label="Dismiss toast"
+      aria-label={t("Dismiss toast")}
       className={cn(
         // pointer-events-auto keeps the X clickable even when a stacked/collapsed
         // toast still gates its content with pointer-events-none.
@@ -316,7 +319,7 @@ function ToastCloseButton({
         onClose?.();
         onDismiss();
       }}
-      title="Dismiss toast"
+      title={t("Dismiss toast")}
     >
       <XIcon className={compact ? "size-3" : "size-3.5"} />
     </button>

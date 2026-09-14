@@ -22,6 +22,7 @@ import { Button } from "~/components/ui/button";
 import { useProviderUsageSummary } from "~/hooks/useProviderUsageSummary";
 import { RotateCcwIcon, TriangleAlertIcon } from "~/lib/icons";
 import { deriveProviderUsageDisplayRows } from "~/lib/providerUsageDisplay";
+import { localizeProviderUsageText } from "~/lib/providerUsageLocalization";
 import { deriveAccountRateLimits, type ProviderRateLimit } from "~/lib/rateLimits";
 import {
   fetchAllProviderUsage,
@@ -31,6 +32,7 @@ import {
 import { cn } from "~/lib/utils";
 import { useStore } from "~/store";
 import { createAllThreadsSelector } from "~/storeSelectors";
+import { useUiLanguage } from "~/uiLanguage";
 
 const PILL_CLASS_NAME = "shrink-0 rounded-full px-2 py-1 text-[11px] font-medium leading-none";
 
@@ -64,6 +66,7 @@ function ProviderUsageCard({
   threadRateLimits: ReadonlyArray<ProviderRateLimit>;
   codexHomePath: string | null;
 }) {
+  const { language, t } = useUiLanguage();
   const provider = snapshot.provider;
   const status = snapshot.status ?? "ok";
   const usageSummary = useProviderUsageSummary({
@@ -95,7 +98,7 @@ function ProviderUsageCard({
               {snapshot.planName}
             </span>
           ) : pill ? (
-            <span className={cn(PILL_CLASS_NAME, pill.className)}>{pill.label}</span>
+            <span className={cn(PILL_CLASS_NAME, pill.className)}>{t(pill.label)}</span>
           ) : null}
         </div>
 
@@ -104,7 +107,7 @@ function ProviderUsageCard({
             {usageSummary.usageNotice ? (
               <p className="flex items-start gap-1.5 text-xs leading-relaxed text-amber-600 dark:text-amber-300/90">
                 <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-                <span>{usageSummary.usageNotice}</span>
+                <span>{localizeProviderUsageText(language, t(usageSummary.usageNotice))}</span>
               </p>
             ) : null}
             {meterRows.length > 0 ? (
@@ -123,8 +126,11 @@ function ProviderUsageCard({
         ) : (
           <p className="text-xs leading-relaxed text-muted-foreground">
             {status === "ok"
-              ? "No usage data reported yet."
-              : (snapshot.detail ?? providerUsageNeedsAuthDetail(provider))}
+              ? t("No usage data reported yet.")
+              : localizeProviderUsageText(
+                  language,
+                  t(snapshot.detail ?? providerUsageNeedsAuthDetail(provider)),
+                )}
           </p>
         )}
       </div>
@@ -147,6 +153,7 @@ function mergeProviderUsageRefresh(
 }
 
 export function ProviderUsageSettingsPanel() {
+  const { t } = useUiLanguage();
   const queryClient = useQueryClient();
   const { settings } = useAppSettings();
   const codexHomePath = settings.codexHomePath || null;
@@ -174,7 +181,7 @@ export function ProviderUsageSettingsPanel() {
 
   return (
     <SettingsSectionShell
-      title="Provider usage"
+      title={t("Provider usage")}
       action={
         <Button
           size="xs"
@@ -184,13 +191,15 @@ export function ProviderUsageSettingsPanel() {
           onClick={() => refreshMutation.mutate()}
         >
           <RotateCcwIcon className={cn("size-3.5", isRefreshing && "animate-spin")} />
-          Refresh
+          {t("Refresh")}
         </Button>
       }
     >
       {showInitialLoading ? (
         <SettingsCard>
-          <div className="px-4 py-3.5 text-xs text-muted-foreground">Loading provider usage…</div>
+          <div className="px-4 py-3.5 text-xs text-muted-foreground">
+            {t("Loading provider usage…")}
+          </div>
         </SettingsCard>
       ) : (
         <div className="flex flex-col gap-3">
@@ -206,10 +215,9 @@ export function ProviderUsageSettingsPanel() {
       )}
 
       <p className="px-2 text-[11px] leading-relaxed text-muted-foreground">
-        Usage is read locally from each provider CLI&apos;s stored credentials and fetched directly
-        from the provider. The list follows whatever you are signed into; unsigned providers stay
-        visible until any account is connected, then drop away. Short-lived tokens are refreshed
-        through the provider&apos;s own CLI or official token endpoint.
+        {t(
+          "Usage is read locally from each provider CLI's stored credentials and fetched directly from the provider. The list follows whatever you are signed into; unsigned providers stay visible until any account is connected, then drop away. Short-lived tokens are refreshed through the provider's own CLI or official token endpoint.",
+        )}
       </p>
     </SettingsSectionShell>
   );

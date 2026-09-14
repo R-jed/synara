@@ -20,8 +20,12 @@ import {
   resolveThemePack,
   setThemeCodeThemeId,
   updateThemePackFromShareString,
+  resetThemeVariant,
 } from "./theme.logic";
-import { DEFAULT_MONOSPACE_FONT_FAMILY_STACK } from "../lib/fontFamily";
+import {
+  DEFAULT_MONOSPACE_FONT_FAMILY_STACK,
+  DEFAULT_UI_FONT_FAMILY_STACK,
+} from "../lib/fontFamily";
 
 const PROVIDED_THEME_STRING =
   'codex-theme-v1:{"codeThemeId":"linear","theme":{"accent":"#606acc","contrast":30,"fonts":{"code":"\\"Jetbrains Mono\\"","ui":"Inter"},"ink":"#e3e4e6","opaqueWindows":true,"semanticColors":{"diffAdded":"#69c967","diffRemoved":"#ff7e78","skill":"#c2a1ff"},"surface":"#0f0f11"},"variant":"dark"}';
@@ -98,6 +102,10 @@ describe("parseStoredThemeState", () => {
     expect(normalizeThemeState({ mode: "dark" }).systemUiFont).toBe(true);
   });
 
+  it("repairs a stale disabled system-font flag when no custom UI font remains", () => {
+    expect(normalizeThemeState({ mode: "dark", systemUiFont: false }).systemUiFont).toBe(true);
+  });
+
   it("keeps an explicit system-font preference even when the theme stores a UI font", () => {
     expect(
       normalizeThemeState({
@@ -109,6 +117,43 @@ describe("parseStoredThemeState", () => {
         systemUiFont: true,
       }).systemUiFont,
     ).toBe(true);
+  });
+});
+
+describe("resetThemeVariant", () => {
+  it("restores the system UI font after resetting the last custom UI font", () => {
+    const state = normalizeThemeState({
+      ...DEFAULT_THEME_STATE,
+      systemUiFont: false,
+      chromeThemes: {
+        ...DEFAULT_THEME_STATE.chromeThemes,
+        dark: {
+          ...DEFAULT_THEME_STATE.chromeThemes.dark,
+          fonts: { ...DEFAULT_THEME_STATE.chromeThemes.dark.fonts, ui: "Inter" },
+        },
+      },
+    });
+
+    expect(resetThemeVariant(state, "dark").systemUiFont).toBe(true);
+  });
+
+  it("keeps custom UI fonts enabled when the other theme still has one", () => {
+    const state = normalizeThemeState({
+      ...DEFAULT_THEME_STATE,
+      systemUiFont: false,
+      chromeThemes: {
+        dark: {
+          ...DEFAULT_THEME_STATE.chromeThemes.dark,
+          fonts: { ...DEFAULT_THEME_STATE.chromeThemes.dark.fonts, ui: "Inter" },
+        },
+        light: {
+          ...DEFAULT_THEME_STATE.chromeThemes.light,
+          fonts: { ...DEFAULT_THEME_STATE.chromeThemes.light.fonts, ui: "Arial" },
+        },
+      },
+    });
+
+    expect(resetThemeVariant(state, "dark").systemUiFont).toBe(false);
   });
 });
 
@@ -124,6 +169,41 @@ describe("theme share strings", () => {
       theme: resolveThemePack(DEFAULT_THEME_STATE, "dark").theme,
       variant: "dark",
     });
+  });
+
+  it("round-trips content font and exact local font-face metadata while keeping old fields", () => {
+    const state = normalizeThemeState({
+      ...DEFAULT_THEME_STATE,
+      chromeThemes: {
+        ...DEFAULT_THEME_STATE.chromeThemes,
+        dark: {
+          ...DEFAULT_THEME_STATE.chromeThemes.dark,
+          fonts: {
+            ui: "Inter",
+            code: "JetBrains Mono",
+            content: "LXGW ZhenKai GB",
+            contentFace: {
+              family: "LXGW ZhenKai GB",
+              fullName: "LXGW ZhenKai GB Regular",
+              postscriptName: "LXGWZhenKaiGB-Regular",
+              style: "Regular",
+            },
+          },
+        },
+      },
+    });
+    const shareString = createThemeShareString("dark", resolveThemePack(state, "dark"));
+    const parsed = parseThemeShareString(shareString);
+
+    expect(parsed.theme.fonts.content).toBe("LXGW ZhenKai GB");
+    expect(parsed.theme.fonts.contentFace).toEqual({
+      family: "LXGW ZhenKai GB",
+      fullName: "LXGW ZhenKai GB Regular",
+      postscriptName: "LXGWZhenKaiGB-Regular",
+      style: "Regular",
+    });
+    expect(parsed.theme.fonts.ui).toBe("Inter");
+    expect(parsed.theme.fonts.code).toBe("JetBrains Mono");
   });
 
   it("parses the provided dark Linear theme and preserves its normalized values", () => {
@@ -340,7 +420,9 @@ describe("buildThemeCssVariables", () => {
     expect(cssVariables.variables["--sidebar-selected"]).toBe(
       cssVariables.variables["--app-user-message-background"],
     );
-    expect(cssVariables.variables["--theme-font-ui-family"]).toBe("Inter");
+    expect(cssVariables.variables["--theme-font-ui-family"]).toBe(
+      `Inter, ${DEFAULT_UI_FONT_FAMILY_STACK}`,
+    );
     expect(cssVariables.variables["--theme-font-code-family"]).toBe(
       `"Jetbrains Mono", ${DEFAULT_MONOSPACE_FONT_FAMILY_STACK}`,
     );

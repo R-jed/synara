@@ -4,9 +4,12 @@
 // Depends on: global document/body and shared Tailwind theme tokens already loaded by the app.
 
 import { ELEVATED_HOVER_SURFACE_CLASS_NAME } from "./surfaceStyles";
+import { getActiveUiLanguage, translateUiText } from "./uiLanguage";
 
 export function showConfirmDialogFallback(message: string): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
+    const language = getActiveUiLanguage();
+    const t = (text: string) => translateUiText(language, text);
     // Split message into title (first line) and description (rest)
     const lines = message.split("\n");
     const title = lines[0] ?? message;
@@ -72,7 +75,7 @@ export function showConfirmDialogFallback(message: string): Promise<boolean> {
     // Cancel button (outline style)
     const cancelBtn = document.createElement("button");
     cancelBtn.type = "button";
-    cancelBtn.textContent = "Cancel";
+    cancelBtn.textContent = t("Cancel");
     cancelBtn.className =
       "inline-flex h-8 min-w-20 cursor-pointer items-center justify-center whitespace-nowrap rounded-md border border-[color:var(--color-border)] bg-[var(--color-background-elevated-primary-opaque)] px-3 text-[13px] font-medium text-[var(--color-text-foreground)] outline-none focus-visible:ring-1 focus-visible:ring-ring/60 " +
       ELEVATED_HOVER_SURFACE_CLASS_NAME;
@@ -81,7 +84,7 @@ export function showConfirmDialogFallback(message: string): Promise<boolean> {
     // Confirm button mirrors the chat send action's foreground-on-background treatment.
     const confirmBtn = document.createElement("button");
     confirmBtn.type = "button";
-    confirmBtn.textContent = "Confirm";
+    confirmBtn.textContent = t("Confirm");
     confirmBtn.className =
       "inline-flex h-8 min-w-20 cursor-pointer items-center justify-center whitespace-nowrap rounded-md border border-foreground bg-foreground px-3 text-[13px] font-medium text-background outline-none transition-all duration-150 hover:scale-[1.02] hover:bg-foreground/92 focus-visible:ring-1 focus-visible:ring-ring/60";
 

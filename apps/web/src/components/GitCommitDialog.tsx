@@ -26,6 +26,7 @@ import {
   GitDialogShell,
 } from "./GitDialogChrome";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 
 export interface GitCommitDialogSubmission {
   action: GitCommitDialogAction["action"];
@@ -56,6 +57,7 @@ export function GitCommitDialog({
   onSubmit,
   onOpenFile,
 }: GitCommitDialogProps) {
+  const { t } = useUiLanguage();
   const [message, setMessage] = useState("");
   const [excludedFiles, setExcludedFiles] = useState<ReadonlySet<string>>(new Set());
   const [isEditingFiles, setIsEditingFiles] = useState(false);
@@ -113,19 +115,21 @@ export function GitCommitDialog({
   return (
     <GitDialogShell open={open} onOpenChange={onOpenChange} onSubmitShortcut={submitPrimary}>
       <GitDialogHeading
-        eyebrow="Commit"
+        eyebrow={t("Commit")}
         eyebrowTrailing={
-          context.isDefaultBranch ? <span className="text-warning">Default branch</span> : null
+          context.isDefaultBranch ? (
+            <span className="text-warning">{t("Default branch")}</span>
+          ) : null
         }
         subject={gitStatus?.branch ?? "(detached HEAD)"}
       />
       <GitDialogBody>
         <textarea
           autoFocus
-          aria-label="Commit message"
+          aria-label={t("Commit message")}
           className={cn(GIT_DIALOG_FIELD_CLASS, "resize-none")}
           maxLength={20_000}
-          placeholder="Message (leave empty to generate)"
+          placeholder={t("Message (leave empty to generate)")}
           rows={2}
           value={message}
           onChange={(event) => setMessage(event.target.value)}
@@ -144,7 +148,7 @@ export function GitCommitDialog({
               />
             ) : null}
             <span className="min-w-0 flex-1 truncate text-muted-foreground">
-              {summarizeSelection(allFiles.length, selectedFiles.length, allSelected)}
+              {summarizeSelection(allFiles.length, selectedFiles.length, allSelected, t)}
             </span>
             <DiffStat
               className="shrink-0 font-mono text-xs"
@@ -158,7 +162,7 @@ export function GitCommitDialog({
                 className="shrink-0"
                 onClick={() => setIsEditingFiles((prev) => !prev)}
               >
-                {isEditingFiles ? "Done" : "Edit"}
+                {isEditingFiles ? t("Done") : t("Edit")}
               </Button>
             ) : null}
           </div>
@@ -186,9 +190,9 @@ export function GitCommitDialog({
             key={action.id}
             highlighted={action.id === "commit"}
             disabled={action.disabled}
-            disabledReason={action.disabledReason}
+            {...(action.disabledReason ? { disabledReason: t(action.disabledReason) } : {})}
             icon={<GitActionGlyph name={action.icon} className="size-4" />}
-            label={action.label}
+            label={t(action.label)}
             {...(action.id === "commit" ? { trailing: <SubmitShortcutKbd /> } : {})}
             onClick={() => submit(action)}
           />
@@ -198,8 +202,13 @@ export function GitCommitDialog({
   );
 }
 
-function summarizeSelection(total: number, selected: number, allSelected: boolean): string {
-  if (total === 0) return "No local changes";
+function summarizeSelection(
+  total: number,
+  selected: number,
+  allSelected: boolean,
+  translate: (text: string) => string,
+): string {
+  if (total === 0) return translate("No local changes");
   if (allSelected) return `${total} ${total === 1 ? "file" : "files"}`;
   return `${selected} of ${total} files`;
 }
@@ -217,6 +226,7 @@ function ChangedFileRow({
   onToggle: () => void;
   onOpen: () => void;
 }) {
+  const { t } = useUiLanguage();
   return (
     <div className="flex w-full items-center gap-2 rounded-md px-2 py-1 font-mono text-xs transition-colors hover:bg-[var(--color-background-button-secondary-hover)]">
       {selectable ? <Checkbox checked={!excluded} onCheckedChange={onToggle} /> : null}
@@ -236,7 +246,7 @@ function ChangedFileRow({
         </span>
         <span className="shrink-0">
           {excluded ? (
-            <span className="text-muted-foreground">Excluded</span>
+            <span className="text-muted-foreground">{t("Excluded")}</span>
           ) : (
             <DiffStat
               insertions={file.insertions}

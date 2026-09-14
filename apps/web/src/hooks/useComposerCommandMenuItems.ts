@@ -34,6 +34,7 @@ import type { ComposerCommandItem } from "../components/chat/ComposerCommandMenu
 import type { ProviderModelOption } from "../providerModelOptions";
 import { compareProvidersByOrder } from "../providerOrdering";
 import type { ComposerThreadMentionSource, Project } from "../types";
+import { useUiLanguage } from "../uiLanguage";
 
 type ComposerPluginSuggestion = {
   plugin: ProviderPluginDescriptor;
@@ -259,6 +260,7 @@ export function useComposerCommandMenuItems(input: {
     readonly currentThreadId: string | null;
   };
 }): ComposerCommandItem[] {
+  const { language } = useUiLanguage();
   const {
     composerTrigger,
     provider,
@@ -409,7 +411,9 @@ export function useComposerCommandMenuItems(input: {
       provider,
       command: command.name,
       label: `/${command.name}`,
-      description: command.description ?? `Run ${provider} native command`,
+      description:
+        command.description ??
+        (language === "zh-CN" ? `运行 ${provider} 原生命令` : `Run ${provider} native command`),
     }));
     // `/` is the universal picker surface; provider dispatch can adapt the
     // visible slash token to backend-specific skill syntax when needed.

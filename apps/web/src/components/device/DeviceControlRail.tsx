@@ -19,6 +19,7 @@ import {
   type LucideIcon,
 } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 
 export type DeviceRailAction = "home" | "screenshot" | "record" | "rotate" | "shutdown" | "detach";
@@ -82,6 +83,7 @@ export function DeviceControlRail(props: {
   landscape: boolean;
   onAction: (action: DeviceRailAction) => void;
 }) {
+  const { language, t } = useUiLanguage();
   return (
     <div className={cn("flex items-center justify-center gap-1", DEVICE_RAIL_HEIGHT_CLASS)}>
       {DEVICE_RAIL_GROUPS.map((group, groupIndex) => (
@@ -92,7 +94,9 @@ export function DeviceControlRail(props: {
           {group.items.map((item) => {
             const isRecordStop = item.id === "record" && props.recording;
             const Icon = isRecordStop ? DeviceRecordStopIcon : item.Icon;
-            const label = isRecordStop ? "Stop recording" : item.label;
+            const sourceLabel = isRecordStop ? "Stop recording" : item.label;
+            const label =
+              language === "zh-CN" && sourceLabel === "Home" ? "主屏幕" : t(sourceLabel);
             const pressed =
               item.id === "record"
                 ? props.recording

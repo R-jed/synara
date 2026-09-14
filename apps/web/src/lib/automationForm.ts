@@ -226,12 +226,25 @@ const DATE_TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
   hour: "numeric",
   minute: "2-digit",
 });
+const ZH_CN_DATE_TIME_FORMATTER = new Intl.DateTimeFormat("zh-CN", {
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
 
 export function formatDateTime(value: string | null): string {
   if (!value) return "Not scheduled";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return DATE_TIME_FORMATTER.format(date);
+}
+
+function formatDateTimeZhCn(value: string | null): string {
+  if (!value) return "未安排";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return ZH_CN_DATE_TIME_FORMATTER.format(date);
 }
 
 function timezoneSuffix(schedule: AutomationSchedule): string {
@@ -304,6 +317,42 @@ export function formatCadence(schedule: AutomationSchedule): string {
   }
 }
 
+function formatIntervalCadenceZhCn(seconds: number): string {
+  if (seconds === 3600) return "每小时";
+  if (seconds % 3600 === 0) return `每 ${seconds / 3600} 小时`;
+  if (seconds === 60) return "每分钟";
+  if (seconds % 60 === 0) return `每 ${seconds / 60} 分钟`;
+  if (seconds === 1) return "每秒";
+  return `每 ${seconds} 秒`;
+}
+
+function weekdayLabelZhCn(value: number): string {
+  return ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][value] ?? "周日";
+}
+
+export function formatCadenceForLanguage(
+  schedule: AutomationSchedule,
+  language: "en" | "zh-CN",
+): string {
+  if (language !== "zh-CN") return formatCadence(schedule);
+  switch (schedule.type) {
+    case "manual":
+      return "手动";
+    case "once":
+      return formatDateTimeZhCn(schedule.runAt);
+    case "interval":
+      return formatIntervalCadenceZhCn(schedule.everySeconds);
+    case "daily":
+      return `每天 ${formatClockTime(schedule.timeOfDay)}`;
+    case "weekdays":
+      return `工作日 ${formatClockTime(schedule.timeOfDay)}`;
+    case "weekly":
+      return `${weekdayLabelZhCn(schedule.dayOfWeek)} ${formatClockTime(schedule.timeOfDay)}`;
+    case "cron":
+      return `Cron ${schedule.expression}`;
+  }
+}
+
 function formatIntervalCadenceLong(seconds: number): string {
   if (seconds === 3600) return "Hourly";
   if (seconds % 3600 === 0) return `Every ${seconds / 3600} hours`;
@@ -317,6 +366,16 @@ export function formatCadenceLong(schedule: AutomationSchedule): string {
   return schedule.type === "interval"
     ? formatIntervalCadenceLong(schedule.everySeconds)
     : formatCadence(schedule);
+}
+
+export function formatCadenceLongForLanguage(
+  schedule: AutomationSchedule,
+  language: "en" | "zh-CN",
+): string {
+  if (language !== "zh-CN") return formatCadenceLong(schedule);
+  return schedule.type === "interval"
+    ? formatIntervalCadenceZhCn(schedule.everySeconds)
+    : formatCadenceForLanguage(schedule, language);
 }
 
 /**
@@ -336,6 +395,25 @@ export function formatNextRun(nextRunAt: string | null, now: number = Date.now()
   if (hours < 24) return hours === 1 ? "in 1 hour" : `in ${hours} hours`;
   const days = Math.round(hours / 24);
   return days === 1 ? "in 1 day" : `in ${days} days`;
+}
+
+export function formatNextRunForLanguage(
+  nextRunAt: string | null,
+  language: "en" | "zh-CN",
+  now: number = Date.now(),
+): string | null {
+  if (language !== "zh-CN") return formatNextRun(nextRunAt, now);
+  if (!nextRunAt) return null;
+  const time = new Date(nextRunAt).getTime();
+  if (Number.isNaN(time)) return null;
+  const seconds = Math.round((time - now) / 1000);
+  if (seconds < 60) return "现在";
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes} 分钟后`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} 小时后`;
+  const days = Math.round(hours / 24);
+  return `${days} 天后`;
 }
 
 export function weekdayLabel(value: number): string {

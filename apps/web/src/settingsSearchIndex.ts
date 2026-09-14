@@ -152,6 +152,12 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
     keywords: "Choose how Synara looks across the app. dark light system color",
   },
   {
+    id: "appearance:language",
+    section: "appearance",
+    title: "Language",
+    keywords: "interface language locale",
+  },
+  {
     id: "appearance:app-icon",
     section: "appearance",
     title: "App icon",
@@ -167,10 +173,28 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
     target: null,
   },
   {
-    id: "appearance:system-ui-font",
+    id: "appearance:ui-font",
     section: "appearance",
-    title: "Use system UI font",
-    keywords: "Use the operating system interface font throughout Synara.",
+    title: "UI font",
+    keywords: "system default installed local font family face style appearance theme",
+  },
+  {
+    id: "appearance:content-font",
+    section: "appearance",
+    title: "Content font",
+    keywords: "chat prose body installed local font family face style appearance theme",
+  },
+  {
+    id: "appearance:code-font",
+    section: "appearance",
+    title: "Code font",
+    keywords: "code monospace diff installed local font family face style appearance theme",
+  },
+  {
+    id: "appearance:reduce-motion",
+    section: "appearance",
+    title: "Reduce motion",
+    keywords: "animations transitions accessibility motion",
   },
   {
     id: "appearance:ui-density",
@@ -187,11 +211,10 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
       "Control how wide the chat column grows so tables and wide content get more room. standard wide full",
   },
   {
-    id: "appearance:base-font-size",
+    id: "appearance:font-size",
     section: "appearance",
-    title: "Base font size",
-    keywords:
-      "Adjust the app text base in pixels. Chat and UI typography scale proportionally. font",
+    title: "Interface and chat font size",
+    keywords: "Adjust interface and chat text together in pixels font size",
   },
   {
     id: "appearance:terminal-font-size",
@@ -204,7 +227,7 @@ export const SETTINGS_SEARCH_ENTRIES: readonly SettingsSearchEntry[] = [
     section: "appearance",
     title: "Terminal font",
     keywords:
-      "Type any monospace font installed on this device e.g. Fira Code. system monospace family",
+      "Choose an installed terminal font family and font face. search local fonts monospace",
   },
   {
     id: "appearance:font-smoothing",
@@ -468,15 +491,16 @@ export function settingsSectionLabel(section: SettingsSectionId): string {
 export function rankSettingsSearchEntries(
   query: string,
   limit: number,
+  translate: (text: string) => string = (text) => text,
 ): readonly SettingsSearchEntry[] {
   const trimmed = query.trim();
   if (trimmed.length === 0) {
     return [];
   }
   const ranked = rankProviderDiscoveryItems(SETTINGS_SEARCH_ENTRIES, trimmed, (entry) => [
-    { value: entry.title },
+    { value: translate(entry.title) },
     { value: entry.keywords, weight: 200 },
-    { value: settingsSectionLabel(entry.section), weight: 400 },
+    { value: translate(settingsSectionLabel(entry.section)), weight: 400 },
   ]);
   return ranked.slice(0, limit);
 }

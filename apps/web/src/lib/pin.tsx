@@ -11,8 +11,12 @@ import type { SVGProps } from "react";
 import { PinFilledIcon, PinIcon } from "./icons";
 
 /** Accessible verb for a pin toggle: "Pin <target>" when unpinned, "Unpin <target>" when pinned. */
-export function pinActionLabel(target: string, pinned: boolean): string {
-  return `${pinned ? "Unpin" : "Pin"} ${target}`;
+export function pinActionLabel(
+  target: string,
+  pinned: boolean,
+  translate: (text: string) => string = (text) => text,
+): string {
+  return `${translate(pinned ? "Unpin" : "Pin")} ${target}`;
 }
 
 // State-reflecting pin glyph: the solid fill-set pin once pinned, the outline pin

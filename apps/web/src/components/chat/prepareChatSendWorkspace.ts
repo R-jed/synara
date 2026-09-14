@@ -39,6 +39,7 @@ import type { Project } from "../../types";
 import { type Thread } from "../../types";
 import { formatPastedTextTitleSeed } from "./queuedComposerPreview";
 interface Input {
+  translate: (text: string) => string;
   activeThread: Thread;
   isServerThread: boolean;
   hasNativeUserMessages: boolean;
@@ -75,6 +76,7 @@ interface Input {
 }
 
 export async function prepareChatSendWorkspace({
+  translate,
   activeThread,
   isServerThread,
   hasNativeUserMessages,
@@ -232,7 +234,9 @@ export async function prepareChatSendWorkspace({
         targetProjectDefaultModelSelectionForSend = firstSendTarget.creation.defaultModelSelection;
       } catch (error) {
         const description =
-          error instanceof Error ? error.message : "Failed to create the selected project.";
+          error instanceof Error
+            ? error.message
+            : translate("Failed to create the selected project.");
         if (!isDuplicateProjectCreateError(description)) {
           throw error;
         }

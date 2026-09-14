@@ -18,6 +18,7 @@ import {
 } from "../ChatView.logic";
 import { resolveRuntimeModelDescriptor } from "./runtimeModelCapabilities";
 import { toastManager } from "../ui/toast";
+import { useUiLanguage } from "~/uiLanguage";
 
 interface ChatRuntimeModesInput {
   threadId: ThreadId;
@@ -46,6 +47,7 @@ export function useChatRuntimeModes({
   activeProviderStatus,
   scheduleComposerFocus,
 }: ChatRuntimeModesInput) {
+  const { t, tError } = useUiLanguage();
   const setComposerDraftRuntimeMode = useComposerDraftStore((state) => state.setRuntimeMode);
   const setDraftThreadContext = useComposerDraftStore((state) => state.setDraftThreadContext);
   const setComposerDraftInteractionMode = useComposerDraftStore(
@@ -79,8 +81,8 @@ export function useChatRuntimeModes({
           if (!api) {
             toastManager.add({
               type: "error",
-              title: "Could not update access mode",
-              description: "Synara is not connected to the server.",
+              title: t("Could not update access mode"),
+              description: t("Synara is not connected to the server."),
             });
             return false;
           }
@@ -110,8 +112,8 @@ export function useChatRuntimeModes({
           } catch (error) {
             toastManager.add({
               type: "error",
-              title: "Could not update access mode",
-              description: error instanceof Error ? error.message : "An unexpected error occurred.",
+              title: t("Could not update access mode"),
+              description: tError(error),
             });
             return false;
           }
@@ -133,6 +135,8 @@ export function useChatRuntimeModes({
       setComposerDraftRuntimeMode,
       setDraftThreadContext,
       threadId,
+      t,
+      tError,
     ],
   );
   const handleRuntimeModeChange = useCallback(
@@ -184,9 +188,8 @@ export function useChatRuntimeModes({
             .catch((error) => {
               toastManager.add({
                 type: "error",
-                title: "Could not update interaction mode",
-                description:
-                  error instanceof Error ? error.message : "An unexpected error occurred.",
+                title: t("Could not update interaction mode"),
+                description: tError(error),
               });
             });
         }
@@ -201,6 +204,8 @@ export function useChatRuntimeModes({
       setComposerDraftInteractionMode,
       setDraftThreadContext,
       threadId,
+      t,
+      tError,
     ],
   );
   const toggleInteractionMode = useCallback(() => {

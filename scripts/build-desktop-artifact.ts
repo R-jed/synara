@@ -532,6 +532,8 @@ function resolveDesktopRuntimeDependencies(
   return resolveCatalogDependencies(runtimeDependencies, catalog, "apps/desktop");
 }
 
+const LOCAL_CHECK_ONLY_UPDATE_REPOSITORY = "R-jed/synara";
+
 function resolveGitHubPublishConfig():
   | {
       readonly provider: "github";
@@ -543,7 +545,7 @@ function resolveGitHubPublishConfig():
   const rawRepo =
     process.env.SYNARA_DESKTOP_UPDATE_REPOSITORY?.trim() ||
     process.env.GITHUB_REPOSITORY?.trim() ||
-    "";
+    LOCAL_CHECK_ONLY_UPDATE_REPOSITORY;
   if (!rawRepo) return undefined;
 
   const [owner, repo, ...rest] = rawRepo.split("/");
@@ -1157,7 +1159,7 @@ const buildDesktopArtifact = Effect.fn("buildDesktopArtifact")(function* (
     );
   }
 
-  if (options.platform === "mac") {
+  if (options.platform === "mac" && options.target === "zip") {
     yield* Effect.log("[desktop-artifact] Repacking and validating macOS update zip...");
     const finalizedZip = yield* Effect.tryPromise({
       try: () =>
@@ -1184,6 +1186,9 @@ const buildDesktopArtifact = Effect.fn("buildDesktopArtifact")(function* (
 
   const copiedArtifacts: string[] = [];
   for (const entry of stageEntries) {
+    if (options.platform === "mac" && options.target === "dmg" && !entry.endsWith(".dmg")) {
+      continue;
+    }
     const from = path.join(stageDistDir, entry);
     const stat = yield* fs.stat(from).pipe(Effect.catch(() => Effect.succeed(null)));
     if (!stat || stat.type !== "File") continue;

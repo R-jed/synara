@@ -7,6 +7,7 @@
 import { cn } from "~/lib/utils";
 import type { ThemeMode, ThemeVariant } from "~/hooks/useTheme";
 import { useRadioGroupKeyboardNav } from "~/hooks/useRadioGroupKeyboardNav";
+import { useUiLanguage } from "~/uiLanguage";
 
 // The mockups always show a fixed grayscale rendering of each appearance — they must
 // look "light" and "dark" regardless of the app's current theme or chrome overrides,
@@ -174,6 +175,7 @@ export function ThemeModePicker({
   onValueChange: (value: ThemeMode) => void;
   ariaLabel: string;
 }) {
+  const { t } = useUiLanguage();
   const radioItemProps = useRadioGroupKeyboardNav({
     values: THEME_MODE_VALUES,
     value,
@@ -212,7 +214,7 @@ export function ThemeModePicker({
                 isActive ? "font-medium text-foreground" : "text-muted-foreground",
               )}
             >
-              {choice.label}
+              {t(choice.label)}
             </span>
           </button>
         );

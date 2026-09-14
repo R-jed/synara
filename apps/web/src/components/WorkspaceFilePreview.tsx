@@ -62,6 +62,7 @@ import { formatFileCommentRange, type FileCommentSelection } from "~/lib/fileCom
 import { showFileReferenceContextMenu } from "~/lib/fileReferenceContextMenu";
 import { gitWorkingTreeDiffQueryOptions } from "~/lib/gitReactQuery";
 import { PlusIcon } from "~/lib/icons";
+import { useUiLanguage } from "~/uiLanguage";
 import { toggleMarkdownTaskMarker } from "~/lib/markdownTaskList";
 import { isRpcCapacityExceededError } from "~/lib/expensiveReadRetry";
 import {
@@ -292,14 +293,15 @@ type EditableFileContentsProps = {
 };
 
 function PierreEditableFileContents(props: EditableFileContentsProps) {
+  const { t } = useUiLanguage();
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const editorId = useId();
   const labelEditor = useCallback(() => {
     editorContainerRef.current
       ?.querySelector("diffs-container")
       ?.shadowRoot?.querySelector<HTMLElement>('[contenteditable="true"]')
-      ?.setAttribute("aria-label", `Edit ${props.path}`);
-  }, [props.path]);
+      ?.setAttribute("aria-label", `${t("Edit")} ${props.path}`);
+  }, [props.path, t]);
   const editorObserverRef = useRef<MutationObserver | null>(null);
   const attachEditor = useCallback(() => {
     const shadowRoot = editorContainerRef.current?.querySelector("diffs-container")?.shadowRoot;
@@ -404,6 +406,7 @@ function EditableFileContents(props: EditableFileContentsProps) {
 }
 
 function NumberedPlainEditableFileContents(props: EditableFileContentsProps) {
+  const { t } = useUiLanguage();
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
   const lineCount = props.contents.split("\n").length;
@@ -433,7 +436,7 @@ function NumberedPlainEditableFileContents(props: EditableFileContentsProps) {
       <textarea
         ref={editorRef}
         className="editor-file-editor"
-        aria-label={`Edit ${props.path}`}
+        aria-label={`${t("Edit")} ${props.path}`}
         aria-busy={props.saving}
         aria-invalid={props.invalid ? "true" : undefined}
         value={props.contents}
@@ -511,11 +514,12 @@ const FILE_PREVIEW_SKELETON_LINES = [
 ];
 
 function FilePreviewLoadingState() {
+  const { t } = useUiLanguage();
   return (
     <div
       className="min-h-0 flex-1 space-y-2.5 overflow-hidden px-3 py-3"
       role="status"
-      aria-label="Loading file..."
+      aria-label={t("Loading file...")}
     >
       {FILE_PREVIEW_SKELETON_LINES.map((line) => (
         <div key={`${line.indent}-${line.width}`} className="flex h-3 items-center gap-2">
@@ -526,7 +530,7 @@ function FilePreviewLoadingState() {
           />
         </div>
       ))}
-      <span className="sr-only">Loading file...</span>
+      <span className="sr-only">{t("Loading file...")}</span>
     </div>
   );
 }
@@ -597,13 +601,18 @@ function resolveFileEditBuffer(
   return !dirty && sourceChanged ? makeFileEditBuffer(document) : current;
 }
 
-function readFileSaveError(error: unknown): string {
-  return error instanceof Error && error.message.length > 0
-    ? error.message
-    : "Could not save this file.";
+function readFileSaveError(
+  error: unknown,
+  fallback: string,
+  translate: (text: string) => string,
+): string {
+  if (!(error instanceof Error) || error.message.length === 0) return fallback;
+  const translated = translate(error.message);
+  return translated !== error.message || !/[A-Za-z]/.test(error.message) ? translated : fallback;
 }
 
 export function WorkspaceFilePreview(props: WorkspaceFilePreviewProps) {
+  const { t } = useUiLanguage();
   const liveRevalidationEnabled = props.liveRevalidationEnabled ?? true;
   const { resolvedTheme } = useTheme();
   const diffThemeName = resolveDiffThemeName(resolvedTheme);
@@ -870,7 +879,7 @@ export function WorkspaceFilePreview(props: WorkspaceFilePreviewProps) {
     if (!api) {
       setEditBuffer((current) => ({
         ...resolveFileEditBuffer(current, editableDocument),
-        error: "File saving is unavailable.",
+        error: t("File saving is unavailable."),
       }));
       return;
     }
@@ -914,7 +923,11 @@ export function WorkspaceFilePreview(props: WorkspaceFilePreviewProps) {
     } catch (error) {
       setEditBuffer((current) =>
         current?.key === documentKey
-          ? { ...current, saving: false, error: readFileSaveError(error) }
+          ? {
+              ...current,
+              saving: false,
+              error: readFileSaveError(error, t("Could not save this file."), t),
+            }
           : current,
       );
     }
@@ -951,7 +964,12 @@ export function WorkspaceFilePreview(props: WorkspaceFilePreviewProps) {
       })
       .catch((error: unknown) => {
         setEditBuffer((current) =>
-          current?.key === documentKey ? { ...current, error: readFileSaveError(error) } : current,
+          current?.key === documentKey
+            ? {
+                ...current,
+                error: readFileSaveError(error, t("Could not reload this file from disk."), t),
+              }
+            : current,
         );
       });
   };
@@ -1142,7 +1160,7 @@ export function WorkspaceFilePreview(props: WorkspaceFilePreviewProps) {
   if (!props.workspaceRoot && !fileIsLocalAbsolute && !fileIsScratchBinaryPreview) {
     return (
       <PanelStateMessage density="compact" fill="flex">
-        <p>No workspace is attached to this chat.</p>
+        <p>{t("No workspace is attached to this chat.")}</p>
       </PanelStateMessage>
     );
   }
@@ -1151,7 +1169,7 @@ export function WorkspaceFilePreview(props: WorkspaceFilePreviewProps) {
     return (
       props.emptyState ?? (
         <PanelStateMessage density="compact" fill="flex">
-          <p>Select a file from the explorer.</p>
+          <p>{t("Select a file from the explorer.")}</p>
         </PanelStateMessage>
       )
     );
@@ -1161,9 +1179,11 @@ export function WorkspaceFilePreview(props: WorkspaceFilePreviewProps) {
       return (
         <PanelStateMessage density="compact" fill="flex" className="items-start justify-start p-3">
           <p className="text-left text-[11px] text-destructive/85">
-            {localPreviewGrantQuery.error instanceof Error
-              ? localPreviewGrantQuery.error.message
-              : "Could not create local file preview grant."}
+            {readFileSaveError(
+              localPreviewGrantQuery.error,
+              t("Could not create local file preview grant."),
+              t,
+            )}
           </p>
         </PanelStateMessage>
       );
@@ -1234,7 +1254,7 @@ export function WorkspaceFilePreview(props: WorkspaceFilePreviewProps) {
             className="shrink-0 rounded-md px-2 py-1 font-medium text-foreground/80 hover:bg-foreground/8"
             onClick={handleEditBufferReload}
           >
-            Reload from disk
+            {t("Reload from disk")}
           </button>
         </div>
       ) : editBufferExternallyChanged ? (
@@ -1243,14 +1263,14 @@ export function WorkspaceFilePreview(props: WorkspaceFilePreviewProps) {
           className="flex shrink-0 items-center gap-3 border-b border-amber-500/25 bg-amber-500/5 px-3 py-2 text-[11px] text-foreground/80"
         >
           <span className="min-w-0 flex-1">
-            This file changed on disk. Your unsaved edits are preserved.
+            {t("This file changed on disk. Your unsaved edits are preserved.")}
           </span>
           <button
             type="button"
             className="shrink-0 rounded-md px-2 py-1 font-medium text-foreground/80 hover:bg-foreground/8"
             onClick={handleEditBufferReload}
           >
-            Reload from disk
+            {t("Reload from disk")}
           </button>
         </div>
       ) : showFileReadErrorIndicator ? (
@@ -1264,17 +1284,18 @@ export function WorkspaceFilePreview(props: WorkspaceFilePreviewProps) {
         >
           {fileReadCapacityError
             ? fileQuery.isFetching
-              ? "Refreshing file..."
-              : "File refresh delayed."
+              ? t("Refreshing file...")
+              : t("File refresh delayed.")
             : fileReadError instanceof Error
-              ? fileReadError.message
-              : "Could not refresh file."}
+              ? readFileSaveError(fileReadError, t("Could not refresh file."), t)
+              : t("Could not refresh file.")}
         </div>
       ) : null}
       {changeGutterEnabled && workingTreeDiffQuery.data?.truncated === true ? (
         <DiffTruncationWarning className="rounded-none border-x-0 border-t-0">
-          Only part of this file&apos;s working-tree diff is available. Change markers may be
-          incomplete.
+          {t(
+            "Only part of this file's working-tree diff is available. Change markers may be incomplete.",
+          )}
         </DiffTruncationWarning>
       ) : null}
       {locatingOutOfRootFile ? (
@@ -1302,7 +1323,9 @@ export function WorkspaceFilePreview(props: WorkspaceFilePreviewProps) {
       ) : !hasFileContents && fileReadError ? (
         <PanelStateMessage density="compact" fill="flex" className="items-start justify-start p-3">
           <p className="text-left text-[11px] text-destructive/85">
-            {fileReadError instanceof Error ? fileReadError.message : "Could not read file."}
+            {fileReadError instanceof Error
+              ? readFileSaveError(fileReadError, t("Could not read file."), t)
+              : t("Could not read file.")}
           </p>
         </PanelStateMessage>
       ) : !hasFileContents ? (
@@ -1360,7 +1383,9 @@ export function WorkspaceFilePreview(props: WorkspaceFilePreviewProps) {
                 <FilePreviewChangeGutter ranges={changeRanges} subtle={changeGutterSubtle} />
               ) : null}
               {!showMarkdownPreview && lineCount > 0 ? (
-                <span className="sr-only">{lineCount} lines</span>
+                <span className="sr-only">
+                  {lineCount} {lineCount === 1 ? t("line") : t("lines")}
+                </span>
               ) : null}
               {previewSelectionAction.pendingAction ? (
                 <TranscriptSelectionAction
@@ -1379,8 +1404,8 @@ export function WorkspaceFilePreview(props: WorkspaceFilePreviewProps) {
                     left: hoveredCommentLine.left,
                     height: hoveredCommentLine.height,
                   }}
-                  aria-label={`Comment on line ${hoveredCommentLine.lineNumber}`}
-                  title="Comment"
+                  aria-label={`${t("Comment on line")} ${hoveredCommentLine.lineNumber}`}
+                  title={t("Comment")}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={(event) => {
                     event.preventDefault();

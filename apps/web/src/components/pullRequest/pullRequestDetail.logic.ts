@@ -79,32 +79,35 @@ type PullRequestTimelineSource = Pick<
  *  merge, and showing "closed" for a merged pull request would misstate what happened. */
 export function buildPullRequestTimelineEvents(
   detail: PullRequestTimelineSource,
+  translate: (text: string) => string = (text) => text,
 ): PullRequestTimelineEvent[] {
   const events: PullRequestTimelineEvent[] = [
     {
       id: "created",
       at: detail.createdAt,
-      title: `${detail.author?.login ?? "Someone"} opened this pull request`,
+      title: `${detail.author?.login ?? translate("Someone")} ${translate("opened this pull request")}`,
       body: null,
     },
     ...detail.commits.map((commit) => ({
       id: commit.oid,
       at: commit.committedDate,
-      title: `Commit ${commit.oid.slice(0, 7)}`,
-      body: commit.messageHeadline || "No commit message.",
+      title: `${translate("Commit")} ${commit.oid.slice(0, 7)}`,
+      body: commit.messageHeadline || translate("No commit message."),
     })),
     ...detail.comments.map((comment) => ({
       id: comment.id,
       at: comment.createdAt,
-      title: `${comment.author?.login ?? "Someone"} ${comment.kind === "review" ? "reviewed" : "commented"}`,
+      title: `${comment.author?.login ?? translate("Someone")} ${translate(
+        comment.kind === "review" ? "reviewed" : "commented",
+      )}`,
       // Timeline previews are plain text, so raw markdown/HTML would print literally.
       body: pullRequestMarkdownPreview(comment.body) || null,
     })),
     ...(detail.mergedAt
-      ? [{ id: "merged", at: detail.mergedAt, title: "Pull request merged", body: null }]
+      ? [{ id: "merged", at: detail.mergedAt, title: translate("Pull request merged"), body: null }]
       : []),
     ...(detail.closedAt && !detail.mergedAt
-      ? [{ id: "closed", at: detail.closedAt, title: "Pull request closed", body: null }]
+      ? [{ id: "closed", at: detail.closedAt, title: translate("Pull request closed"), body: null }]
       : []),
   ];
   return events.toSorted((left, right) => left.at.localeCompare(right.at));

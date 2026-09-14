@@ -6,6 +6,7 @@ import type { HTMLAttributes } from "react";
 
 import { TriangleAlertIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 
 export const DEFAULT_DIFF_TRUNCATION_MESSAGE =
@@ -13,14 +14,15 @@ export const DEFAULT_DIFF_TRUNCATION_MESSAGE =
 
 export function DiffTruncationWarning({
   className,
-  children = DEFAULT_DIFF_TRUNCATION_MESSAGE,
+  children,
   ...props
 }: HTMLAttributes<HTMLDivElement>) {
+  const { t } = useUiLanguage();
   return (
     <Alert {...props} variant="warning" size="sm" className={cn("shrink-0", className)}>
       <TriangleAlertIcon aria-hidden="true" />
-      <AlertTitle>Partial diff</AlertTitle>
-      <AlertDescription>{children}</AlertDescription>
+      <AlertTitle>{t("Partial diff")}</AlertTitle>
+      <AlertDescription>{children ?? t(DEFAULT_DIFF_TRUNCATION_MESSAGE)}</AlertDescription>
     </Alert>
   );
 }

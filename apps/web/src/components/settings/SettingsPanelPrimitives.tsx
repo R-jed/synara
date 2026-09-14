@@ -196,6 +196,7 @@ export function SettingsListRow({
 
 export function SettingsRow({
   title,
+  anchorTitle,
   description,
   status,
   resetAction,
@@ -204,6 +205,7 @@ export function SettingsRow({
   onClick,
 }: {
   title: ReactNode;
+  anchorTitle?: string;
   description: string;
   status?: ReactNode;
   resetAction?: ReactNode;
@@ -213,7 +215,12 @@ export function SettingsRow({
 }) {
   // String-titled rows expose a stable anchor so the sidebar search can deep-link to them
   // via `?target=…`; scroll-margin keeps the row clear of the sticky settings header.
-  const anchorId = typeof title === "string" ? settingRowAnchorId(title) : undefined;
+  const anchorId =
+    anchorTitle !== undefined
+      ? settingRowAnchorId(anchorTitle)
+      : typeof title === "string"
+        ? settingRowAnchorId(title)
+        : undefined;
   return (
     <div
       id={anchorId}

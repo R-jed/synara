@@ -31,6 +31,7 @@ import {
 import { type NewProjectScriptInput } from "../ProjectScriptsControl";
 import { randomTerminalId } from "../terminal/terminalIds";
 import { toastManager } from "../ui/toast";
+import { getActiveUiLanguage, translateUiErrorText, translateUiText } from "~/uiLanguage";
 const EMPTY_LAST_INVOKED_SCRIPT_BY_PROJECT: Record<string, string> = {};
 interface ChatProjectScriptsInput {
   activeThreadId: ThreadId | null;
@@ -127,14 +128,15 @@ export function useChatProjectScripts({
         await runScriptInTargetTerminal();
         return { terminalId: targetTerminalId };
       } catch (error) {
-        setThreadError(
-          activeThreadId,
-          error instanceof Error ? error.message : `Failed to run script "${script.name}".`,
-        );
+        const language = getActiveUiLanguage();
+        const fallback = `${translateUiText(language, "Failed to run script")} "${script.name}".`;
+        setThreadError(activeThreadId, translateUiErrorText(language, error, fallback));
         if (options?.throwOnError) {
           throw error instanceof Error
             ? error
-            : new Error(`Failed to run script "${script.name}".`);
+            : new Error(
+                `${translateUiText(getActiveUiLanguage(), "Failed to run script")} "${script.name}".`,
+              );
         }
         return null;
       }
@@ -260,7 +262,9 @@ export function useChatProjectScripts({
       const deletedName = activeProject.scripts.find((s) => s.id === scriptId)?.name;
       // Resolved before the `try`: a value block (`??`) inside a try body makes React
       // Compiler bail out on the whole component.
-      const deletedScriptToastTitle = `Deleted action "${deletedName ?? "Unknown"}"`;
+      const deletedScriptToastTitle = `${translateUiText(getActiveUiLanguage(), "Deleted action")} "${
+        deletedName ?? translateUiText(getActiveUiLanguage(), "Unknown")
+      }"`;
 
       try {
         await persistProjectScripts({
@@ -274,10 +278,11 @@ export function useChatProjectScripts({
           title: deletedScriptToastTitle,
         });
       } catch (error) {
+        const language = getActiveUiLanguage();
         toastManager.add({
           type: "error",
-          title: "Could not delete action",
-          description: error instanceof Error ? error.message : "An unexpected error occurred.",
+          title: translateUiText(language, "Could not delete action"),
+          description: translateUiErrorText(language, error),
         });
       }
     },

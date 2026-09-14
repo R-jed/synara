@@ -6,6 +6,7 @@ import { pluralize } from "@synara/shared/text";
 
 import type { BrowserAnnotationDraft } from "~/lib/browserAnnotations";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { COMPOSER_ATTACHMENT_CHIP_CLASS_NAME } from "../composerInlineChip";
 import { Popover, PopoverPopup, PopoverTrigger } from "../ui/popover";
 import { BrowserAnnotationChip } from "./BrowserAnnotationChip";
@@ -27,6 +28,7 @@ export function BrowserAnnotationStrip({
   onRemove,
   className,
 }: BrowserAnnotationStripProps) {
+  const { language } = useUiLanguage();
   if (annotations.length === 0) {
     return null;
   }
@@ -60,13 +62,19 @@ export function BrowserAnnotationStrip({
                   COMPOSER_ATTACHMENT_CHIP_CLASS_NAME,
                   "h-6 shrink-0 px-2 transition-colors hover:bg-[var(--color-background-button-secondary-hover)]",
                 )}
-                aria-label={`Show ${hiddenAnnotations.length} more browser ${pluralize(
-                  hiddenAnnotations.length,
-                  "annotation",
-                )}`}
+                aria-label={
+                  language === "zh-CN"
+                    ? `显示另外 ${hiddenAnnotations.length} 个浏览器标注`
+                    : `Show ${hiddenAnnotations.length} more browser ${pluralize(
+                        hiddenAnnotations.length,
+                        "annotation",
+                      )}`
+                }
                 data-testid="browser-annotation-overflow"
               >
-                {overflowLabel(hiddenAnnotations.length)}
+                {language === "zh-CN"
+                  ? `+${hiddenAnnotations.length} 个其他标注`
+                  : overflowLabel(hiddenAnnotations.length)}
               </button>
             }
           />
@@ -78,7 +86,9 @@ export function BrowserAnnotationStrip({
           >
             <div className="min-w-0 py-1">
               <p className="px-2 pb-1.5 text-[11px] font-medium text-muted-foreground">
-                {hiddenAnnotations.length} more {pluralize(hiddenAnnotations.length, "annotation")}
+                {language === "zh-CN"
+                  ? `${hiddenAnnotations.length} 个其他标注`
+                  : `${hiddenAnnotations.length} more ${pluralize(hiddenAnnotations.length, "annotation")}`}
               </p>
               <div
                 className="max-h-52 overflow-y-auto overscroll-contain pr-0.5"

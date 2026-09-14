@@ -10,10 +10,14 @@ import type { WorkLogSynaraThreadCreation } from "../../session-logic";
 import { ProviderIcon } from "../ProviderIcon";
 import { SynaraLogo } from "../SynaraLogo";
 import { Button } from "../ui/button";
+import { useUiLanguage } from "~/uiLanguage";
 
-function threadMeta(thread: WorkLogSynaraThreadCreation["threads"][number]): string {
+function threadMeta(
+  thread: WorkLogSynaraThreadCreation["threads"][number],
+  t: (text: string) => string,
+): string {
   const model = formatModelDisplayName(thread.model) ?? thread.model;
-  const environment = thread.environment === "worktree" ? "Worktree" : "Local";
+  const environment = thread.environment === "worktree" ? t("Worktree") : t("Local");
   return `${PROVIDER_DISPLAY_NAMES[thread.provider]} · ${model} · ${environment}`;
 }
 
@@ -24,11 +28,14 @@ export const SynaraThreadCreationCard = memo(function SynaraThreadCreationCard({
   readonly creation: WorkLogSynaraThreadCreation;
   readonly onOpenThread?: (threadId: string) => void;
 }) {
+  const { t } = useUiLanguage();
   const singleThread = creation.threads.length === 1 ? creation.threads[0] : undefined;
-  const title = singleThread ? "Thread created" : `${creation.createdCount} threads created`;
+  const title = singleThread
+    ? t("Thread created")
+    : `${creation.createdCount} ${t("threads created")}`;
   const summary = singleThread
     ? singleThread.title
-    : `${creation.createdCount}/${creation.requestedCount} requested threads created`;
+    : `${creation.createdCount}/${creation.requestedCount} ${t("requested threads created")}`;
 
   return (
     <div
@@ -49,7 +56,7 @@ export const SynaraThreadCreationCard = memo(function SynaraThreadCreationCard({
           {singleThread ? (
             <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[length:var(--app-font-size-ui-xs,10px)] text-muted-foreground/52">
               <ProviderIcon provider={singleThread.provider} className="size-3 shrink-0" />
-              <span className="truncate">{threadMeta(singleThread)}</span>
+              <span className="truncate">{threadMeta(singleThread, t)}</span>
             </div>
           ) : null}
         </div>
@@ -61,7 +68,7 @@ export const SynaraThreadCreationCard = memo(function SynaraThreadCreationCard({
             className="shrink-0"
             onClick={() => onOpenThread(singleThread.threadId)}
           >
-            Open thread
+            {t("Open thread")}
           </Button>
         ) : null}
       </div>
@@ -79,7 +86,7 @@ export const SynaraThreadCreationCard = memo(function SynaraThreadCreationCard({
                   {thread.title}
                 </p>
                 <p className="truncate font-system-ui text-[length:var(--app-font-size-ui-xs,10px)] text-muted-foreground/52">
-                  {threadMeta(thread)}
+                  {threadMeta(thread, t)}
                 </p>
               </div>
               {onOpenThread ? (
@@ -90,7 +97,7 @@ export const SynaraThreadCreationCard = memo(function SynaraThreadCreationCard({
                   className="shrink-0"
                   onClick={() => onOpenThread(thread.threadId)}
                 >
-                  Open
+                  {t("Open")}
                 </Button>
               ) : null}
             </div>

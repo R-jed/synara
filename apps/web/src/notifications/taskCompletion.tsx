@@ -17,6 +17,7 @@ import { useStore } from "../store";
 import { createAllThreadsSelector } from "../storeSelectors";
 import { useTerminalStateStore } from "../terminalStateStore";
 import type { Thread } from "../types";
+import { useUiLanguage } from "../uiLanguage";
 import {
   buildTerminalAttentionCopy,
   buildTerminalCompletionCopy,
@@ -129,6 +130,7 @@ function showThreadToast(
   threadId: Thread["id"],
   tone: "success" | "warning",
   navigate: ReturnType<typeof useNavigate>,
+  translate: (text: string) => string,
 ): void {
   const { body, title } = copy;
   toastManager.add({
@@ -142,14 +144,15 @@ function showThreadToast(
       dismissAfterVisibleMs: 8000,
     },
     actionProps: {
-      "aria-label": `Open ${title}`,
-      children: "Open",
+      "aria-label": translate("Open {title}").replace("{title}", title),
+      children: translate("Open"),
       onClick: () => focusThread(threadId, navigate),
     },
   });
 }
 
 export function TaskCompletionNotifications() {
+  const { t } = useUiLanguage();
   const { settings } = useAppSettings();
   const navigate = useNavigate();
   const activeThreadId = useParams({
@@ -258,7 +261,7 @@ export function TaskCompletionNotifications() {
 
     for (const completion of completions) {
       notifiedCompletionKeysRef.current.add(completedThreadNotificationKey(completion));
-      const copy = buildTaskCompletionCopy(completion);
+      const copy = buildTaskCompletionCopy(completion, t);
       if (
         settings.enableTaskCompletionToasts &&
         shouldShowThreadNotificationToast({
@@ -266,7 +269,7 @@ export function TaskCompletionNotifications() {
           visibleThreadIds,
         })
       ) {
-        showThreadToast(copy, completion.threadId, "success", navigate);
+        showThreadToast(copy, completion.threadId, "success", navigate, t);
       }
 
       if (shouldAttemptSystemNotification) {
@@ -275,7 +278,7 @@ export function TaskCompletionNotifications() {
     }
 
     for (const candidate of inputNeededCandidates) {
-      const copy = buildInputNeededCopy(candidate);
+      const copy = buildInputNeededCopy(candidate, t);
       if (
         settings.enableTaskCompletionToasts &&
         shouldShowThreadNotificationToast({
@@ -283,7 +286,7 @@ export function TaskCompletionNotifications() {
           visibleThreadIds,
         })
       ) {
-        showThreadToast(copy, candidate.threadId, "warning", navigate);
+        showThreadToast(copy, candidate.threadId, "warning", navigate, t);
       }
 
       if (shouldAttemptSystemNotification) {
@@ -292,7 +295,7 @@ export function TaskCompletionNotifications() {
     }
 
     for (const completion of terminalCompletions) {
-      const copy = buildTerminalCompletionCopy(completion);
+      const copy = buildTerminalCompletionCopy(completion, t);
       if (
         settings.enableTaskCompletionToasts &&
         shouldShowThreadNotificationToast({
@@ -300,7 +303,7 @@ export function TaskCompletionNotifications() {
           visibleThreadIds,
         })
       ) {
-        showThreadToast(copy, completion.threadId, "success", navigate);
+        showThreadToast(copy, completion.threadId, "success", navigate, t);
       }
 
       if (shouldAttemptSystemNotification) {
@@ -309,7 +312,7 @@ export function TaskCompletionNotifications() {
     }
 
     for (const candidate of terminalAttentionCandidates) {
-      const copy = buildTerminalAttentionCopy(candidate);
+      const copy = buildTerminalAttentionCopy(candidate, t);
       if (
         settings.enableTaskCompletionToasts &&
         shouldShowThreadNotificationToast({
@@ -317,7 +320,7 @@ export function TaskCompletionNotifications() {
           visibleThreadIds,
         })
       ) {
-        showThreadToast(copy, candidate.threadId, "warning", navigate);
+        showThreadToast(copy, candidate.threadId, "warning", navigate, t);
       }
 
       if (shouldAttemptSystemNotification) {
@@ -329,6 +332,7 @@ export function TaskCompletionNotifications() {
     settings.enableSystemTaskCompletionNotifications,
     settings.enableTaskCompletionToasts,
     terminalStateByThreadId,
+    t,
     threads,
     threadsHydrated,
     visibleThreadIds,

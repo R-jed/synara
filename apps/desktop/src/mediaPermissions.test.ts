@@ -82,6 +82,13 @@ describe("isTrustedMediaPermissionRequest", () => {
       isTrustedMediaPermissionRequest(trusted, trusted, {
         mediaTypes: ["audio"],
         isMainFrame: true,
+        embeddingOrigin: "synara://app/index.html",
+      }),
+    ).toBe(false);
+    expect(
+      isTrustedMediaPermissionRequest(trusted, trusted, {
+        mediaTypes: ["audio"],
+        isMainFrame: true,
         requestingUrl: "https://untrusted.example/",
       }),
     ).toBe(false);

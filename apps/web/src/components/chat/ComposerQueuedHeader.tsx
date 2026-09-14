@@ -9,6 +9,7 @@
 import type { QueuedComposerTurn } from "../../composerDraftStore";
 import { SteerIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import ChatMarkdown from "../ChatMarkdown";
 import {
   ComposerStackedPanelRow,
@@ -55,6 +56,11 @@ export function compactQueuedComposerPreviewMarkdown(value: string): string {
   return normalized.length > 0 ? normalized : "Queued follow-up";
 }
 
+function localizedQueuedComposerPreview(value: string, t: (text: string) => string): string {
+  const preview = compactQueuedComposerPreviewMarkdown(value);
+  return preview === "Queued follow-up" || preview === "Code block" ? t(preview) : preview;
+}
+
 interface ComposerQueuedHeaderProps {
   queuedTurns: QueuedComposerTurn[];
   onSteer: (queuedTurn: QueuedComposerTurn) => void;
@@ -73,6 +79,7 @@ export const ComposerQueuedHeader = function ComposerQueuedHeader({
   cwd,
   attachedToPrevious: attachedToPreviousProp,
 }: ComposerQueuedHeaderProps) {
+  const { t } = useUiLanguage();
   const attachedToPrevious = attachedToPreviousProp ?? false;
   if (queuedTurns.length === 0) {
     return null;
@@ -90,7 +97,7 @@ export const ComposerQueuedHeader = function ComposerQueuedHeader({
           <ComposerStackedPanelRowMain>
             <SteerIcon className={COMPOSER_STACKED_PANEL_ICON_CLASS_NAME} />
             <ChatMarkdown
-              text={compactQueuedComposerPreviewMarkdown(queuedTurn.previewText)}
+              text={localizedQueuedComposerPreview(queuedTurn.previewText, t)}
               cwd={cwd}
               isStreaming={false}
               className={COMPOSER_STACKED_PANEL_PREVIEW_MARKDOWN_CLASS_NAME}

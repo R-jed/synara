@@ -5,6 +5,7 @@ import { XIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { ScrollArea } from "~/components/ui/scroll-area";
+import { useUiLanguage } from "~/uiLanguage";
 
 const Sheet = SheetPrimitive.Root;
 
@@ -72,6 +73,7 @@ function SheetPopup({
   side?: "right" | "left" | "top" | "bottom";
   variant?: "default" | "inset";
 }) {
+  const { t } = useUiLanguage();
   const showCloseButton = showCloseButtonProp ?? true;
   const keepMounted = keepMountedProp ?? false;
   const side = sideProp ?? "right";
@@ -101,7 +103,7 @@ function SheetPopup({
           {children}
           {showCloseButton && (
             <SheetPrimitive.Close
-              aria-label="Close"
+              aria-label={t("Close")}
               className="absolute end-2 top-2"
               render={<Button size="icon" variant="ghost" />}
             >

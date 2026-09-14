@@ -24,8 +24,9 @@ import {
   WorktreeIcon,
 } from "~/lib/icons";
 import { resolveThreadEnvironmentPresentation } from "~/lib/threadEnvironment";
-import { formatRelativeTime } from "~/lib/relativeTime";
+import { formatRelativeTimeForLanguage } from "~/lib/relativeTime";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { formatElapsed } from "../../session-logic";
 import { RAISED_SURFACE_CHROME_CLASS_NAME } from "../chat/composerPickerStyles";
 import { KanbanStatusIcon } from "./KanbanStatusIcon";
@@ -53,18 +54,19 @@ export interface KanbanCardViewProps {
  * an idle terminal is not a draft, so column status would be misleading.
  */
 function KanbanCardColumnLabel({ card }: { card: KanbanCard }) {
+  const { t } = useUiLanguage();
   if (card.isTerminal) {
     return (
       <span className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground/80">
         <TerminalIcon className="size-3 shrink-0" aria-hidden />
-        Terminal
+        {t("Terminal")}
       </span>
     );
   }
   return (
     <span className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground/80">
       <KanbanStatusIcon column={card.column} className="size-3" />
-      {KANBAN_COLUMN_LABELS[card.column]}
+      {t(KANBAN_COLUMN_LABELS[card.column])}
     </span>
   );
 }
@@ -98,6 +100,7 @@ function KanbanCardViewComponent({
   isDragSource: isDragSourceProp,
   nowMs,
 }: KanbanCardViewProps) {
+  const { language, t } = useUiLanguage();
   const isOverlay = isOverlayProp ?? false;
   const isDragSource = isDragSourceProp ?? false;
   // Thread-backed draft cards keep their own title, so the unsent prompt is shown
@@ -128,6 +131,13 @@ function KanbanCardViewComponent({
     card.activeWorkStartedAt && nowMs
       ? formatElapsed(card.activeWorkStartedAt, new Date(nowMs).toISOString())
       : null;
+  const activeWorkElapsedLabel =
+    activeWorkElapsed && language === "zh-CN"
+      ? activeWorkElapsed
+          .replace(/(\d+(?:\.\d+)?)ms\b/g, "$1 毫秒")
+          .replace(/(\d+(?:\.\d+)?)s\b/g, "$1 秒")
+          .replace(/(\d+)m\b/g, "$1 分钟")
+      : activeWorkElapsed;
 
   return (
     <button
@@ -152,7 +162,7 @@ function KanbanCardViewComponent({
           {card.title}
         </span>
         {card.thread?.isPinned ? (
-          <span title="Pinned" className="flex shrink-0 items-center pt-0.5">
+          <span title={t("Pinned")} className="flex shrink-0 items-center pt-0.5">
             <PinFilledIcon className="size-3 text-muted-foreground/60" aria-hidden />
           </span>
         ) : null}
@@ -184,7 +194,7 @@ function KanbanCardViewComponent({
           </span>
         ) : null}
         {isForked ? (
-          <span title="Forked thread" className="flex shrink-0 items-center">
+          <span title={t("Forked thread")} className="flex shrink-0 items-center">
             <GoRepoForked
               className="size-3 text-emerald-600 dark:text-emerald-300/90"
               aria-hidden
@@ -204,22 +214,22 @@ function KanbanCardViewComponent({
                 <LoaderIcon className="size-3 shrink-0 animate-spin" aria-hidden />
                 Starting…
               </span>
-              {activeWorkElapsed ? (
+              {activeWorkElapsedLabel ? (
                 <span className="shrink-0 text-[11px] text-muted-foreground/70">
-                  Worked for {activeWorkElapsed}
+                  {t("Worked for")} {activeWorkElapsedLabel}
                 </span>
               ) : null}
             </>
           ) : (
             <>
               <KanbanCardStatusPill card={card} />
-              {activeWorkElapsed ? (
+              {activeWorkElapsedLabel ? (
                 <span className="shrink-0 text-[11px] text-muted-foreground/70">
-                  Worked for {activeWorkElapsed}
+                  {t("Worked for")} {activeWorkElapsedLabel}
                 </span>
               ) : card.timestamp ? (
                 <span className="shrink-0 text-[11px] text-muted-foreground/70">
-                  {formatRelativeTime(card.timestamp)}
+                  {formatRelativeTimeForLanguage(card.timestamp, language)}
                 </span>
               ) : null}
             </>

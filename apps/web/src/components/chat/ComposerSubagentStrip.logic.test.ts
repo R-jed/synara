@@ -362,6 +362,7 @@ describe("deriveComposerSubagentStripItems", () => {
       key: "parent:thread-main",
       threadId: "thread-main",
       label: "Fix the bug",
+      isFallbackLabel: false,
     });
     expect(subagentRows(fromSubagentView)).toHaveLength(1);
 

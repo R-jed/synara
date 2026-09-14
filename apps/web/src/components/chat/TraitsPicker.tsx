@@ -13,6 +13,7 @@ import {
 import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDownIcon, FastModeIcon, FastModeOutlineIcon, SettingsIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { Button } from "../ui/button";
 import {
   Menu,
@@ -162,6 +163,7 @@ export function FastModeToggle({
   onToggle: () => void;
   tone?: "muted" | "accent";
 }) {
+  const { t } = useUiLanguage();
   const tone = toneProp ?? "muted";
   const Icon = enabled ? FastModeIcon : FastModeOutlineIcon;
   return (
@@ -170,7 +172,7 @@ export function FastModeToggle({
         render={
           <button
             type="button"
-            aria-label="Fast mode"
+            aria-label={t("Fast mode")}
             aria-pressed={enabled}
             className={cn(
               "flex shrink-0 cursor-pointer items-center justify-center transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--color-border-focus)]/60",
@@ -193,7 +195,7 @@ export function FastModeToggle({
         />
       </TooltipTrigger>
       <TooltipPopup side="top" variant="picker">
-        {enabled ? "Fast mode on" : "Fast mode off"}
+        {enabled ? t("Fast mode on") : t("Fast mode off")}
       </TooltipPopup>
     </Tooltip>
   );
@@ -230,15 +232,16 @@ function TraitRadioSection({
   onValueChange: (value: string) => void;
   onSelectionComplete?: (() => void) | undefined;
 }) {
+  const { t } = useUiLanguage();
   return (
     <MenuGroup>
       {labelTrailing ? (
         <MenuGroupLabel className="flex items-center justify-between gap-2">
-          {label}
+          {t(label)}
           {labelTrailing}
         </MenuGroupLabel>
       ) : (
-        <MenuGroupLabel>{label}</MenuGroupLabel>
+        <MenuGroupLabel>{t(label)}</MenuGroupLabel>
       )}
       {note}
       <MenuRadioGroup value={value} onValueChange={onValueChange}>
@@ -250,8 +253,8 @@ function TraitRadioSection({
               {...(disabled ? { disabled: true } : {})}
               onClick={() => onSelectionComplete?.()}
             >
-              {option.label}
-              {option.isDefault ? " (default)" : ""}
+              {t(option.label)}
+              {option.isDefault ? ` (${t("default")})` : ""}
             </MenuRadioItem>
           );
           return option.description ? (
@@ -304,6 +307,7 @@ export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
   modelOptions,
   onSelectionComplete,
 }: TraitsMenuContentProps) {
+  const { t } = useUiLanguage();
   const excludeEffort = excludeEffortProp ?? false;
   const includeFastMode = (includeFastModeProp ?? true) && !excludeEffort;
   const selection = getComposerTraitSelection(provider, model, prompt, modelOptions, runtimeModel);
@@ -379,11 +383,11 @@ export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
     <>
       {thinkingEnabled !== null ? (
         <TraitRadioSection
-          label="Thinking"
+          label={t("Thinking")}
           value={thinkingEnabled ? "on" : "off"}
           options={[
-            { value: "on", label: "On (default)" },
-            { value: "off", label: "Off" },
+            { value: "on", label: t("On (default)") },
+            { value: "off", label: t("Off") },
           ]}
           onValueChange={(value) => commitTrait({ thinking: value === "on" })}
           onSelectionComplete={onSelectionComplete}
@@ -393,7 +397,7 @@ export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
         <>
           {hasPriorContextWindowSection ? <MenuDivider /> : null}
           <TraitRadioSection
-            label={contextWindowDescriptor?.label ?? "Context"}
+            label={t(contextWindowDescriptor?.label ?? "Context")}
             value={contextWindow ?? defaultContextWindow ?? ""}
             options={contextWindowOptions.map((option) => ({
               value: option.value,
@@ -409,7 +413,7 @@ export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
         <>
           {hasPriorEffortSection ? <MenuDivider /> : null}
           <TraitRadioSection
-            label={provider === "opencode" ? "Variant" : "Effort"}
+            label={t(provider === "opencode" ? "Variant" : "Effort")}
             labelTrailing={
               showsFastModeEffortToggle ? (
                 <FastModeToggle
@@ -423,7 +427,7 @@ export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
             note={
               ultrathinkPromptControlled ? (
                 <div className="px-2 pb-1.5 text-muted-foreground/80 text-xs">
-                  Remove Ultrathink from the prompt to change effort.
+                  {t("Remove Ultrathink from the prompt to change effort.")}
                 </div>
               ) : undefined
             }
@@ -444,11 +448,11 @@ export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
         <>
           {hasPriorFastModeSection ? <MenuDivider /> : null}
           <TraitRadioSection
-            label="Speed"
+            label={t("Speed")}
             value={fastModeEnabled ? "on" : "off"}
             options={[
-              { value: "off", label: "Default" },
-              { value: "on", label: "Fast" },
+              { value: "off", label: t("Default") },
+              { value: "on", label: t("Fast") },
             ]}
             onValueChange={(value) => commitTrait({ fastMode: value === "on" })}
             onSelectionComplete={onSelectionComplete}
@@ -459,7 +463,7 @@ export const TraitsMenuContent = memo(function TraitsMenuContentImpl({
         <>
           {hasVisibleControls ? <MenuDivider /> : null}
           <TraitRadioSection
-            label="Agent"
+            label={t("Agent")}
             value={selectedAgent ?? defaultAgent ?? ""}
             options={agentOptions.map((agent) => ({
               value: agent.name,
@@ -503,6 +507,7 @@ export const TraitsPicker = memo(function TraitsPicker({
   // summary moves to title/sr-only.
   hideLabel?: boolean;
 }) {
+  const { t } = useUiLanguage();
   const includeFastMode = includeFastModeProp ?? true;
   const hideLabel = hideLabelProp ?? false;
   const [uncontrolledMenuOpen, setUncontrolledMenuOpen] = useState(false);
@@ -565,6 +570,10 @@ export const TraitsPicker = memo(function TraitsPicker({
     runtimeModel,
     runtimeAgents,
   });
+  const localizedHiddenLabelTitle = hiddenLabelTitle
+    .split(" · ")
+    .map((part) => t(part))
+    .join(" · ");
 
   const isCodexStyle = provider === "codex";
 
@@ -573,31 +582,35 @@ export const TraitsPicker = memo(function TraitsPicker({
       size="sm"
       variant="chrome"
       className={`min-w-0 shrink-0 justify-start overflow-hidden whitespace-nowrap px-2 sm:px-2.5 [&_svg]:mx-0 ${COMPOSER_PICKER_TRIGGER_TEXT_CLASS_NAME}`}
-      aria-label="Change effort, context, and speed"
-      {...(hideLabel && hiddenLabelTitle.length > 0 ? { title: hiddenLabelTitle } : {})}
+      aria-label={t("Change effort, context, and speed")}
+      {...(hideLabel && localizedHiddenLabelTitle.length > 0
+        ? { title: localizedHiddenLabelTitle }
+        : {})}
     />
   );
 
   const triggerContent = hideLabel ? (
     <span className="flex min-w-0 items-center gap-1">
       <SettingsIcon aria-hidden="true" className="size-3.5 shrink-0 opacity-75" />
-      {hiddenLabelTitle.length > 0 ? <span className="sr-only">{hiddenLabelTitle}</span> : null}
+      {localizedHiddenLabelTitle.length > 0 ? (
+        <span className="sr-only">{localizedHiddenLabelTitle}</span>
+      ) : null}
       <ChevronDownIcon aria-hidden="true" className="size-3 shrink-0 opacity-60" />
     </span>
   ) : isCodexStyle ? (
     <span className="flex min-w-0 w-full items-center gap-2 overflow-hidden">
       <span className="min-w-0 flex flex-1 items-center gap-1.5 truncate">
         {visiblePrimaryTriggerLabel ? (
-          <span className="truncate">{visiblePrimaryTriggerLabel}</span>
+          <span className="truncate">{t(visiblePrimaryTriggerLabel)}</span>
         ) : (
-          <span className="truncate">Options</span>
+          <span className="truncate">{t("Options")}</span>
         )}
         {showsFastBadge ? (
           <>
             <span className="shrink-0 text-muted-foreground/45">·</span>
             <span className="inline-flex shrink-0 items-center gap-1">
               <FastModeIcon aria-hidden="true" className="size-3 text-[hsl(var(--chart-4))]" />
-              <span>Fast</span>
+              <span>{t("Fast")}</span>
             </span>
           </>
         ) : null}
@@ -606,7 +619,7 @@ export const TraitsPicker = memo(function TraitsPicker({
             {visiblePrimaryTriggerLabel || showsFastBadge ? (
               <span className="shrink-0 text-muted-foreground/45">·</span>
             ) : null}
-            <span className="shrink-0">{contextWindowLabel}</span>
+            <span className="shrink-0">{t(contextWindowLabel)}</span>
           </>
         ) : null}
       </span>
@@ -615,13 +628,13 @@ export const TraitsPicker = memo(function TraitsPicker({
   ) : (
     <>
       <span className="inline-flex items-center gap-1.5">
-        <span>{visiblePrimaryTriggerLabel ?? "Options"}</span>
+        <span>{visiblePrimaryTriggerLabel ? t(visiblePrimaryTriggerLabel) : t("Options")}</span>
         {showsFastBadge ? (
           <>
             <span className="text-muted-foreground/45">·</span>
             <span className="inline-flex items-center gap-1">
               <FastModeIcon aria-hidden="true" className="size-3 text-[hsl(var(--chart-4))]" />
-              <span>Fast</span>
+              <span>{t("Fast")}</span>
             </span>
           </>
         ) : null}
@@ -630,7 +643,7 @@ export const TraitsPicker = memo(function TraitsPicker({
             {visiblePrimaryTriggerLabel || showsFastBadge ? (
               <span className="text-muted-foreground/45">·</span>
             ) : null}
-            <span>{contextWindowLabel}</span>
+            <span>{t(contextWindowLabel)}</span>
           </>
         ) : null}
       </span>
@@ -653,7 +666,7 @@ export const TraitsPicker = memo(function TraitsPicker({
           {!isMenuOpen ? (
             <TooltipPopup side="top" sideOffset={6} variant="picker">
               <span className="inline-flex items-center gap-2 px-1 py-0.5">
-                <span>Change effort, context, and speed</span>
+                <span>{t("Change effort, context, and speed")}</span>
                 <ShortcutKbd
                   shortcutLabel={shortcutLabel}
                   className="h-4 min-w-4 px-1 text-[length:var(--app-font-size-ui-2xs,9px)] text-muted-foreground"

@@ -32,7 +32,7 @@ import {
 import {
   automationQueryKey,
   createInputFromForm,
-  formatCadence,
+  formatCadenceForLanguage,
   isFormSubmittable,
   type AutomationFormState,
 } from "../../routes/-automations.shared";
@@ -40,6 +40,7 @@ import type { Project } from "../../types";
 import { type Thread } from "../../types";
 import { useChatAutomationSetup } from "./useChatAutomationSetup";
 import { toastManager } from "../ui/toast";
+import { useUiLanguage } from "~/uiLanguage";
 function automationScheduleActivityPayload(schedule: AutomationSchedule) {
   switch (schedule.type) {
     case "manual":
@@ -124,6 +125,7 @@ export function useChatAutomationCreation({
   automationDraftWarnings,
   acknowledgedAutomationWarnings,
 }: ChatAutomationCreationInput) {
+  const { language, t, tError } = useUiLanguage();
   const createAutomationFromForm = useCallback(
     async (input: {
       readonly form: AutomationFormState;
@@ -173,13 +175,16 @@ export function useChatAutomationCreation({
                   id: EventId.makeUnsafe(randomUUID()),
                   tone: "info",
                   kind: "automation.created",
-                  summary: `Created automation: ${definition.name} - ${formatCadence(definition.schedule)}`,
+                  summary: `${t("Automation created")}: ${definition.name} - ${formatCadenceForLanguage(
+                    definition.schedule,
+                    language,
+                  )}`,
                   payload: {
                     source: "chat-composer",
                     automationId: definition.id,
                     automationName: definition.name,
                     mode: definition.mode,
-                    cadenceLabel: formatCadence(definition.schedule),
+                    cadenceLabel: formatCadenceForLanguage(definition.schedule, language),
                     schedule: automationScheduleActivityPayload(definition.schedule),
                   },
                   turnId: null,
@@ -190,9 +195,10 @@ export function useChatAutomationCreation({
             } catch {
               toastManager.add({
                 type: "warning",
-                title: "Thread note not added",
-                description:
+                title: t("Thread note not added"),
+                description: t(
                   "The automation was created, but Synara could not add the activity note.",
+                ),
               });
             }
           })();
@@ -202,17 +208,19 @@ export function useChatAutomationCreation({
         resetAutomationDraftState();
         toastManager.add({
           type: "success",
-          title: "Automation created",
-          description: `${definition.name} - ${formatCadence(definition.schedule)}`,
+          title: t("Automation created"),
+          description: `${definition.name} - ${formatCadenceForLanguage(
+            definition.schedule,
+            language,
+          )}`,
         });
         return true;
       })()
         .catch((error: unknown) => {
           toastManager.add({
             type: "error",
-            title: "Could not create automation",
-            description:
-              error instanceof Error ? error.message : "Synara could not save the automation.",
+            title: t("Could not create automation"),
+            description: tError(error, "Synara could not save the automation."),
           });
           return false;
         })
@@ -227,11 +235,14 @@ export function useChatAutomationCreation({
       automationDraftSubmittingRef,
       clearComposerInput,
       isServerThread,
+      language,
       providerOptionsForDispatch,
       queryClient,
       resetAutomationDraftState,
       setIsAutomationDraftSubmitting,
       threadId,
+      t,
+      tError,
     ],
   );
 
@@ -246,8 +257,8 @@ export function useChatAutomationCreation({
       if (!api || !activeProject || !activeThread) {
         toastManager.add({
           type: "warning",
-          title: "Chat required",
-          description: "Open a chat before creating a chat-bound automation.",
+          title: t("Chat required"),
+          description: t("Open a chat before creating a chat-bound automation."),
         });
         return null;
       }
@@ -285,8 +296,8 @@ export function useChatAutomationCreation({
         if (result === "unavailable") {
           toastManager.add({
             type: "error",
-            title: "Could not create chat",
-            description: "Synara could not promote this draft before saving the automation.",
+            title: t("Could not create chat"),
+            description: t("Synara could not promote this draft before saving the automation."),
           });
           return null;
         }
@@ -309,16 +320,24 @@ export function useChatAutomationCreation({
       } catch (error) {
         toastManager.add({
           type: "error",
-          title: "Could not create chat",
-          description:
-            error instanceof Error
-              ? error.message
-              : "Synara could not promote this draft before saving the automation.",
+          title: t("Could not create chat"),
+          description: tError(
+            error,
+            "Synara could not promote this draft before saving the automation.",
+          ),
         });
         return null;
       }
     },
-    [activeProject, activeThread, activeThreadAssociatedWorktree, isServerThread, threadNotes],
+    [
+      activeProject,
+      activeThread,
+      activeThreadAssociatedWorktree,
+      isServerThread,
+      t,
+      tError,
+      threadNotes,
+    ],
   );
 
   const prepareAutomationFormForCreate = useCallback(

@@ -12,6 +12,7 @@ import { DisclosureRegion } from "../ui/DisclosureRegion";
 import { DISCLOSURE_CLEANUP_BUFFER_MS, DISCLOSURE_TRANSITION_MS } from "~/lib/disclosureMotion";
 import { cn } from "~/lib/utils";
 import { MUTED_LABEL_TEXT_CLASS_NAME } from "~/surfaceStyles";
+import { useUiLanguage } from "~/uiLanguage";
 import { extractWebFetchUrl } from "../../lib/toolCallLabel";
 import { LinkChipIcon } from "../LinkChipIcon";
 import type { ToolCallGroupSummary } from "./toolCallGroup.logic";
@@ -25,7 +26,33 @@ export function ToolCallGroupSummaryRow(props: {
   renderChildren: () => ReactNode;
 }) {
   const { summary, open, onToggle, fontSizePx, renderChildren } = props;
+  const { language } = useUiLanguage();
   const [keepChildrenMounted, setKeepChildrenMounted] = useState(open);
+  const summaryLabel =
+    language === "zh-CN"
+      ? summary.parts
+          .map((part) => {
+            switch (part.category) {
+              case "command":
+                return `运行了 ${part.count} 条命令`;
+              case "edit":
+                return `编辑了 ${part.count} 个文件`;
+              case "read":
+                return `读取了 ${part.count} 个文件`;
+              case "search":
+                return `搜索了 ${part.count} 个文件`;
+              case "agent":
+                return `运行了 ${part.count} 个 Agent 任务`;
+              case "tool":
+                return `使用了 ${part.count} 个工具`;
+              case "other":
+                return summary.parts.length === 1
+                  ? `运行了 ${part.count} 次工具调用`
+                  : `其他 ${part.count} 次工具调用`;
+            }
+          })
+          .join("，")
+      : summary.label;
 
   useEffect(() => {
     if (open) {
@@ -65,7 +92,7 @@ export function ToolCallGroupSummaryRow(props: {
             renderWorkEntryIcon(workEntryLeftIcon(summary.iconEntry), "size-3.5")
           )}
         </span>
-        <span>{summary.label}</span>
+        <span>{summaryLabel}</span>
         {/* One step quieter than the label, matching the per-row disclosure chevron. */}
         <DisclosureChevron open={open} className="text-muted-foreground/70" />
       </button>

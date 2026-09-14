@@ -42,6 +42,7 @@ export interface ComposerSubagentStripParentItem {
   key: string;
   threadId: ThreadId;
   label: string;
+  isFallbackLabel: boolean;
 }
 
 export type ComposerSubagentStripRow = ComposerSubagentStripItem | ComposerSubagentStripParentItem;
@@ -170,6 +171,7 @@ function withParentRow(
       key: `parent:${parentRow.threadId}`,
       threadId: parentRow.threadId,
       label: parentRow.label ?? "Main thread",
+      isFallbackLabel: parentRow.label === null,
     },
     ...items,
   ];

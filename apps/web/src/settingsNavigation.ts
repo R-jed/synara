@@ -76,7 +76,7 @@ export const SETTINGS_NAV_ITEMS: readonly SettingsNavItem[] = [
     id: "appearance",
     group: "personal",
     label: "Appearance",
-    description: "Customize the theme, typography, density, and time format.",
+    description: "Customize the language, theme, typography, density, and time format.",
     icon: "color-palette",
     eyebrow: "Visual language",
   },

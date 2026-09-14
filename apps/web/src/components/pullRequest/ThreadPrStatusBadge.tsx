@@ -7,6 +7,7 @@ import type { OrchestrationThreadPullRequest } from "@synara/contracts";
 import type { MouseEvent } from "react";
 
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { SidebarGlyph } from "../sidebarGlyphs";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import {
@@ -28,9 +29,10 @@ export function ThreadPrStatusBadge({
   onOpen: (event: MouseEvent<HTMLElement>, prUrl: string) => void;
   className?: string;
 }) {
+  const { t } = useUiLanguage();
   const presentation = resolvePrStatePresentation(pr);
   const PrIcon = PR_STATE_PRESENTATION_ICONS[presentation.iconKind];
-  const tooltip = `#${pr.number} ${presentation.label}: ${pr.title}`;
+  const tooltip = `#${pr.number} ${t(presentation.label)}: ${pr.title}`;
 
   return (
     <Tooltip>

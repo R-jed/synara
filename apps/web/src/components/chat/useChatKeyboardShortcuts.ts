@@ -24,6 +24,7 @@ import { useChatTerminalController } from "./useChatTerminalController";
 import { useChatWorkLog } from "./useChatWorkLog";
 import { useComposerVoiceController } from "./useComposerVoiceController";
 import { toastManager } from "../ui/toast";
+import { useUiLanguage } from "~/uiLanguage";
 function eventTargetsComposer(
   event: globalThis.KeyboardEvent,
   composerForm: HTMLFormElement | null,
@@ -162,6 +163,7 @@ export function useChatKeyboardShortcuts({
   runProjectScript,
   activeThread,
 }: ChatKeyboardShortcutsInput) {
+  const { t } = useUiLanguage();
   useEffect(() => {
     if (surfaceMode === "split" && !isFocusedPane) {
       return;
@@ -401,7 +403,7 @@ export function useChatKeyboardShortcuts({
           event.stopPropagation();
           toastManager.add({
             type: "info",
-            title: "Nothing to commit or push.",
+            title: t("Nothing to commit or push."),
           });
         }
         return;
@@ -504,5 +506,6 @@ export function useChatKeyboardShortcuts({
     modelOptionsByProvider,
     onProviderModelSelect,
     copyThreadIdToClipboard,
+    t,
   ]);
 }

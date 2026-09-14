@@ -8,6 +8,7 @@ import type { OrchestrationThreadPullRequest } from "@synara/contracts";
 import type { MouseEvent } from "react";
 
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   PR_STATE_PRESENTATION_ICONS,
   resolvePrStatePresentation,
@@ -25,11 +26,12 @@ export function PrStateChip({
    *  render it inside their row button, where nested interactive elements are invalid. */
   onOpen?: (event: MouseEvent<HTMLElement>) => void;
 }) {
+  const { t } = useUiLanguage();
   const presentation = resolvePrStatePresentation(pr);
   const PrIcon = PR_STATE_PRESENTATION_ICONS[presentation.iconKind];
   return (
     <span
-      title={`#${pr.number} ${presentation.label}: ${pr.title}`}
+      title={`#${pr.number} ${t(presentation.label)}: ${pr.title}`}
       onClick={onOpen}
       // Middle-click follows browser link semantics: open on GitHub.
       onAuxClick={onOpen}

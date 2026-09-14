@@ -32,6 +32,9 @@ vi.mock("~/appSettings", () => ({
     settings: { confirmThreadArchive: false, confirmThreadDelete: false },
   }),
 }));
+vi.mock("~/uiLanguage", () => ({
+  useUiLanguage: () => ({ t: (value: string) => value }),
+}));
 vi.mock("~/hooks/useCopyToClipboard", () => ({
   useCopyPathToClipboard: () => vi.fn(),
   useCopyThreadIdToClipboard: () => vi.fn(),

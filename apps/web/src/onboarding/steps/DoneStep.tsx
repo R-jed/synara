@@ -4,12 +4,14 @@
 // Layer: Web UI component
 
 import { TourShortcutList } from "./FeatureTourStep";
+import { useUiLanguage } from "~/uiLanguage";
 
 export function DoneStep() {
+  const { t } = useUiLanguage();
   return (
     <div className="flex flex-col gap-3.5 px-[120px]">
       <p className="text-[length:var(--app-font-size-ui-sm,11px)] font-medium tracking-[0.04em] text-muted-foreground/70 uppercase">
-        Shortcuts worth learning today
+        {t("Shortcuts worth learning today")}
       </p>
       <TourShortcutList />
     </div>

@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "~/components/ui/button";
 import { toastManager } from "~/components/ui/toast";
 import { ensureNativeApi } from "~/nativeApi";
+import { useUiLanguage } from "~/uiLanguage";
 
 export const automationProposalListQueryKey = ["automation-proposals", "include-archived"] as const;
 
@@ -14,6 +15,7 @@ export function AutomationProposalActions({
   readonly automationId: string;
   readonly onResolved?: (resolution: Exclude<AutomationProposalState, "pending">) => void;
 }) {
+  const { t, tError } = useUiLanguage();
   const queryClient = useQueryClient();
   const resolutionMutation = useMutation({
     mutationFn: (resolution: Exclude<AutomationProposalState, "pending">) =>
@@ -29,8 +31,8 @@ export function AutomationProposalActions({
     onError: (error) =>
       toastManager.add({
         type: "error",
-        title: "Could not update automation proposal",
-        description: error instanceof Error ? error.message : String(error),
+        title: t("Could not update automation proposal"),
+        description: tError(error),
       }),
   });
 
@@ -43,7 +45,7 @@ export function AutomationProposalActions({
         disabled={resolutionMutation.isPending}
         onClick={() => resolutionMutation.mutate("dismissed")}
       >
-        Dismiss
+        {t("Dismiss")}
       </Button>
       <Button
         type="button"
@@ -51,7 +53,7 @@ export function AutomationProposalActions({
         disabled={resolutionMutation.isPending}
         onClick={() => resolutionMutation.mutate("accepted")}
       >
-        Accept
+        {t("Accept")}
       </Button>
     </div>
   );

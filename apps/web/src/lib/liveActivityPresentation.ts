@@ -135,6 +135,15 @@ export interface LiveActivityMetaOptions {
   // Subagent rows (Cursor/Claude `Task`, Codex collab) only hear back from the child
   // agent when it finishes, so quiet time is the expected state — never idleness.
   readonly subagent?: boolean;
+  readonly translate?: ((text: string) => string) | undefined;
+}
+
+function translateDurationTemplate(
+  template: string,
+  duration: string,
+  translate: (text: string) => string,
+): string {
+  return translate(template).replace("{duration}", duration);
 }
 
 // Live meta only exists to explain work the row can't state on its own: how long
@@ -150,29 +159,38 @@ export function formatLiveActivityMeta(
     return null;
   }
 
+  const translate = options?.translate ?? ((text: string) => text);
   const parts: string[] = [];
   const elapsed = formatLiveActivityElapsed(activity, nowMs);
   const lastActivityAtMs = parseTimestamp(activity.lastActivityAt);
 
   if (isLiveActivityInProgress(activity)) {
     if (options?.subagent) {
-      parts.push("Subagent working");
+      parts.push(translate("Subagent working"));
     } else if (lastActivityAtMs !== null) {
       const idleMs = Math.max(0, nowMs - lastActivityAtMs);
       parts.push(
         idleMs >= NO_ACTIVITY_THRESHOLD_MS
-          ? `No activity for ${formatClockDuration(idleMs)}`
+          ? translateDurationTemplate(
+              "No activity for {duration}",
+              formatClockDuration(idleMs),
+              translate,
+            )
           : idleMs < 1_000
-            ? "Active now"
-            : `Active ${formatClockDuration(idleMs)} ago`,
+            ? translate("Active now")
+            : translateDurationTemplate(
+                "Active {duration} ago",
+                formatClockDuration(idleMs),
+                translate,
+              ),
       );
     }
   } else {
-    parts.push(formatLiveActivityStateLabel(activity.state));
+    parts.push(translate(formatLiveActivityStateLabel(activity.state)));
   }
 
   if (elapsed !== null) {
-    parts.push(`${elapsed} elapsed`);
+    parts.push(translateDurationTemplate("{duration} elapsed", elapsed, translate));
   }
   if (activity.progress !== undefined) {
     parts.push(formatLiveActivityProgress(activity.progress));

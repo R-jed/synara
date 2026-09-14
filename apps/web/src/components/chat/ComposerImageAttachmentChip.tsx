@@ -6,6 +6,7 @@
 import { WindowIcon } from "~/lib/icons";
 import { type ComposerImageAttachment } from "../../composerDraftStore";
 import { normalizeComposerImageSource } from "../../lib/composerImageSource";
+import { useUiLanguage } from "../../uiLanguage";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { AttachmentRemoveButton } from "./AttachmentRemoveButton";
 import {
@@ -29,6 +30,7 @@ export function ComposerImageAttachmentChip({
   onExpandImage,
   onRemoveImage,
 }: ComposerImageAttachmentChipProps) {
+  const { language, t } = useUiLanguage();
   // Normalize here so a legacy "appshot" provenance still renders as an AppSnap.
   const appSnapSource = normalizeComposerImageSource(image.source) ?? null;
   const previewImage = () => {
@@ -53,7 +55,11 @@ export function ComposerImageAttachmentChip({
         <button
           type="button"
           className="relative flex size-full items-center justify-center overflow-hidden bg-[var(--color-background-secondary)] p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-          aria-label={`Preview AppSnap from ${appName}`}
+          aria-label={
+            language === "zh-CN"
+              ? `预览来自 ${appName} 的 AppSnap`
+              : `Preview AppSnap from ${appName}`
+          }
           title={provenance}
           onClick={previewImage}
         >
@@ -98,14 +104,18 @@ export function ComposerImageAttachmentChip({
               }
             />
             <TooltipPopup side="top" className="max-w-64 whitespace-normal leading-tight">
-              {DRAFT_ATTACHMENT_WARNING_DESCRIPTION}
+              {t(DRAFT_ATTACHMENT_WARNING_DESCRIPTION)}
             </TooltipPopup>
           </Tooltip>
         )}
 
         <AttachmentRemoveButton
           size="sm"
-          label={`Remove AppSnap from ${appName}`}
+          label={
+            language === "zh-CN"
+              ? `移除来自 ${appName} 的 AppSnap`
+              : `Remove AppSnap from ${appName}`
+          }
           className="opacity-70 transition-opacity duration-150 hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100"
           onRemove={() => onRemoveImage(image.id)}
         />
@@ -118,7 +128,7 @@ export function ComposerImageAttachmentChip({
       <button
         type="button"
         className="block size-16 overflow-hidden rounded-xl border border-[color:var(--color-border-light)] bg-[var(--color-background-elevated-secondary)] transition-colors hover:border-[color:var(--color-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        aria-label={`Preview ${image.name}`}
+        aria-label={language === "zh-CN" ? `预览 ${image.name}` : `Preview ${image.name}`}
         title={image.name}
         onClick={previewImage}
       >
@@ -139,14 +149,14 @@ export function ComposerImageAttachmentChip({
             }
           />
           <TooltipPopup side="top" className="max-w-64 whitespace-normal leading-tight">
-            {DRAFT_ATTACHMENT_WARNING_DESCRIPTION}
+            {t(DRAFT_ATTACHMENT_WARNING_DESCRIPTION)}
           </TooltipPopup>
         </Tooltip>
       )}
 
       <AttachmentRemoveButton
         size="md"
-        label={`Remove ${image.name}`}
+        label={language === "zh-CN" ? `移除 ${image.name}` : `Remove ${image.name}`}
         onRemove={() => onRemoveImage(image.id)}
       />
     </div>

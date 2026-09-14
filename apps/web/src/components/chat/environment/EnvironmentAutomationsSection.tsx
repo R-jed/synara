@@ -6,9 +6,10 @@
 
 import type { AutomationDefinition } from "@synara/contracts";
 
-import { formatCadence } from "~/routes/-automations.shared";
+import { formatCadenceForLanguage } from "~/routes/-automations.shared";
 import { ClockIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 
 import {
   ENVIRONMENT_ROW_ICON_CLASS_NAME,
@@ -27,15 +28,18 @@ export function EnvironmentAutomationsSection({
   readonly automations: readonly EnvironmentAutomationPanelItem[];
   readonly onOpenAutomation: (definition: AutomationDefinition) => void;
 }) {
+  const { language, t } = useUiLanguage();
   if (automations.length === 0) {
     return null;
   }
 
   return (
     <div className="flex flex-col gap-0.5">
-      <EnvironmentSectionLabel>Automations</EnvironmentSectionLabel>
+      <EnvironmentSectionLabel>{t("Automations")}</EnvironmentSectionLabel>
       {automations.map(({ definition }) => {
-        const cadence = definition.enabled ? formatCadence(definition.schedule) : "Paused";
+        const cadence = definition.enabled
+          ? formatCadenceForLanguage(definition.schedule, language)
+          : t("Paused");
         return (
           <EnvironmentRow
             key={definition.id}
@@ -54,7 +58,7 @@ export function EnvironmentAutomationsSection({
                 {cadence}
               </span>
             }
-            aria-label={`Open automation ${definition.name}`}
+            aria-label={`${t("Open automation")} ${definition.name}`}
             title={`${definition.name} - ${cadence}`}
             onClick={() => onOpenAutomation(definition)}
           />

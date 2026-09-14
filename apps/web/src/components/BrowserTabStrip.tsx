@@ -10,6 +10,7 @@ import { isBlankBrowserTabUrl } from "@synara/shared/browserSession";
 
 import { GlobeIcon, PlusIcon, XIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 
 import {
   BROWSER_CHROME_CONTROL_CLASS_NAME,
@@ -53,6 +54,7 @@ function scrollTabIntoView(strip: HTMLElement, tab: HTMLElement): void {
 }
 
 export function BrowserTabStrip(props: BrowserTabStripProps) {
+  const { t } = useUiLanguage();
   const { activeTabId, onCloseTab, onCreateTab, onSelectTab } = props;
   const stripRef = useRef<HTMLDivElement>(null);
 
@@ -105,7 +107,7 @@ export function BrowserTabStrip(props: BrowserTabStripProps) {
                 className="min-w-0 flex-1 truncate text-left"
                 onClick={() => onSelectTab(tab.id)}
               >
-                {tab.title || "Untitled"}
+                {tab.title || t("Untitled")}
               </button>
               <Button
                 type="button"
@@ -118,7 +120,7 @@ export function BrowserTabStrip(props: BrowserTabStripProps) {
                 }}
               >
                 <XIcon className="size-3" />
-                <span className="sr-only">Close tab</span>
+                <span className="sr-only">{t("Close tab")}</span>
               </Button>
             </div>
           );
@@ -131,14 +133,14 @@ export function BrowserTabStrip(props: BrowserTabStripProps) {
                 variant="ghost"
                 size="icon-sm"
                 className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
-                aria-label="New tab"
+                aria-label={t("New tab")}
                 onClick={onCreateTab}
               />
             }
           >
             <PlusIcon className="size-3.5" />
           </TooltipTrigger>
-          <TooltipPopup>New tab</TooltipPopup>
+          <TooltipPopup>{t("New tab")}</TooltipPopup>
         </Tooltip>
       </div>
       {props.status ? (
@@ -149,9 +151,9 @@ export function BrowserTabStrip(props: BrowserTabStripProps) {
               ? "border-destructive/25 bg-destructive/8 text-destructive"
               : "border-border/60 bg-background/80 text-muted-foreground",
           )}
-          title={props.status.label}
+          title={t(props.status.label)}
         >
-          {props.status.label}
+          {t(props.status.label)}
         </div>
       ) : null}
     </div>

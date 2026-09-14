@@ -23,6 +23,7 @@ import type { OpenUsageUsageLine } from "~/lib/openUsageRateLimits";
 import type { ProviderRateLimit } from "~/lib/rateLimits";
 import { useStore } from "~/store";
 import { createAccountRateLimitThreadsSelector } from "~/storeSelectors";
+import { useUiLanguage } from "~/uiLanguage";
 
 import { ComposerPickerMenuPopup } from "./chat/ComposerPickerMenuPopup";
 import { ChatHeaderButton } from "./chat/chatHeaderControls";
@@ -139,7 +140,10 @@ export function ProviderUsageMenuPopup({
 }
 
 export function ProviderUsageMenuControl({ provider }: { provider: ProviderKind }) {
+  const { language } = useUiLanguage();
   const model = useProviderUsageMenuModel(provider);
+  const menuTitle =
+    language === "zh-CN" ? `${PROVIDER_DISPLAY_NAMES[provider]} 用量` : model.menuTitle;
 
   if (!model.primaryRow) {
     return null;
@@ -156,7 +160,7 @@ export function ProviderUsageMenuControl({ provider }: { provider: ProviderKind 
                   type="button"
                   tone="plain"
                   className="gap-1.5 px-2"
-                  aria-label={model.menuTitle}
+                  aria-label={menuTitle}
                 />
               }
             >
@@ -165,7 +169,7 @@ export function ProviderUsageMenuControl({ provider }: { provider: ProviderKind 
             </MenuTrigger>
           }
         />
-        <TooltipPopup side="bottom">{model.menuTitle}</TooltipPopup>
+        <TooltipPopup side="bottom">{menuTitle}</TooltipPopup>
       </Tooltip>
     </ProviderUsageMenuPopup>
   );

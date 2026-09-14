@@ -20,6 +20,7 @@ import { expandProjectHomePath } from "~/lib/projectPaths";
 import { cn } from "~/lib/utils";
 import { readNativeApi } from "~/nativeApi";
 import { useStore } from "~/store";
+import { useUiLanguage } from "~/uiLanguage";
 import { useWorkspacePathsStore } from "~/workspacePathsStore";
 
 export interface OnboardingProjectResult {
@@ -36,6 +37,7 @@ export function ProjectStep(props: {
   /** Project creation is not abortable; the dialog blocks navigation while it runs. */
   onBusyChange: (busy: boolean) => void;
 }) {
+  const { t, tError } = useUiLanguage();
   const { settings } = useAppSettings();
   const homeDir = useWorkspacePathsStore((store) => store.homeDir);
   const syncServerShellSnapshot = useStore((store) => store.syncServerShellSnapshot);
@@ -76,7 +78,7 @@ export function ProjectStep(props: {
       });
       setPath("");
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not add the project.");
+      setError(tError(caught, "Could not add the project."));
     } finally {
       setSubmitting(false);
     }
@@ -92,7 +94,7 @@ export function ProjectStep(props: {
         await addProject(picked);
       }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not open the folder picker.");
+      setError(tError(caught, "Could not open the folder picker."));
     } finally {
       setPicking(false);
     }
@@ -127,12 +129,12 @@ export function ProjectStep(props: {
             aria-hidden="true"
           />
           {picking ? (
-            <span>Opening the folder picker…</span>
+            <span>{t("Opening the folder picker…")}</span>
           ) : (
             <span>
-              Drop a folder here, or{" "}
+              {t("Drop a folder here, or")}{" "}
               <span className="underline decoration-dotted decoration-[1.5px] underline-offset-[5px]">
-                browse
+                {t("browse")}
               </span>
             </span>
           )}
@@ -151,7 +153,7 @@ export function ProjectStep(props: {
               setError(null);
             }}
             placeholder={homeDir ? `${homeDir}/code/my-repo` : "/path/to/repository"}
-            aria-label="Project folder path"
+            aria-label={t("Project folder path")}
             spellCheck={false}
             autoCorrect="off"
             autoCapitalize="off"
@@ -164,7 +166,7 @@ export function ProjectStep(props: {
           className={cn(FIELD_CONTROL_CLASS_NAME, "shrink-0 px-4")}
           disabled={submitting || path.trim().length === 0}
         >
-          Add
+          {t("Add")}
         </Button>
       </form>
 
@@ -175,7 +177,7 @@ export function ProjectStep(props: {
       ) : null}
 
       {props.results.length > 0 ? (
-        <ul className="flex flex-col gap-1.5" aria-label="Added projects">
+        <ul className="flex flex-col gap-1.5" aria-label={t("Added projects")}>
           {props.results.map((result) => (
             <li
               key={result.projectId}
@@ -192,7 +194,7 @@ export function ProjectStep(props: {
                 )}
               >
                 <CheckIcon className="size-3" aria-hidden />
-                {result.created ? "Added" : "Already linked"}
+                {t(result.created ? "Added" : "Already linked")}
               </span>
             </li>
           ))}

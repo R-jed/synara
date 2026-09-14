@@ -25,6 +25,7 @@ import { Terminal } from "@xterm/xterm";
 
 import { readNativeApi } from "~/nativeApi";
 import { suppressQueryResponses } from "~/lib/suppressQueryResponses";
+import { getActiveUiLanguage, translateUiErrorText } from "~/uiLanguage";
 
 import { openInPreferredEditor } from "../../editorPreferences";
 import { isTerminalClearShortcut, terminalNavigationShortcutData } from "../../keybindings";
@@ -78,6 +79,12 @@ const TERMINAL_CURSOR_WIDTH = 1;
 
 // Once WebGL fails, skip it for subsequent terminals in this renderer process.
 let suggestedRendererType: "webgl" | "dom" | undefined;
+
+function localizeTerminalError(error: unknown, fallback: string): string {
+  const language = getActiveUiLanguage();
+  if (language === "en") return describeErrorMessage(error, fallback);
+  return translateUiErrorText(language, error, "An unexpected error occurred.");
+}
 
 function terminalByteLength(data: string): number {
   return TERMINAL_TEXT_ENCODER.encode(data).byteLength;
@@ -678,7 +685,7 @@ async function sendTerminalInput(
   try {
     await api.terminal.write({ threadId: entry.threadId, terminalId: entry.terminalId, data });
   } catch (error) {
-    writeSystemMessage(entry.terminal, describeErrorMessage(error, fallbackError));
+    writeSystemMessage(entry.terminal, localizeTerminalError(error, fallbackError));
   }
 }
 
@@ -725,7 +732,7 @@ function reconcileTerminalSnapshot(entry: TerminalRuntimeEntry): void {
       setRuntimeStatus(entry, "error");
       writeSystemMessage(
         entry.terminal,
-        error instanceof Error ? error.message : "Failed to reconnect terminal",
+        localizeTerminalError(error, "Failed to reconnect terminal"),
       );
     });
 }
@@ -951,14 +958,14 @@ export function createRuntimeEntry(config: TerminalRuntimeConfig): TerminalRunti
 
               if (match.kind === "url") {
                 void api.shell.openExternal(match.text).catch((error) => {
-                  writeSystemMessage(terminal, describeErrorMessage(error, "Unable to open link"));
+                  writeSystemMessage(terminal, localizeTerminalError(error, "Unable to open link"));
                 });
                 return;
               }
 
               const target = resolvePathLinkTarget(match.text, entry.cwd);
               void openInPreferredEditor(api, target).catch((error) => {
-                writeSystemMessage(terminal, describeErrorMessage(error, "Unable to open path"));
+                writeSystemMessage(terminal, localizeTerminalError(error, "Unable to open path"));
               });
             },
           })),
@@ -984,7 +991,7 @@ export function createRuntimeEntry(config: TerminalRuntimeConfig): TerminalRunti
       void api.terminal
         .write({ threadId: entry.threadId, terminalId: entry.terminalId, data })
         .catch((error) =>
-          writeSystemMessage(terminal, describeErrorMessage(error, "Terminal write failed")),
+          writeSystemMessage(terminal, localizeTerminalError(error, "Terminal write failed")),
         );
     }),
   );
@@ -1050,7 +1057,10 @@ export function createRuntimeEntry(config: TerminalRuntimeConfig): TerminalRunti
 
       if (event.type === "error") {
         setRuntimeStatus(entry, "error");
-        writeSystemMessage(terminal, event.message);
+        writeSystemMessage(
+          terminal,
+          localizeTerminalError(event.message, "An unexpected error occurred."),
+        );
         return;
       }
 
@@ -1145,7 +1155,7 @@ function openTerminal(entry: TerminalRuntimeEntry): void {
       if (entry.disposed) return;
       entry.opened = false;
       setRuntimeStatus(entry, "error");
-      writeSystemMessage(entry.terminal, describeErrorMessage(error, "Failed to open terminal"));
+      writeSystemMessage(entry.terminal, localizeTerminalError(error, "Failed to open terminal"));
     });
 }
 

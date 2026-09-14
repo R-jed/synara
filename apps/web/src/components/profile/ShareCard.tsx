@@ -9,6 +9,7 @@ import { forwardRef, type ReactNode } from "react";
 import type { ProfileStats, ProfileTokenStats } from "@synara/contracts";
 import { ProviderIcon } from "~/components/ProviderIcon";
 import { SynaraLogo } from "~/components/SynaraLogo";
+import { useUiLanguage } from "~/uiLanguage";
 import { ActivityHeatmap, CARD_HEATMAP_INTENSITY_CLASSES } from "./ActivityHeatmap";
 import { ProfileAvatar } from "./ProfileAvatar";
 import { formatCompact, formatDays } from "./profileFormatting";
@@ -44,6 +45,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function Sha
   { stats, tokenStats, displayName, handle, avatarColor, avatarImage },
   ref,
 ) {
+  const { language, t } = useUiLanguage();
   const topProvider = selectProfileTopProvider(stats, tokenStats);
 
   const tiles: Tile[] = [
@@ -54,24 +56,36 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function Sha
           {formatCompact(tokenStats?.lifetimeTotalTokens ?? null)}
         </span>
       ),
-      label: "lifetime tokens",
+      label: t("lifetime tokens"),
     },
     {
       key: "peak",
       value: (
         <span className={VALUE_CLASS}>{formatCompact(tokenStats?.peakDayTokens ?? null)}</span>
       ),
-      label: "peak day",
+      label: t("peak day"),
     },
     {
       key: "current",
-      value: <span className={VALUE_CLASS}>{formatDays(stats.activity.currentStreakDays)}</span>,
-      label: "current streak",
+      value: (
+        <span className={VALUE_CLASS}>
+          {language === "zh-CN"
+            ? `${stats.activity.currentStreakDays.toLocaleString()} ${t("days")}`
+            : formatDays(stats.activity.currentStreakDays)}
+        </span>
+      ),
+      label: t("current streak"),
     },
     {
       key: "longest",
-      value: <span className={VALUE_CLASS}>{formatDays(stats.activity.longestStreakDays)}</span>,
-      label: "longest streak",
+      value: (
+        <span className={VALUE_CLASS}>
+          {language === "zh-CN"
+            ? `${stats.activity.longestStreakDays.toLocaleString()} ${t("days")}`
+            : formatDays(stats.activity.longestStreakDays)}
+        </span>
+      ),
+      label: t("longest streak"),
     },
     {
       key: "provider",
@@ -90,7 +104,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(function Sha
       ) : (
         <span className={VALUE_CLASS}>—</span>
       ),
-      label: "top provider",
+      label: t("top provider"),
     },
   ];
 

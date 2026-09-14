@@ -12,9 +12,10 @@ import { pluralize } from "@synara/shared/text";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "~/components/ui/collapsible";
 import { DisclosureChevron } from "~/components/ui/DisclosureChevron";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 
 import { FeatureSection } from "./FeatureSection";
-import type { WhatsNewEntry } from "./logic";
+import { formatWhatsNewDate, type WhatsNewEntry } from "./logic";
 
 export interface ChangelogAccordionProps {
   readonly entries: readonly WhatsNewEntry[];
@@ -33,26 +34,29 @@ export function ChangelogAccordion({
   defaultExpandedVersion: defaultExpandedVersionProp,
   className,
 }: ChangelogAccordionProps) {
+  const { t } = useUiLanguage();
   const defaultExpandedVersion = defaultExpandedVersionProp ?? null;
   if (entries.length === 0) {
     return (
       <p className={cn("text-xs text-muted-foreground", className)}>
-        No release notes yet — check back after the next update.
+        {t("No release notes yet — check back after the next update.")}
       </p>
     );
   }
 
   return (
-    <ul className={cn("flex flex-col", className)}>
-      {entries.map((entry, index) => (
-        <ChangelogAccordionRow
-          key={entry.version}
-          entry={entry}
-          defaultOpen={entry.version === defaultExpandedVersion}
-          isLast={index === entries.length - 1}
-        />
-      ))}
-    </ul>
+    <div className={className}>
+      <ul className="flex flex-col">
+        {entries.map((entry, index) => (
+          <ChangelogAccordionRow
+            key={entry.version}
+            entry={entry}
+            defaultOpen={entry.version === defaultExpandedVersion}
+            isLast={index === entries.length - 1}
+          />
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -65,10 +69,14 @@ function ChangelogAccordionRow({
   readonly defaultOpen: boolean;
   readonly isLast: boolean;
 }) {
+  const { language, t } = useUiLanguage();
   const [open, setOpen] = useState(defaultOpen);
 
   const featureCount = entry.features.length;
-  const featureLabel = `${featureCount} ${pluralize(featureCount, "update")}`;
+  const featureLabel =
+    language === "zh-CN"
+      ? `${featureCount} 项更新`
+      : `${featureCount} ${pluralize(featureCount, "update")}`;
 
   return (
     <li className={cn(!isLast && "border-b border-border/40")}>
@@ -76,8 +84,12 @@ function ChangelogAccordionRow({
         <CollapsibleTrigger className="group flex w-full items-center gap-3 py-3 text-left">
           <DisclosureChevron open={open} />
           <span className="flex flex-1 items-baseline gap-2">
-            <span className="text-xs text-muted-foreground">{entry.date}</span>
-            <span className="text-sm font-semibold text-foreground">Version {entry.version}</span>
+            <span className="text-xs text-muted-foreground">
+              {formatWhatsNewDate(entry.date, language)}
+            </span>
+            <span className="text-sm font-semibold text-foreground">
+              {t("Version")} {entry.version}
+            </span>
             <span className="text-xs text-muted-foreground/70">({featureLabel})</span>
           </span>
         </CollapsibleTrigger>

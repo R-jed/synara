@@ -3,7 +3,7 @@
 // Layer: Web settings UI
 // Exports: ThemePackEditor
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import { Button } from "./ui/button";
 import {
@@ -16,16 +16,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { Input } from "./ui/input";
 import { Popover, PopoverPopup, PopoverTrigger } from "./ui/popover";
 import { Select, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Switch } from "./ui/switch";
 import { Textarea } from "./ui/textarea";
 import { toastManager } from "./ui/toast";
 import { SettingsCard, SettingsSelectPopup } from "./settings/SettingsPanelPrimitives";
+import { LocalFontControl } from "./settings/LocalFontControl";
 import { copyTextToClipboard } from "../hooks/useCopyToClipboard";
 import { type ChromeTheme, type ThemeMode, type ThemeVariant, useTheme } from "../hooks/useTheme";
+import { queryLocalFontFamilies, type LocalFontFamily } from "../lib/localFonts";
 import { cn } from "../lib/utils";
+import { settingRowAnchorId } from "../settingsNavigation";
 import {
   SETTINGS_CARD_ROW_CLASS_NAME,
   SETTINGS_CONTROL_RADIUS_CLASS_NAME,
@@ -39,6 +41,7 @@ import {
   getCodeThemeSeed,
   resolveThemePack,
 } from "../theme/theme.logic";
+import { useUiLanguage } from "../uiLanguage";
 
 type ThemePackEditorProps = {
   isActive?: boolean;
@@ -60,6 +63,7 @@ export function ThemePackEditor({
   isActive: isActiveProp,
   mode: modeProp,
 }: ThemePackEditorProps) {
+  const { t } = useUiLanguage();
   const isActive = isActiveProp ?? false;
   const mode = modeProp ?? "system";
   const {
@@ -70,8 +74,10 @@ export function ThemePackEditor({
     isDefaultThemePack,
     resetThemeVariant,
     setCodeThemeId,
+    setSystemUiFont,
+    systemUiFont,
+    updateThemeFontSelection,
     updateThemePack,
-    updateThemeFonts,
   } = useTheme();
 
   const pack = variant === "dark" ? darkTheme : lightTheme;
@@ -86,31 +92,51 @@ export function ThemePackEditor({
       variants: option.variants,
     }));
   }, [variant]);
+  const [localFontFamilies, setLocalFontFamilies] = useState<ReadonlyArray<LocalFontFamily> | null>(
+    null,
+  );
+  const [localFontsLoading, setLocalFontsLoading] = useState(false);
+
+  const requestLocalFonts = useCallback(() => {
+    if (localFontsLoading || localFontFamilies !== null) return;
+    setLocalFontsLoading(true);
+    void queryLocalFontFamilies()
+      // A permission/user-activation failure can be transient. Leave the catalog
+      // unloaded so the next deliberate click can retry instead of caching failure.
+      .then(setLocalFontFamilies, () => setLocalFontFamilies(null))
+      .finally(() => setLocalFontsLoading(false));
+  }, [localFontFamilies, localFontsLoading]);
+  const preloadStartedRef = useRef(false);
+  useEffect(() => {
+    if (preloadStartedRef.current) return;
+    preloadStartedRef.current = true;
+    requestLocalFonts();
+  }, [requestLocalFonts]);
   const codeThemeLabel =
     CODE_THEME_OPTIONS.find((option) => option.id === pack.codeThemeId)?.label ?? pack.codeThemeId;
   const isPristine = isDefaultThemePack(variant);
-  const titleLabel = variant === "dark" ? "Dark theme" : "Light theme";
+  const titleLabel = t(variant === "dark" ? "Dark theme" : "Light theme");
   const contextLabel = isActive
     ? mode === "system"
-      ? `System is currently using this ${variant} slot.`
-      : "This is the active theme right now."
+      ? t(`System is currently using this ${variant} slot.`)
+      : t("This is the active theme right now.")
     : mode === "system"
-      ? `Used when your system switches to ${variant}.`
-      : `Inactive while the app is locked to ${mode}.`;
+      ? t(`Used when your system switches to ${variant}.`)
+      : t(`Inactive while the app is locked to ${mode}.`);
 
   const handleCopy = async () => {
     try {
       await copyTextToClipboard(exportThemeString(variant));
       toastManager.add({
         type: "success",
-        title: "Theme copied",
-        description: `Copied the ${variant} theme share string.`,
+        title: t("Theme copied"),
+        description: t(`Copied the ${variant} theme share string.`),
       });
     } catch {
       toastManager.add({
         type: "error",
-        title: "Copy failed",
-        description: "Unable to copy the theme share string.",
+        title: t("Copy failed"),
+        description: t("Unable to copy the theme share string."),
       });
     }
   };
@@ -134,7 +160,7 @@ export function ThemePackEditor({
                 ELEVATED_HOVER_SURFACE_RAISED_TEXT_CLASS_NAME,
               )}
             >
-              Reset
+              {t("Reset")}
             </button>
           ) : null}
         </div>
@@ -145,7 +171,7 @@ export function ThemePackEditor({
             onClick={() => void handleCopy()}
             className={EDITOR_TEXT_ACTION_CLASS_NAME}
           >
-            Copy
+            {t("Copy")}
           </button>
           <Select
             value={pack.codeThemeId}
@@ -157,7 +183,7 @@ export function ThemePackEditor({
             <SelectTrigger
               size="sm"
               className={cn(SETTINGS_CONTROL_RADIUS_CLASS_NAME, "ml-1 min-w-52 gap-2")}
-              aria-label={`${titleLabel} code theme`}
+              aria-label={`${titleLabel} ${t("Code theme")}`}
             >
               <SelectValue className="flex-1 text-left">
                 <CodeThemeSelectOption label={codeThemeLabel} theme={theme} />
@@ -183,10 +209,10 @@ export function ThemePackEditor({
       </div>
 
       <div className={SETTINGS_STACKED_ROWS_DIVIDER_CLASS_NAME}>
-        <ThemeRow label="Accent">
+        <ThemeRow label={t("Accent")}>
           <ColorPill
             color={theme.accent}
-            ariaLabel={`${titleLabel} accent color`}
+            ariaLabel={`${titleLabel} ${t("Accent color")}`}
             onChange={(next) => updateThemePack(variant, { accent: next })}
             onReset={
               theme.accent !== defaultTheme.accent
@@ -199,10 +225,10 @@ export function ThemePackEditor({
           />
         </ThemeRow>
 
-        <ThemeRow label="Background">
+        <ThemeRow label={t("Background")}>
           <ColorPill
             color={theme.surface}
-            ariaLabel={`${titleLabel} background color`}
+            ariaLabel={`${titleLabel} ${t("Background color")}`}
             onChange={(next) => updateThemePack(variant, { surface: next })}
             onReset={
               theme.surface !== defaultTheme.surface
@@ -215,10 +241,10 @@ export function ThemePackEditor({
           />
         </ThemeRow>
 
-        <ThemeRow label="Foreground">
+        <ThemeRow label={t("Foreground")}>
           <ColorPill
             color={theme.ink}
-            ariaLabel={`${titleLabel} foreground color`}
+            ariaLabel={`${titleLabel} ${t("Foreground color")}`}
             onChange={(next) => updateThemePack(variant, { ink: next })}
             onReset={
               theme.ink !== defaultTheme.ink
@@ -231,44 +257,71 @@ export function ThemePackEditor({
           />
         </ThemeRow>
 
-        <ThemeRow label="UI font">
-          <div className="flex flex-col items-end gap-1">
-            <FontInput
-              value={theme.fonts.ui ?? ""}
-              placeholder="System default"
-              ariaLabel={`${titleLabel} UI font`}
-              onChange={(next) => updateThemeFonts(variant, { ui: next.length > 0 ? next : null })}
-            />
-          </div>
-        </ThemeRow>
-
-        <ThemeRow label="Code font">
-          <div className="flex flex-col items-end gap-1">
-            <FontInput
-              value={theme.fonts.code ?? ""}
-              placeholder='"JetBrains Mono"'
-              ariaLabel={`${titleLabel} code font`}
-              mono
-              onChange={(next) =>
-                updateThemeFonts(variant, { code: next.length > 0 ? next : null })
-              }
-            />
-          </div>
-        </ThemeRow>
-
-        <ThemeRow label="Translucent sidebar">
-          <Switch
-            checked={!theme.opaqueWindows}
-            onCheckedChange={(checked) => updateThemePack(variant, { opaqueWindows: !checked })}
-            aria-label={`${titleLabel} translucent sidebar`}
+        <ThemeRow label={t("UI font")} anchorTitle="UI font">
+          <LocalFontControl
+            ariaLabel={`${titleLabel} ${t("UI font")}`}
+            family={theme.fonts.ui ?? null}
+            face={theme.fonts.uiFace ?? null}
+            families={localFontFamilies ?? []}
+            catalogLoaded={localFontFamilies !== null}
+            loading={localFontsLoading}
+            specialLabel={t("System default (all themes)")}
+            specialSelected={systemUiFont}
+            onRequestFonts={requestLocalFonts}
+            onSelectSpecial={() => setSystemUiFont(true)}
+            onChange={(family, face) => {
+              updateThemeFontSelection(variant, "ui", family, face);
+              setSystemUiFont(false);
+            }}
           />
         </ThemeRow>
 
-        <ThemeRow label="Contrast">
+        <ThemeRow label={t("Content font")} anchorTitle="Content font">
+          <LocalFontControl
+            ariaLabel={`${titleLabel} ${t("Content font")}`}
+            family={theme.fonts.content ?? null}
+            face={theme.fonts.contentFace ?? null}
+            families={localFontFamilies ?? []}
+            catalogLoaded={localFontFamilies !== null}
+            loading={localFontsLoading}
+            specialLabel={t("Same as UI")}
+            specialSelected={!theme.fonts.content}
+            onRequestFonts={requestLocalFonts}
+            onSelectSpecial={() => updateThemeFontSelection(variant, "content", null, null)}
+            onChange={(family, face) => updateThemeFontSelection(variant, "content", family, face)}
+          />
+        </ThemeRow>
+
+        <ThemeRow label={t("Code font")} anchorTitle="Code font">
+          <LocalFontControl
+            ariaLabel={`${titleLabel} ${t("Code font")}`}
+            family={theme.fonts.code ?? null}
+            face={theme.fonts.codeFace ?? null}
+            families={localFontFamilies ?? []}
+            catalogLoaded={localFontFamilies !== null}
+            loading={localFontsLoading}
+            mono
+            specialLabel={t("Default (JetBrains Mono)")}
+            specialSelected={!theme.fonts.code}
+            onRequestFonts={requestLocalFonts}
+            onSelectSpecial={() => updateThemeFontSelection(variant, "code", null, null)}
+            onChange={(family, face) => updateThemeFontSelection(variant, "code", family, face)}
+          />
+        </ThemeRow>
+
+        <ThemeRow label={t("Translucent sidebar")}>
+          <Switch
+            checked={!theme.opaqueWindows}
+            onCheckedChange={(checked) => updateThemePack(variant, { opaqueWindows: !checked })}
+            aria-label={`${titleLabel} ${t("Translucent sidebar")}`}
+          />
+        </ThemeRow>
+
+        <ThemeRow label={t("Contrast")}>
           <ContrastSlider
             value={theme.contrast}
             onChange={(next) => updateThemePack(variant, { contrast: next })}
-            ariaLabel={`${titleLabel} contrast`}
+            ariaLabel={`${titleLabel} ${t("Contrast")}`}
           />
         </ThemeRow>
       </div>
@@ -276,11 +329,54 @@ export function ThemePackEditor({
   );
 }
 
+export function ThemeLivePreview() {
+  const { t } = useUiLanguage();
+  return (
+    <SettingsCard divided={false}>
+      <div className="overflow-hidden rounded-[inherit]">
+        <div className="flex items-center justify-between border-b border-[color:var(--color-border)] px-4 py-2.5 text-xs text-[var(--color-text-foreground-secondary)]">
+          <span className="font-medium text-[var(--color-text-foreground)]">
+            {t("Live preview")}
+          </span>
+          <span>{t("Theme and code font")}</span>
+        </div>
+        <div className="space-y-1 p-3 font-chat-code text-[11px] leading-5">
+          <div className="rounded-md px-2 text-[var(--color-text-foreground-secondary)]">
+            <span className="mr-3 select-none opacity-55">18</span>
+            const appearance = currentTheme;
+          </div>
+          <div className="rounded-md bg-[color-mix(in_srgb,var(--success)_12%,transparent)] px-2 text-[var(--color-text-foreground)]">
+            <span className="mr-3 select-none text-[var(--success)]">+</span>
+            contentFont: selectedFont,
+          </div>
+          <div className="rounded-md bg-[color-mix(in_srgb,var(--destructive)_12%,transparent)] px-2 text-[var(--color-text-foreground)]">
+            <span className="mr-3 select-none text-[var(--destructive)]">−</span>
+            legacyFontInput: true,
+          </div>
+          <div className="rounded-md px-2 text-[var(--color-text-foreground-secondary)]">
+            <span className="mr-3 select-none opacity-55">21</span>
+            preview: {t("Updates immediately")}
+          </div>
+        </div>
+      </div>
+    </SettingsCard>
+  );
+}
+
 // ── Row primitive ─────────────────────────────────────────────────────────
 
-function ThemeRow({ label, children }: { label: string; children: React.ReactNode }) {
+function ThemeRow({
+  label,
+  anchorTitle,
+  children,
+}: {
+  label: string;
+  anchorTitle?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div
+      id={anchorTitle ? settingRowAnchorId(anchorTitle) : undefined}
       className={cn(
         SETTINGS_CARD_ROW_CLASS_NAME,
         "flex min-h-12 items-center justify-between gap-3",
@@ -305,6 +401,7 @@ function ColorPill({
   onChange: (next: string) => void;
   onReset?: (() => void) | undefined;
 }) {
+  const { t } = useUiLanguage();
   const commitTimerRef = useRef<number | null>(null);
   const pendingCommitRef = useRef<string | null>(null);
   const colorRef = useRef(color);
@@ -324,13 +421,13 @@ function ColorPill({
     colorRef.current = color;
   }, [color]);
 
-  const clearCommitTimer = () => {
+  const clearCommitTimer = useCallback(() => {
     if (commitTimerRef.current === null) {
       return;
     }
     window.clearTimeout(commitTimerRef.current);
     commitTimerRef.current = null;
-  };
+  }, []);
 
   // Explicit undefined check instead of a ref-reading default parameter,
   // which React Compiler does not support yet (it would skip this component).
@@ -390,8 +487,8 @@ function ColorPill({
             "rounded-md p-1 text-[var(--color-text-foreground-tertiary)]",
             ELEVATED_HOVER_SURFACE_RAISED_TEXT_CLASS_NAME,
           )}
-          aria-label={`Reset ${ariaLabel}`}
-          title="Reset to default"
+          aria-label={`${ariaLabel}，${t("Reset to default")}`}
+          title={t("Reset to default")}
         >
           <ResetGlyph />
         </button>
@@ -447,7 +544,7 @@ function ColorPill({
                 SETTINGS_CONTROL_RADIUS_CLASS_NAME,
                 "h-8 border border-[color:var(--color-border-light)] bg-[var(--color-background-elevated-secondary)] px-2 text-center font-chat-code text-xs uppercase outline-none focus:border-[color:var(--color-border-focus)]",
               )}
-              aria-label={`${ariaLabel} hex value`}
+              aria-label={`${ariaLabel}，${t("Hex value")}`}
             />
           </div>
         </PopoverPopup>
@@ -480,40 +577,6 @@ function CodeThemeSelectOption({ label, theme }: { label: string; theme: ChromeT
         <div className="truncate text-[13px] text-[var(--color-text-foreground)]">{label}</div>
       </div>
     </div>
-  );
-}
-
-// ── Font input ────────────────────────────────────────────────────────────
-
-function FontInput({
-  value,
-  placeholder,
-  ariaLabel,
-  mono: monoProp,
-  onChange,
-}: {
-  value: string;
-  placeholder: string;
-  ariaLabel: string;
-  mono?: boolean;
-  onChange: (next: string) => void;
-}) {
-  const mono = monoProp ?? false;
-  const [draft, setDraft] = useState<string | null>(null);
-  return (
-    <Input
-      value={draft ?? value}
-      placeholder={placeholder}
-      onChange={(event) => {
-        const next = event.target.value;
-        setDraft(next);
-        onChange(next);
-      }}
-      onBlur={() => setDraft(null)}
-      spellCheck={false}
-      aria-label={ariaLabel}
-      className={cn(SETTINGS_CONTROL_RADIUS_CLASS_NAME, "w-56", mono && "font-chat-code")}
-    />
   );
 }
 
@@ -555,6 +618,43 @@ function ContrastSlider({
 
 // ── Import dialog ─────────────────────────────────────────────────────────
 
+function localizeThemeImportError(language: "en" | "zh-CN", message: string): string {
+  if (language !== "zh-CN") return message;
+  if (message === "Theme share string must start with codex-theme-v1:") {
+    return "主题分享代码必须以 codex-theme-v1: 开头。";
+  }
+  if (message === "Theme share string does not contain valid JSON.") {
+    return "主题分享代码中的 JSON 无效。";
+  }
+  if (message === "Theme share payload must be an object.") return "主题分享代码的内容必须是对象。";
+  if (message === "Theme share variant must be either light or dark.") {
+    return "主题模式必须是 light 或 dark。";
+  }
+  if (message === "Theme share theme must be an object.") return "主题内容必须是对象。";
+  if (message === "Theme fonts must be an object.") return "主题字体设置必须是对象。";
+  if (message === "Theme semanticColors must be an object.") return "主题语义颜色设置必须是对象。";
+  if (message === "Theme contrast must be an integer between 0 and 100.") {
+    return "主题对比度必须是 0 到 100 之间的整数。";
+  }
+  const unavailableCodeTheme = message.match(
+    /^Code theme "(.+)" is not available for (light|dark)\.$/,
+  );
+  if (unavailableCodeTheme) {
+    return `代码主题“${unavailableCodeTheme[1]}”不支持 ${unavailableCodeTheme[2]} 模式。`;
+  }
+  const variantMismatch = message.match(
+    /^Theme variant mismatch\. Expected (light|dark), received (light|dark)\.$/,
+  );
+  if (variantMismatch) {
+    return `主题模式不匹配。当前需要 ${variantMismatch[1]}，导入内容为 ${variantMismatch[2]}。`;
+  }
+  const fieldError = message.match(/^(.+) must (.+)\.$/);
+  if (fieldError) {
+    return `主题字段“${fieldError[1]}”格式无效：${fieldError[2]}。`;
+  }
+  return "主题分享代码无效，请检查内容后重试。";
+}
+
 function ImportThemeDialog({
   variant,
   onImport,
@@ -562,6 +662,7 @@ function ImportThemeDialog({
   variant: ThemeVariant;
   onImport: (value: string) => void;
 }) {
+  const { language, t } = useUiLanguage();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -571,14 +672,18 @@ function ImportThemeDialog({
       onImport(value);
       toastManager.add({
         type: "success",
-        title: "Theme imported",
-        description: `Updated the ${variant} theme pack.`,
+        title: t("Theme imported"),
+        description: t(`Updated the ${variant} theme pack.`),
       });
       setValue("");
       setError(null);
       setOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to import that theme string.");
+      setError(
+        err instanceof Error
+          ? localizeThemeImportError(language, err.message)
+          : t("Unable to import that theme string."),
+      );
     }
   };
 
@@ -587,18 +692,30 @@ function ImportThemeDialog({
       <DialogTrigger
         render={
           <button type="button" className={EDITOR_TEXT_ACTION_CLASS_NAME}>
-            Import
+            {t("Import")}
           </button>
         }
       />
       <DialogPopup className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Import {variant} theme</DialogTitle>
+          <DialogTitle>
+            {t(variant === "dark" ? "Import dark theme" : "Import light theme")}
+          </DialogTitle>
           <p className="text-xs text-muted-foreground">
-            Paste a{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-chat-code">codex-theme-v1:</code>{" "}
-            share string. The embedded variant must match {variant}, and the selected code theme
-            must exist for that variant.
+            {language === "zh-CN" ? (
+              <>
+                粘贴以{" "}
+                <code className="rounded bg-muted px-1 py-0.5 font-chat-code">codex-theme-v1:</code>{" "}
+                开头的主题分享代码。代码中的主题模式必须与当前主题一致，并且所选代码主题必须支持该模式。
+              </>
+            ) : (
+              <>
+                Paste a{" "}
+                <code className="rounded bg-muted px-1 py-0.5 font-chat-code">codex-theme-v1:</code>{" "}
+                share string. The embedded variant must match {variant}, and the selected code theme
+                must exist for that variant.
+              </>
+            )}
           </p>
         </DialogHeader>
         <DialogPanel>
@@ -612,7 +729,7 @@ function ImportThemeDialog({
             spellCheck={false}
             rows={5}
             className="font-chat-code text-[11px]"
-            aria-label="Theme share string"
+            aria-label={t("Theme share string")}
           />
           {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
         </DialogPanel>
@@ -620,7 +737,7 @@ function ImportThemeDialog({
           <DialogClose
             render={
               <Button variant="outline" type="button" size="sm">
-                Cancel
+                {t("Cancel")}
               </Button>
             }
           />
@@ -630,7 +747,7 @@ function ImportThemeDialog({
             disabled={value.trim().length === 0}
             onClick={handleSubmit}
           >
-            Import
+            {t("Import")}
           </Button>
         </DialogFooter>
       </DialogPopup>

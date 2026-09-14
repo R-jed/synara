@@ -20,6 +20,7 @@ import { pinActionLabel } from "~/lib/pin";
 import { archiveThreadFromClient } from "~/lib/threadArchive";
 import { dispatchThreadRename } from "~/lib/threadRename";
 import { newCommandId } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { useComposerDraftStore } from "../../composerDraftStore";
 import { useKanbanUiStore } from "../../kanbanUiStore";
 import { readNativeApi } from "../../nativeApi";
@@ -74,6 +75,7 @@ async function setThreadPinned(threadId: ThreadId, isPinned: boolean) {
 }
 
 export function useKanbanCardContextMenu(): KanbanCardContextMenuController {
+  const { language, t } = useUiLanguage();
   const { settings } = useAppSettings();
   const queryClient = useQueryClient();
   const removeWorktreeMutation = useMutation(gitRemoveWorktreeMutationOptions({ queryClient }));
@@ -131,23 +133,23 @@ export function useKanbanCardContextMenu(): KanbanCardContextMenuController {
         [
           ...(isThreadActionCard
             ? [
-                { id: "rename", label: "Rename thread" },
+                { id: "rename", label: t("Rename thread") },
                 {
                   id: "toggle-pin",
-                  label: pinActionLabel("thread", card.thread?.isPinned ?? false),
+                  label: t(pinActionLabel("thread", card.thread?.isPinned ?? false)),
                 },
               ]
             : []),
           ...(workspacePath
-            ? [{ id: "copy-path", label: "Copy Path", separatorBefore: true }]
+            ? [{ id: "copy-path", label: t("Copy Path"), separatorBefore: true }]
             : []),
-          ...(isThreadBacked ? [{ id: "copy-thread-id", label: "Copy Thread ID" }] : []),
+          ...(isThreadBacked ? [{ id: "copy-thread-id", label: t("Copy Thread ID") }] : []),
           ...(isThreadActionCard
-            ? [{ id: "archive", label: "Archive", separatorBefore: true }]
+            ? [{ id: "archive", label: t("Archive"), separatorBefore: true }]
             : []),
           {
             id: "delete",
-            label: deletesOnlyDraft ? "Delete draft" : "Delete",
+            label: t(deletesOnlyDraft ? "Delete draft" : "Delete"),
             destructive: true,
             separatorBefore: !isThreadActionCard,
           },
@@ -164,7 +166,7 @@ export function useKanbanCardContextMenu(): KanbanCardContextMenuController {
         void setThreadPinned(card.threadId, next).catch(() => {
           toastManager.add({
             type: "error",
-            title: next ? "Unable to pin thread" : "Unable to unpin thread",
+            title: t(next ? "Unable to pin thread" : "Unable to unpin thread"),
           });
         });
         return;
@@ -182,10 +184,15 @@ export function useKanbanCardContextMenu(): KanbanCardContextMenuController {
         if (!isThreadActionCard) return;
         if (settings.confirmThreadArchive) {
           const confirmed = await api.dialogs.confirm(
-            [
-              `Archive thread "${card.title}"?`,
-              "Archived threads are hidden from the sidebar but can be restored later.",
-            ].join("\n"),
+            language === "zh-CN"
+              ? [
+                  `归档对话“${card.title}”？`,
+                  t("Archived threads are hidden from the sidebar but can be restored later."),
+                ].join("\n")
+              : [
+                  `Archive thread "${card.title}"?`,
+                  "Archived threads are hidden from the sidebar but can be restored later.",
+                ].join("\n"),
           );
           if (!confirmed) return;
         }
@@ -196,11 +203,16 @@ export function useKanbanCardContextMenu(): KanbanCardContextMenuController {
       if (settings.confirmThreadDelete) {
         const confirmed = await api.dialogs.confirm(
           deletesOnlyDraft
-            ? `Delete this draft? This removes its unsent prompt.`
-            : [
-                `Delete thread "${card.title}"?`,
-                "This permanently clears conversation history for this thread.",
-              ].join("\n"),
+            ? t("Delete this draft? This removes its unsent prompt.")
+            : language === "zh-CN"
+              ? [
+                  `删除对话“${card.title}”？`,
+                  t("This permanently clears conversation history for this thread."),
+                ].join("\n")
+              : [
+                  `Delete thread "${card.title}"?`,
+                  "This permanently clears conversation history for this thread.",
+                ].join("\n"),
         );
         if (!confirmed) return;
       }
@@ -225,8 +237,8 @@ export function useKanbanCardContextMenu(): KanbanCardContextMenuController {
         if (outcome === "unavailable") {
           toastManager.add({
             type: "error",
-            title: "Not connected",
-            description: "Reconnect to the server before renaming.",
+            title: t("Not connected"),
+            description: t("Reconnect to the server before renaming."),
           });
           return;
         }

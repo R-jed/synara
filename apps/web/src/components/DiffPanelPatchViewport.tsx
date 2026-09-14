@@ -6,6 +6,7 @@
 import type { FileDiffMetadata } from "@pierre/diffs/react";
 import { memo } from "react";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import type { RenderablePatch } from "~/lib/diffRendering";
 import { DiffPanelFileList, type DiffFileChatActions } from "./DiffPanelFileList";
 import type { DiffLineBlameTarget } from "./DiffLineBlamePopover";
@@ -34,6 +35,7 @@ export const DiffPanelPatchViewport = memo(
     unavailableLabel: string;
     viewKind: "repo" | "turn";
   }) {
+    const { t } = useUiLanguage();
     const viewportClassName = "flex h-full min-h-0 w-full flex-1 flex-col";
 
     if (props.error && !props.renderablePatch) {
@@ -66,7 +68,7 @@ export const DiffPanelPatchViewport = memo(
                 ? props.emptyLabel
                 : props.viewKind === "repo"
                   ? props.unavailableLabel
-                  : "No patch available for this selection."}
+                  : t("No patch available for this selection.")}
             </p>
           </PanelStateMessage>
         </div>
@@ -94,7 +96,7 @@ export const DiffPanelPatchViewport = memo(
     return (
       <div className={cn(viewportClassName, "overflow-auto p-2")}>
         <div className="space-y-2">
-          <p className="text-[11px] text-muted-foreground/75">{props.renderablePatch.reason}</p>
+          <p className="text-[11px] text-muted-foreground/75">{t(props.renderablePatch.reason)}</p>
           <pre
             className={cn(
               "max-h-[72vh] rounded-md border border-border/70 bg-background/70 p-3 font-mono text-[11px] leading-relaxed text-muted-foreground/90",

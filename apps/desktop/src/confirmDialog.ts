@@ -1,4 +1,5 @@
 import { type BrowserWindow, dialog } from "electron";
+import { translateDesktopText } from "./uiLanguage";
 
 const CONFIRM_BUTTON_INDEX = 1;
 
@@ -13,7 +14,7 @@ export async function showDesktopConfirmDialog(
 
   const options = {
     type: "question" as const,
-    buttons: ["No", "Yes"],
+    buttons: [translateDesktopText("No"), translateDesktopText("Yes")],
     defaultId: CONFIRM_BUTTON_INDEX,
     cancelId: 0,
     noLink: true,

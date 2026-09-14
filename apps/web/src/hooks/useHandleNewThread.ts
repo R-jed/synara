@@ -43,6 +43,7 @@ import { useStore } from "../store";
 import { useProjectEnvironmentStore } from "../projectEnvironmentStore";
 import { useTemporaryThreadStore } from "../temporaryThreadStore";
 import { useTerminalStateStore } from "../terminalStateStore";
+import { useUiLanguage } from "../uiLanguage";
 
 export interface NewThreadNavigationOptions {
   /**
@@ -54,6 +55,7 @@ export interface NewThreadNavigationOptions {
 }
 
 export function useHandleNewThread() {
+  const { t } = useUiLanguage();
   const projects = useStore((store) => store.projects);
   const { settings, serverSettings } = useAppSettings();
   const queryClient = useQueryClient();
@@ -269,7 +271,7 @@ export function useHandleNewThread() {
           commandId: newCommandId(),
           threadId,
           projectId,
-          title: "New terminal",
+          title: t("New terminal"),
           modelSelection: creationState.modelSelection,
           runtimeMode: creationState.runtimeMode,
           interactionMode: creationState.interactionMode,

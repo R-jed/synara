@@ -9,6 +9,7 @@ import { copyTextToClipboard } from "~/hooks/useCopyToClipboard";
 import { getNavigatorPlatform, isMacPlatform, isWindowsPlatform } from "~/lib/utils";
 import { readNativeApi } from "~/nativeApi";
 import { toastManager } from "~/components/ui/toast";
+import { getActiveUiLanguage, translateUiErrorText, translateUiText } from "~/uiLanguage";
 
 export function getRevealInFolderLabel(platform: string): string {
   if (isWindowsPlatform(platform)) {
@@ -34,6 +35,10 @@ export async function showFileReferenceContextMenu(input: {
   onReferenceInChat: ((reference: ChatFileReference) => void) | undefined;
   onAskWhyInChat?: ((reference: ChatFileReference) => void) | undefined;
 }): Promise<void> {
+  const language = getActiveUiLanguage();
+  const t = (text: string) => translateUiText(language, text);
+  const tError = (error: unknown, fallback?: string) =>
+    translateUiErrorText(language, error, fallback);
   const api = readNativeApi();
   if (!api) {
     return;
@@ -47,6 +52,12 @@ export async function showFileReferenceContextMenu(input: {
     ...input.selection,
   };
   const rangeLabel = formatSelectionLabel(reference);
+  const localizedRangeLabel =
+    language === "zh-CN" && typeof reference.startLine === "number"
+      ? reference.endLine && reference.endLine !== reference.startLine
+        ? `第 ${reference.startLine}–${reference.endLine} 行`
+        : `第 ${reference.startLine} 行`
+      : rangeLabel;
   const hasSnippet = typeof reference.snippet === "string" && reference.snippet.trim().length > 0;
   const clicked = await api.contextMenu.show(
     [
@@ -54,11 +65,13 @@ export async function showFileReferenceContextMenu(input: {
         ? [
             {
               id: "reference-in-chat" as const,
-              label: rangeLabel
-                ? `Reference ${rangeLabel} in chat`
+              label: localizedRangeLabel
+                ? language === "zh-CN"
+                  ? `在聊天中引用${localizedRangeLabel}`
+                  : `Reference ${localizedRangeLabel} in chat`
                 : hasSnippet
-                  ? "Reference selection in chat"
-                  : "Reference in chat",
+                  ? t("Reference selection in chat")
+                  : t("Reference in chat"),
             },
           ]
         : []),
@@ -66,7 +79,11 @@ export async function showFileReferenceContextMenu(input: {
         ? [
             {
               id: "ask-why-in-chat" as const,
-              label: rangeLabel ? `Ask why ${rangeLabel} changed` : "Ask why this changed",
+              label: localizedRangeLabel
+                ? language === "zh-CN"
+                  ? `询问为什么${localizedRangeLabel}发生更改`
+                  : `Ask why ${localizedRangeLabel} changed`
+                : t("Ask why this changed"),
             },
           ]
         : []),
@@ -74,11 +91,11 @@ export async function showFileReferenceContextMenu(input: {
         ? [
             {
               id: "reveal-in-folder" as const,
-              label: getRevealInFolderLabel(getNavigatorPlatform()),
+              label: t(getRevealInFolderLabel(getNavigatorPlatform())),
             },
           ]
         : []),
-      { id: "copy-path" as const, label: "Copy path" },
+      { id: "copy-path" as const, label: t("Copy path") },
     ],
     input.position,
   );
@@ -96,9 +113,8 @@ export async function showFileReferenceContextMenu(input: {
     } catch (error) {
       toastManager.add({
         type: "error",
-        title: "Unable to reveal file",
-        description:
-          error instanceof Error ? error.message : "An unknown error occurred opening the file.",
+        title: t("Unable to reveal file"),
+        description: tError(error, "An unknown error occurred opening the file."),
       });
     }
     return;

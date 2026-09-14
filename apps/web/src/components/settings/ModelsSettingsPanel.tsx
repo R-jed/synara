@@ -28,6 +28,7 @@ import { PlusIcon, XIcon } from "~/lib/icons";
 import { resolveProviderDiscoveryCwd } from "~/lib/providerDiscovery";
 import { serverConfigQueryOptions } from "~/lib/serverReactQuery";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   SETTINGS_CARD_ROW_DIVIDER_CLASS_NAME,
   SETTINGS_INSET_LIST_CLASS_NAME,
@@ -80,6 +81,7 @@ export function ModelsSettingsPanel({
   resetEpoch,
   active,
 }: AppSettingsBinding & { readonly resetEpoch: number; readonly active: boolean }) {
+  const { t } = useUiLanguage();
   const serverConfigQuery = useQuery(serverConfigQueryOptions());
   const [selectedCustomModelProvider, setSelectedCustomModelProvider] =
     useState<ProviderKind>("codex");
@@ -222,7 +224,7 @@ export function ModelsSettingsPanel({
       <button
         type="button"
         className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 hover:opacity-100"
-        aria-label={`Remove ${row.slug}`}
+        aria-label={`${t("Remove")} ${row.slug}`}
         onClick={() => removeCustomModel(row.provider, row.slug)}
       >
         <XIcon className="size-3.5 text-muted-foreground hover:text-foreground" />
@@ -234,10 +236,10 @@ export function ModelsSettingsPanel({
 
   return (
     <div className="space-y-6">
-      <SettingsSection title="Generation defaults">
+      <SettingsSection title={t("Generation defaults")}>
         <SettingsRow
-          title="Git writing model"
-          description="Used for generated commit messages, PR titles, and branch names."
+          title={t("Git writing model")}
+          description={t("Used for generated commit messages, PR titles, and branch names.")}
           resetAction={
             isGitTextGenerationModelDirty ? (
               <SettingResetButton
@@ -265,7 +267,7 @@ export function ModelsSettingsPanel({
                   textGenerationModel: model,
                 });
               }}
-              ariaLabel="Git text generation model"
+              ariaLabel={t("Git text generation model")}
               triggerClassName="w-full sm:w-52"
               valueContent={selectedGitTextGenerationModelLabel}
             >
@@ -283,10 +285,10 @@ export function ModelsSettingsPanel({
         />
       </SettingsSection>
 
-      <SettingsSection title="Custom models">
+      <SettingsSection title={t("Custom models")}>
         <SettingsRow
-          title="Saved model slugs"
-          description="Add custom model slugs for supported providers."
+          title={t("Saved model slugs")}
+          description={t("Add custom model slugs for supported providers.")}
           resetAction={
             savedCustomModelRows.length > 0 ? (
               <SettingResetButton label="custom models" onClick={resetCustomModels} />
@@ -306,7 +308,7 @@ export function ModelsSettingsPanel({
                 <SelectTrigger
                   size="sm"
                   className="w-full sm:w-40"
-                  aria-label="Custom model provider"
+                  aria-label={t("Custom model provider")}
                 >
                   <SelectValue>{selectedCustomModelProviderSettings.title}</SelectValue>
                 </SelectTrigger>
@@ -350,12 +352,12 @@ export function ModelsSettingsPanel({
                 onClick={() => addCustomModel(selectedCustomModelProvider)}
               >
                 <PlusIcon className="size-3.5" />
-                Add
+                {t("Add")}
               </Button>
             </div>
 
             {selectedCustomModelError ? (
-              <p className="mt-2 text-xs text-destructive">{selectedCustomModelError}</p>
+              <p className="mt-2 text-xs text-destructive">{t(selectedCustomModelError)}</p>
             ) : null}
 
             {savedCustomModelRows.length > 0 ? (
@@ -375,8 +377,8 @@ export function ModelsSettingsPanel({
                       onClick={() => setShowAllCustomModels((value) => !value)}
                     >
                       {showAllCustomModels
-                        ? "Show less"
-                        : `Show more (${overflowCustomModelRows.length})`}
+                        ? t("Show less")
+                        : `${t("Show more")} (${overflowCustomModelRows.length})`}
                     </button>
                   </>
                 ) : null}

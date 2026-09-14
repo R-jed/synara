@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { BrowserCookieImportResult, BrowserVaultMethods, ThreadId } from "@synara/contracts";
 import { Button } from "./ui/button";
 import { DisclosureRegion } from "./ui/DisclosureRegion";
+import { useUiLanguage } from "~/uiLanguage";
 
 export interface BrowserCookieDestination {
   threadId: ThreadId;
@@ -47,6 +48,7 @@ export function BrowserCookieImport({
   api: BrowserVaultMethods;
   destination: BrowserCookieDestination;
 }) {
+  const { t } = useUiLanguage();
   const [open, setOpen] = useState(false);
   const [sources, setSources] = useState<Choice[]>([]);
   const [profiles, setProfiles] = useState<Choice[]>([]);
@@ -77,10 +79,12 @@ export function BrowserCookieImport({
       if (request !== generation.current) return;
       setProfiles(choices);
       setProfile(choices[0]?.id ?? "");
-      if (!choices.length) setStatus("No available profiles found.");
+      if (!choices.length) setStatus(t("No available profiles found."));
     } catch {
       if (request === generation.current)
-        setStatus("Profiles could not be read. Check browser installation and system permissions.");
+        setStatus(
+          t("Profiles could not be read. Check browser installation and system permissions."),
+        );
     } finally {
       if (request === generation.current) setBusy(false);
     }
@@ -97,12 +101,12 @@ export function BrowserCookieImport({
       setSources(choices);
       if (choices[0]) await loadProfiles(choices[0].id);
       else {
-        setStatus("Cookie import is unavailable on this platform.");
+        setStatus(t("Cookie import is unavailable on this platform."));
         setBusy(false);
       }
     } catch {
       if (request === generation.current) {
-        setStatus("Cookie import is unavailable. Sign in directly in the browser instead.");
+        setStatus(t("Cookie import is unavailable. Sign in directly in the browser instead."));
         setBusy(false);
       }
     }
@@ -136,13 +140,15 @@ export function BrowserCookieImport({
       if (request === generation.current && result)
         setStatus(
           result.ok
-            ? `${result.imported} ${result.imported === 1 ? "cookie" : "cookies"} imported. ${result.skipped} skipped.${result.warnings.length ? " Some cookies could not be transferred; you may need to sign in again." : ""}`
-            : importFailure(result, source),
+            ? `${t("Imported")} ${result.imported} ${t(result.imported === 1 ? "cookie" : "cookies")}. ${t("Skipped")} ${result.skipped}.${result.warnings.length ? ` ${t("Some cookies could not be transferred; you may need to sign in again.")}` : ""}`
+            : t(importFailure(result, source)),
         );
     } catch {
       if (request === generation.current)
         setStatus(
-          "Import stopped because the browser destination changed or the operation became unavailable. Select the destination and retry.",
+          t(
+            "Import stopped because the browser destination changed or the operation became unavailable. Select the destination and retry.",
+          ),
         );
     } finally {
       if (request === generation.current) {
@@ -163,14 +169,14 @@ export function BrowserCookieImport({
           else void load();
         }}
       >
-        Import browser cookies
+        {t("Import browser cookies")}
       </Button>
       <DisclosureRegion open={open}>
         <div className="space-y-3 pt-3 text-sm">
           <label className="block space-y-1">
-            <span>Import scope</span>
+            <span>{t("Import scope")}</span>
             <select
-              aria-label="Cookie import scope"
+              aria-label={t("Cookie import scope")}
               className="h-8 w-full rounded-md border bg-background px-2"
               value={scope}
               disabled={busy}
@@ -181,21 +187,27 @@ export function BrowserCookieImport({
               }}
             >
               {destination.origin ? (
-                <option value="site">This site: {destination.origin}</option>
+                <option value="site">
+                  {t("This site:")} {destination.origin}
+                </option>
               ) : null}
-              <option value="profile">All sites in this profile</option>
+              <option value="profile">{t("All sites in this profile")}</option>
             </select>
           </label>
           <p className="text-xs text-muted-foreground">
             {scope === "profile"
-              ? "Imports all compatible cookies from the selected profile. Every imported signed-in session becomes available across Synara browser tabs and agent workflows."
-              : "Imports this site, its subdomains, and matching parent domains. Imported sessions are shared across Synara browser tabs and agent workflows."}
+              ? t(
+                  "Imports all compatible cookies from the selected profile. Every imported signed-in session becomes available across Synara browser tabs and agent workflows.",
+                )
+              : t(
+                  "Imports this site, its subdomains, and matching parent domains. Imported sessions are shared across Synara browser tabs and agent workflows.",
+                )}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <label className="min-w-0 space-y-1">
-              <span>Browser</span>
+              <span>{t("Browser")}</span>
               <select
-                aria-label="Cookie source browser"
+                aria-label={t("Cookie source browser")}
                 className="h-8 w-full rounded-md border bg-background px-2"
                 value={source}
                 disabled={busy}
@@ -211,9 +223,9 @@ export function BrowserCookieImport({
               </select>
             </label>
             <label className="min-w-0 space-y-1">
-              <span>Profile</span>
+              <span>{t("Browser profile")}</span>
               <select
-                aria-label="Cookie source profile"
+                aria-label={t("Cookie source profile")}
                 className="h-8 w-full rounded-md border bg-background px-2"
                 value={profile}
                 disabled={busy}
@@ -240,8 +252,9 @@ export function BrowserCookieImport({
                 onChange={(event) => setConfirmed(event.target.checked)}
               />
               <span>
-                I allow Synara and its agents to use all imported signed-in sessions from this
-                profile.
+                {t(
+                  "I allow Synara and its agents to use all imported signed-in sessions from this profile.",
+                )}
               </span>
             </label>
           </DisclosureRegion>
@@ -259,10 +272,10 @@ export function BrowserCookieImport({
               }}
             >
               {busy
-                ? "Working..."
+                ? t("Working...")
                 : scope === "profile"
-                  ? "Import all sites"
-                  : "Import for this site"}
+                  ? t("Import all sites")
+                  : t("Import for this site")}
             </Button>
           </div>
         </div>

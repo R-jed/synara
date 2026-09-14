@@ -1643,19 +1643,31 @@ export function deriveComposerSendState(options: {
 export function buildExpiredTerminalContextToastCopy(
   expiredTerminalContextCount: number,
   variant: "omitted" | "empty",
+  language: "en" | "zh-CN" = "en",
 ): { title: string; description: string } {
   const count = Math.max(1, Math.floor(expiredTerminalContextCount));
-  const noun = count === 1 ? "Expired terminal context" : "Expired terminal contexts";
-  if (variant === "empty") {
-    return {
-      title: `${noun} won't be sent`,
-      description: "Remove it or re-add it to include terminal output.",
-    };
+  if (language === "zh-CN") {
+    return variant === "empty"
+      ? {
+          title: `${count} 个已过期的终端上下文不会发送`,
+          description: "请移除后重新添加，以包含终端输出。",
+        }
+      : {
+          title: `消息中已省略 ${count} 个已过期的终端上下文`,
+          description: "如需包含终端输出，请重新添加。",
+        };
   }
-  return {
-    title: `${noun} omitted from message`,
-    description: "Re-add it if you want that terminal output included.",
-  };
+
+  const noun = count === 1 ? "Expired terminal context" : "Expired terminal contexts";
+  return variant === "empty"
+    ? {
+        title: `${noun} won't be sent`,
+        description: "Remove it or re-add it to include terminal output.",
+      }
+    : {
+        title: `${noun} omitted from message`,
+        description: "Re-add it if you want that terminal output included.",
+      };
 }
 
 export function shouldRenderTerminalWorkspace(options: {

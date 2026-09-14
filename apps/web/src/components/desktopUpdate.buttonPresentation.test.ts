@@ -22,7 +22,7 @@ const baseState: DesktopUpdateState = {
 };
 
 describe("desktop update button presentation timeline", () => {
-  it("surfaces checking, downloading and ready-to-install states without secondary detail text", () => {
+  it("keeps checking interactive and all update-ready states informational", () => {
     const checking = getDesktopUpdateButtonPresentation({
       ...baseState,
       status: "checking",
@@ -39,8 +39,8 @@ describe("desktop update button presentation timeline", () => {
       downloadPercent: 37.9,
     });
     expect(downloading).toEqual({
-      label: "Preparing",
-      secondaryLabel: null,
+      label: "Update available",
+      secondaryLabel: "1.2.0",
     });
 
     const downloaded = getDesktopUpdateButtonPresentation({
@@ -50,12 +50,12 @@ describe("desktop update button presentation timeline", () => {
       downloadedVersion: "1.2.0",
     });
     expect(downloaded).toEqual({
-      label: "Update",
-      secondaryLabel: null,
+      label: "Update available",
+      secondaryLabel: "1.2.0",
     });
   });
 
-  it("shows a stable fallback when download progress is unavailable", () => {
+  it("shows the available version when legacy download progress is unavailable", () => {
     const downloading = getDesktopUpdateButtonPresentation({
       ...baseState,
       status: "downloading",
@@ -64,12 +64,12 @@ describe("desktop update button presentation timeline", () => {
     });
 
     expect(downloading).toEqual({
-      label: "Preparing",
-      secondaryLabel: null,
+      label: "Update available",
+      secondaryLabel: "1.2.0",
     });
   });
 
-  it("keeps downloading presentation stable for out-of-range progress values", () => {
+  it("keeps legacy downloading presentation informational for out-of-range progress values", () => {
     const over = getDesktopUpdateButtonPresentation({
       ...baseState,
       status: "downloading",
@@ -77,8 +77,8 @@ describe("desktop update button presentation timeline", () => {
       downloadPercent: 126.9,
     });
     expect(over).toEqual({
-      label: "Preparing",
-      secondaryLabel: null,
+      label: "Update available",
+      secondaryLabel: "1.2.0",
     });
 
     const below = getDesktopUpdateButtonPresentation({
@@ -88,12 +88,12 @@ describe("desktop update button presentation timeline", () => {
       downloadPercent: -8,
     });
     expect(below).toEqual({
-      label: "Preparing",
-      secondaryLabel: null,
+      label: "Update available",
+      secondaryLabel: "1.2.0",
     });
   });
 
-  it("shows Retry after an install failed across a restart", () => {
+  it("shows a non-interactive update notice after a legacy install failure", () => {
     expect(
       getDesktopUpdateButtonPresentation({
         ...baseState,
@@ -105,8 +105,8 @@ describe("desktop update button presentation timeline", () => {
         installFailureCount: 1,
       }),
     ).toEqual({
-      label: "Retry",
-      secondaryLabel: null,
+      label: "Update available",
+      secondaryLabel: "1.2.0",
     });
   });
 });

@@ -19,10 +19,12 @@ import { ShortcutKbd } from "./ui/shortcut-kbd";
 import {
   buildShortcutSheetSections,
   filterShortcutSheetSections,
+  localizeShortcutSheetText,
   type ShortcutSheetContext,
   type ShortcutSheetSection,
 } from "../shortcutsSheet";
 import type { ProjectScript } from "../types";
+import { useUiLanguage } from "~/uiLanguage";
 
 export default function ShortcutsDialog(props: {
   open: boolean;
@@ -55,6 +57,7 @@ function ShortcutsDialogContent(props: {
   platform: string;
   context: ShortcutSheetContext;
 }) {
+  const { language, t } = useUiLanguage();
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -75,22 +78,32 @@ function ShortcutsDialogContent(props: {
     platform: props.platform,
     context: props.context,
   });
-  const filteredSections = filterShortcutSheetSections(sections, query);
+  const localizedSections = sections.map((section) => ({
+    ...section,
+    title: localizeShortcutSheetText(section.title, language, t),
+    description: localizeShortcutSheetText(section.description, language, t),
+    entries: section.entries.map((entry) => ({
+      ...entry,
+      label: localizeShortcutSheetText(entry.label, language, t),
+      description: localizeShortcutSheetText(entry.description, language, t),
+    })),
+  }));
+  const filteredSections = filterShortcutSheetSections(localizedSections, query);
   const hasResults = filteredSections.some((section) => section.entries.length > 0);
 
   return (
     <>
       <DialogHeader className="pb-2">
-        <DialogTitle className="text-base">Keybindings</DialogTitle>
+        <DialogTitle className="text-base">{t("Keybindings")}</DialogTitle>
         <DialogDescription className="text-xs">
-          Reflects the bindings active in your current context.
+          {t("Reflects the bindings active in your current context.")}
         </DialogDescription>
         <div className="pt-2">
           <Input
             ref={inputRef}
             type="search"
             size="sm"
-            placeholder="Search shortcuts..."
+            placeholder={t("Search shortcuts...")}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
@@ -102,7 +115,7 @@ function ShortcutsDialogContent(props: {
             }}
             className="rounded-md"
             nativeInput
-            aria-label="Search shortcuts"
+            aria-label={t("Search shortcuts")}
           />
         </div>
       </DialogHeader>
@@ -116,7 +129,7 @@ function ShortcutsDialogContent(props: {
           </div>
         ) : (
           <div className="px-6 py-10 text-center text-sm text-muted-foreground">
-            No shortcuts match &ldquo;{query}&rdquo;.
+            {t("No shortcuts match")} &ldquo;{query}&rdquo;.
           </div>
         )}
       </DialogPanel>
@@ -131,6 +144,7 @@ function ShortcutSection({
   section: ShortcutSheetSection;
   isFirst: boolean;
 }) {
+  const { t } = useUiLanguage();
   if (section.entries.length === 0) return null;
   const muted = section.tone === "muted";
   return (
@@ -142,9 +156,9 @@ function ShortcutSection({
             muted ? "text-muted-foreground/70" : "text-muted-foreground",
           )}
         >
-          {section.title}
+          {t(section.title)}
         </h3>
-        <p className="truncate text-[11px] text-muted-foreground/70">{section.description}</p>
+        <p className="truncate text-[11px] text-muted-foreground/70">{t(section.description)}</p>
       </header>
       <ul className={cn("px-3 pb-3", muted && "opacity-75")}>
         {section.entries.map((entry) => (
@@ -152,7 +166,7 @@ function ShortcutSection({
             key={entry.id}
             className="group flex items-center justify-between gap-4 rounded-md px-3 py-1.5 hover:bg-muted/60"
           >
-            <span className="min-w-0 truncate text-sm text-foreground">{entry.label}</span>
+            <span className="min-w-0 truncate text-sm text-foreground">{t(entry.label)}</span>
             <ShortcutKbd shortcutLabel={entry.shortcutLabel} groupClassName="shrink-0" />
           </li>
         ))}

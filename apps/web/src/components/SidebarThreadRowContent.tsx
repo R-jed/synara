@@ -15,6 +15,7 @@ import { SIDEBAR_ROW_LABEL_TEXT_CLASS_NAME } from "../sidebarRowStyles";
 import type { SidebarThreadSummary } from "../types";
 import { TerminalIcon } from "../lib/icons";
 import { cn } from "../lib/utils";
+import { useUiLanguage } from "../uiLanguage";
 import { ProviderIcon } from "./ProviderIcon";
 import { SidebarGlyph } from "./sidebarGlyphs";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "./ui/tooltip";
@@ -34,14 +35,17 @@ function ProviderAvatarWithTerminal({
   terminalStatus: SidebarThreadTerminalStatus | null;
   terminalCount: number;
 }) {
+  const { language, t } = useUiLanguage();
   const provider = thread.session?.provider ?? thread.modelSelection.provider;
   const handoffSourceProvider = thread.handoff?.sourceProvider ?? null;
   const handoffTooltip = resolveThreadHandoffBadgeLabel(thread);
   const showBadge = terminalCount > 1 || terminalStatus !== null;
   const badgeTooltip =
     terminalCount > 1
-      ? `${terminalCount} ${pluralize(terminalCount, "terminal")} open`
-      : (terminalStatus?.label ?? "Terminal open");
+      ? language === "zh-CN"
+        ? `已打开 ${terminalCount} 个终端`
+        : `${terminalCount} ${pluralize(terminalCount, "terminal")} open`
+      : t(terminalStatus?.label ?? "Terminal open");
   const badgeColorClass = terminalStatus?.colorClass ?? "text-muted-foreground/55";
 
   const hasHandoff = Boolean(handoffSourceProvider);
@@ -184,6 +188,7 @@ export function SidebarThreadRowContent({
   pendingStatusColorClass?: string | null | undefined;
   suffix?: ReactNode;
 }) {
+  const { t } = useUiLanguage();
   const subagentIndentPx = subagentIndentPxProp ?? 0;
   const isSubagentThread = Boolean(thread.parentThreadId);
   const subagentPresentation =
@@ -252,10 +257,10 @@ export function SidebarThreadRowContent({
         </span>
         {!isSubagentThread && pendingStatusColorClass ? (
           <span
-            aria-label="Pending approval"
+            aria-label={t("Pending approval")}
             className={cn("shrink-0 text-[10px] font-medium", pendingStatusColorClass)}
           >
-            Pending
+            {t("Pending")}
           </span>
         ) : null}
       </div>

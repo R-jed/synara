@@ -15,6 +15,7 @@ import {
   serverAllProviderUsageQueryOptions,
   serverSettingsQueryOptions,
 } from "~/lib/serverReactQuery";
+import { useUiLanguage } from "~/uiLanguage";
 
 import { resolveEnvironmentProviderUsageSummary } from "./EnvironmentUsageSection.logic";
 import {
@@ -26,6 +27,7 @@ import {
 } from "./EnvironmentRow";
 
 export function EnvironmentUsageSection({ provider }: { provider: ProviderKind }) {
+  const { t } = useUiLanguage();
   const usageQuery = useQuery(serverAllProviderUsageQueryOptions());
   const settingsQuery = useQuery(serverSettingsQueryOptions());
   // The batch snapshot is an enrichment, not a gate: when the provider's live fetch fails or is
@@ -50,16 +52,21 @@ export function EnvironmentUsageSection({ provider }: { provider: ProviderKind }
     snapshot,
     hasUsageLines: model.usageLines.length > 0,
   });
+  const localizedRowSummary = summary.rows
+    .map((row) => `${t(row.label)} ${row.remainingLabel} ${t("remaining")}`)
+    .join(", ");
+  const localizedStatusLabel = t(summary.statusLabel);
+  const localizedAriaLabel = `${providerName} ${t("usage")}: ${localizedRowSummary || localizedStatusLabel}`;
 
   return (
-    <EnvironmentLabeledSection label="Usage">
+    <EnvironmentLabeledSection label={t("Usage")}>
       <ProviderUsageMenuPopup provider={provider} model={model} align="start" showUsageLines={true}>
         <MenuTrigger
           render={
             <button
               type="button"
               className={ENVIRONMENT_ROW_CLASS_NAME}
-              aria-label={summary.ariaLabel}
+              aria-label={localizedAriaLabel}
             />
           }
         >
@@ -79,7 +86,7 @@ export function EnvironmentUsageSection({ provider }: { provider: ProviderKind }
                     {summary.rows.map((row) => (
                       <span key={row.id} className="flex items-baseline gap-1.5">
                         <span className="text-[var(--color-text-foreground-secondary)]">
-                          {row.label}
+                          {t(row.label)}
                         </span>
                         <span className="min-w-7 text-right text-[var(--color-text-foreground)]">
                           {row.remainingLabel}
@@ -89,7 +96,7 @@ export function EnvironmentUsageSection({ provider }: { provider: ProviderKind }
                   </span>
                 ) : (
                   <span className="text-[length:var(--app-font-size-chat-meta,10px)] text-[var(--color-text-foreground-secondary)]">
-                    {summary.statusLabel}
+                    {localizedStatusLabel}
                   </span>
                 )}
                 <EnvironmentRowChevron />

@@ -579,6 +579,8 @@ export interface DesktopCustomTitleBarState {
   restartRequired: boolean;
 }
 
+export type DesktopUiLanguage = "en" | "zh-CN";
+
 export const DesktopAppIcon = Schema.Literals(["default", "icon", "dark"]);
 export type DesktopAppIcon = typeof DesktopAppIcon.Type;
 
@@ -591,6 +593,13 @@ export interface SynaraStorageSnapshot {
 export type DesktopSafariAccessInfo =
   | { supported: false }
   | { supported: true; appName: string; appPath: string | null };
+
+export interface DesktopLocalFontFace {
+  readonly family: string;
+  readonly fullName: string;
+  readonly postscriptName: string;
+  readonly style: string;
+}
 
 export interface DesktopBridge {
   safariAccess?: {
@@ -612,8 +621,12 @@ export interface DesktopBridge {
   }) => Promise<string | null>;
   confirm: (message: string) => Promise<boolean>;
   setTheme: (theme: DesktopTheme) => Promise<void>;
+  setUiLanguage?: (language: DesktopUiLanguage) => Promise<void>;
   getAppIcon?: () => Promise<DesktopAppIcon>;
   setAppIcon: (icon: DesktopAppIcon) => Promise<void>;
+  localFonts?: {
+    list: () => Promise<DesktopLocalFontFace[]>;
+  };
   showContextMenu: <T extends string>(
     items: readonly ContextMenuItem<T>[],
     position?: { x: number; y: number },

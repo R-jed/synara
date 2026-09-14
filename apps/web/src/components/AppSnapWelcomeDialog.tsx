@@ -18,6 +18,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useOnboardingDialogStore } from "../onboarding/onboardingDialogStore";
 import { CentralIcon } from "../lib/central-icons";
+import { useUiLanguage } from "../uiLanguage";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -38,6 +39,7 @@ type AppSnapWelcomeStorage = typeof AppSnapWelcomeStorageSchema.Type;
 const INITIAL_STORAGE: AppSnapWelcomeStorage = { acknowledged: false };
 
 export function AppSnapWelcomeDialog() {
+  const { t } = useUiLanguage();
   const navigate = useNavigate();
   const [storage, setStorage] = useLocalStorage(
     APP_SNAP_WELCOME_STORAGE_KEY,
@@ -121,22 +123,23 @@ export function AppSnapWelcomeDialog() {
 
           <DialogHeader className="gap-2 p-0">
             <DialogTitle className="text-[19px] leading-tight">
-              Synara AppSnaps are live!
+              {t("Synara AppSnaps are live!")}
             </DialogTitle>
             {/* Two lines at 378px wide is the reference sheet's proportion; longer copy
                 wraps to three and throws the whole vertical rhythm off. */}
             <DialogDescription className="text-[14px] leading-[19.5px]">
-              Press both Option keys (⌥&thinsp;⌥) to snap any app&rsquo;s window into the task
-              you&rsquo;re working in.
+              {t(
+                "Press both Option keys (⌥ ⌥) to snap any app's window into the task you're working in.",
+              )}
             </DialogDescription>
           </DialogHeader>
 
           <DialogFooter className="gap-2 p-0 pt-3">
             <Button variant="ghost" className="rounded-[10px]" onClick={acknowledge}>
-              Not now
+              {t("Not now")}
             </Button>
             <Button className="rounded-[10px]" onClick={openSettings}>
-              Set up AppSnap
+              {t("Set up AppSnap")}
             </Button>
           </DialogFooter>
         </div>

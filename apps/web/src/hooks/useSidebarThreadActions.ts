@@ -48,6 +48,7 @@ import { useTemporaryThreadStore } from "../temporaryThreadStore";
 import { getThreadFromState } from "../threadDerivation";
 import { useThreadSelectionStore } from "../threadSelectionStore";
 import type { Project, SidebarThreadSummary } from "../types";
+import { useUiLanguage } from "../uiLanguage";
 
 const ARCHIVE_UNDO_TOAST_DURATION_MS = 8000;
 /**
@@ -99,6 +100,7 @@ export function useSidebarThreadActions(input: {
   readonly sidebarThreadSummaryById: Readonly<Record<string, SidebarThreadSummary>>;
   readonly threadsHydrated: boolean;
 }) {
+  const { language, t, tError } = useUiLanguage();
   const {
     activeSplitView,
     appSettings,
@@ -234,11 +236,11 @@ export function useSidebarThreadActions(input: {
         console.error("Failed to update pinned thread state", { threadId, error });
         toastManager.add({
           type: "error",
-          title: isPinned ? "Unable to unpin thread" : "Unable to pin thread",
+          title: t(isPinned ? "Unable to unpin thread" : "Unable to pin thread"),
         });
       });
     },
-    [pinnedThreadIdSet, setThreadPinned],
+    [pinnedThreadIdSet, setThreadPinned, t],
   );
 
   const [optimisticSettledMutationByThreadId, setOptimisticSettledMutationByThreadId] = useState<
@@ -322,11 +324,11 @@ export function useSidebarThreadActions(input: {
         console.error("Failed to update settled thread state", { threadId, error });
         toastManager.add({
           type: "error",
-          title: isSettled ? "Unable to mark thread as done" : "Unable to undo done",
+          title: t(isSettled ? "Unable to mark thread as done" : "Unable to undo done"),
         });
       });
     },
-    [setThreadSettled],
+    [setThreadSettled, t],
   );
 
   // Drop optimistic settle entries once the server-confirmed state agrees, so
@@ -547,10 +549,16 @@ export function useSidebarThreadActions(input: {
       if (!thread) return;
       if (appSettings.confirmThreadDelete) {
         const api = readNativeApi();
-        const confirmationMessage = [
-          `Delete thread "${thread.title}"?`,
-          "This permanently clears conversation history for this thread.",
-        ].join("\n");
+        const confirmationMessage =
+          language === "zh-CN"
+            ? [
+                `删除对话“${thread.title}”？`,
+                t("This permanently clears conversation history for this thread."),
+              ].join("\n")
+            : [
+                `Delete thread "${thread.title}"?`,
+                "This permanently clears conversation history for this thread.",
+              ].join("\n");
         const confirmed = api
           ? await api.dialogs.confirm(confirmationMessage)
           : await showConfirmDialogFallback(confirmationMessage);
@@ -558,7 +566,7 @@ export function useSidebarThreadActions(input: {
       }
       await deleteThread(threadId);
     },
-    [deleteThread, appSettings.confirmThreadDelete, sidebarThreadSummaryById],
+    [deleteThread, appSettings.confirmThreadDelete, language, sidebarThreadSummaryById, t],
   );
 
   const archiveThread = useCallback(
@@ -613,8 +621,8 @@ export function useSidebarThreadActions(input: {
           if (!currentThread) {
             toastManager.add({
               type: "error",
-              title: "Could not restore thread",
-              description: "The thread no longer exists.",
+              title: t("Could not restore thread"),
+              description: t("The thread no longer exists."),
             });
             return false;
           }
@@ -630,8 +638,8 @@ export function useSidebarThreadActions(input: {
         } catch (error) {
           toastManager.add({
             type: "error",
-            title: "Could not restore thread",
-            description: error instanceof Error ? error.message : "Unable to restore the thread.",
+            title: t("Could not restore thread"),
+            description: tError(error, "Unable to restore the thread."),
           });
           return false;
         }
@@ -640,7 +648,7 @@ export function useSidebarThreadActions(input: {
         pendingThreadIds.delete(restoreInput.threadId);
       });
     },
-    [navigate],
+    [navigate, t, tError],
   );
 
   const showArchiveUndoToast = useCallback(
@@ -676,12 +684,12 @@ export function useSidebarThreadActions(input: {
       } catch (error) {
         toastManager.add({
           type: "error",
-          title: "Could not archive thread",
-          description: error instanceof Error ? error.message : "Unable to archive the thread.",
+          title: t("Could not archive thread"),
+          description: tError(error, "Unable to archive the thread."),
         });
       }
     },
-    [archiveThread, routeThreadId, showArchiveUndoToast],
+    [archiveThread, routeThreadId, showArchiveUndoToast, t, tError],
   );
 
   const confirmAndArchiveThread = useCallback(
@@ -690,10 +698,16 @@ export function useSidebarThreadActions(input: {
       if (!thread) return;
       if (appSettings.confirmThreadArchive) {
         const api = readNativeApi();
-        const confirmationMessage = [
-          `Archive thread "${thread.title}"?`,
-          "Archived threads are hidden from the sidebar but can be restored later.",
-        ].join("\n");
+        const confirmationMessage =
+          language === "zh-CN"
+            ? [
+                `归档对话“${thread.title}”？`,
+                t("Archived threads are hidden from the sidebar but can be restored later."),
+              ].join("\n")
+            : [
+                `Archive thread "${thread.title}"?`,
+                "Archived threads are hidden from the sidebar but can be restored later.",
+              ].join("\n");
         const confirmed = api
           ? await api.dialogs.confirm(confirmationMessage)
           : await showConfirmDialogFallback(confirmationMessage);
@@ -701,7 +715,13 @@ export function useSidebarThreadActions(input: {
       }
       await archiveThreadWithUndo(threadId);
     },
-    [archiveThreadWithUndo, appSettings.confirmThreadArchive, sidebarThreadSummaryById],
+    [
+      archiveThreadWithUndo,
+      appSettings.confirmThreadArchive,
+      language,
+      sidebarThreadSummaryById,
+      t,
+    ],
   );
 
   const archiveAllThreadsInProject = useCallback(
@@ -715,15 +735,24 @@ export function useSidebarThreadActions(input: {
       if (projectThreads.length === 0) {
         toastManager.add({
           type: "info",
-          title: "Nothing to archive",
-          description: `"${project.name}" has no threads to archive.`,
+          title: t("Nothing to archive"),
+          description:
+            language === "zh-CN"
+              ? `“${project.name}”中没有可归档的对话。`
+              : `"${project.name}" has no threads to archive.`,
         });
         return;
       }
-      const archiveLines = [
-        `Archive ${projectThreads.length} ${pluralize(projectThreads.length, "thread")} in "${project.name}"?`,
-        "Archived threads are hidden from the sidebar but can be restored later.",
-      ];
+      const archiveLines =
+        language === "zh-CN"
+          ? [
+              `归档“${project.name}”中的 ${projectThreads.length} 个对话？`,
+              t("Archived threads are hidden from the sidebar but can be restored later."),
+            ]
+          : [
+              `Archive ${projectThreads.length} ${pluralize(projectThreads.length, "thread")} in "${project.name}"?`,
+              "Archived threads are hidden from the sidebar but can be restored later.",
+            ];
       const confirmed = api
         ? await api.dialogs.confirm(archiveLines.join("\n"))
         : await showConfirmDialogFallback(archiveLines.join("\n"));
@@ -748,21 +777,35 @@ export function useSidebarThreadActions(input: {
       if (archivedCount > 0) {
         toastManager.add({
           type: failureCount > 0 ? "warning" : "success",
-          title: archivedCount === 1 ? "Thread archived" : `Archived ${archivedCount} threads`,
+          title:
+            language === "zh-CN"
+              ? archivedCount === 1
+                ? "对话已归档"
+                : `已归档 ${archivedCount} 个对话`
+              : archivedCount === 1
+                ? "Thread archived"
+                : `Archived ${archivedCount} threads`,
           description:
             failureCount > 0
-              ? `Failed to archive ${failureCount} ${pluralize(failureCount, "thread")}.`
-              : `"${project.name}" cleared.`,
+              ? language === "zh-CN"
+                ? `${failureCount} 个对话归档失败。`
+                : `Failed to archive ${failureCount} ${pluralize(failureCount, "thread")}.`
+              : language === "zh-CN"
+                ? `“${project.name}”已清空。`
+                : `"${project.name}" cleared.`,
         });
       } else if (failureCount > 0) {
         toastManager.add({
           type: "error",
-          title: "Failed to archive threads",
-          description: `Could not archive ${failureCount} ${pluralize(failureCount, "thread")} in "${project.name}".`,
+          title: t("Failed to archive threads"),
+          description:
+            language === "zh-CN"
+              ? `无法归档“${project.name}”中的 ${failureCount} 个对话。`
+              : `Could not archive ${failureCount} ${pluralize(failureCount, "thread")} in "${project.name}".`,
         });
       }
     },
-    [archiveThread, projectById, sidebarThreads, removeFromSelection],
+    [archiveThread, language, projectById, sidebarThreads, removeFromSelection, t],
   );
 
   const deleteProjectThreads = useCallback(
@@ -775,8 +818,11 @@ export function useSidebarThreadActions(input: {
         if (options?.showEmptyToast ?? true) {
           toastManager.add({
             type: "info",
-            title: "Nothing to delete",
-            description: `"${project.name}" has no threads to delete.`,
+            title: t("Nothing to delete"),
+            description:
+              language === "zh-CN"
+                ? `“${project.name}”中没有可删除的对话。`
+                : `"${project.name}" has no threads to delete.`,
           });
         }
         return {
@@ -788,10 +834,15 @@ export function useSidebarThreadActions(input: {
       }
       const confirmationMessage =
         options?.confirmMessage === undefined
-          ? [
-              `Delete ${projectThreads.length} ${pluralize(projectThreads.length, "thread")} in "${project.name}"?`,
-              "This permanently clears conversation history for these threads.",
-            ].join("\n")
+          ? language === "zh-CN"
+            ? [
+                `删除“${project.name}”中的 ${projectThreads.length} 个对话？`,
+                t("This permanently clears conversation history for these threads."),
+              ].join("\n")
+            : [
+                `Delete ${projectThreads.length} ${pluralize(projectThreads.length, "thread")} in "${project.name}"?`,
+                "This permanently clears conversation history for these threads.",
+              ].join("\n")
           : options.confirmMessage;
       if (confirmationMessage !== null) {
         const confirmed = await api.dialogs.confirm(confirmationMessage);
@@ -834,17 +885,31 @@ export function useSidebarThreadActions(input: {
         if (deletedCount > 0) {
           toastManager.add({
             type: failureCount > 0 ? "warning" : "success",
-            title: deletedCount === 1 ? "Thread deleted" : `Deleted ${deletedCount} threads`,
+            title:
+              language === "zh-CN"
+                ? deletedCount === 1
+                  ? "对话已删除"
+                  : `已删除 ${deletedCount} 个对话`
+                : deletedCount === 1
+                  ? "Thread deleted"
+                  : `Deleted ${deletedCount} threads`,
             description:
               failureCount > 0
-                ? `Failed to delete ${failureCount} ${pluralize(failureCount, "thread")}.`
-                : `"${project.name}" cleared.`,
+                ? language === "zh-CN"
+                  ? `${failureCount} 个对话删除失败。`
+                  : `Failed to delete ${failureCount} ${pluralize(failureCount, "thread")}.`
+                : language === "zh-CN"
+                  ? `“${project.name}”已清空。`
+                  : `"${project.name}" cleared.`,
           });
         } else if (failureCount > 0) {
           toastManager.add({
             type: "error",
-            title: "Failed to delete threads",
-            description: `Could not delete ${failureCount} ${pluralize(failureCount, "thread")} in "${project.name}".`,
+            title: t("Failed to delete threads"),
+            description:
+              language === "zh-CN"
+                ? `无法删除“${project.name}”中的 ${failureCount} 个对话。`
+                : `Could not delete ${failureCount} ${pluralize(failureCount, "thread")} in "${project.name}".`,
           });
         }
       }
@@ -855,7 +920,7 @@ export function useSidebarThreadActions(input: {
         projectName: project.name,
       };
     },
-    [deleteThread, projectById, sidebarThreads, removeFromSelection],
+    [deleteThread, language, projectById, sidebarThreads, removeFromSelection, t],
   );
 
   return {

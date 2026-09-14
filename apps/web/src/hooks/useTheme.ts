@@ -9,6 +9,8 @@ import { isMacNavigatorPlatform } from "../lib/utils";
 import {
   DEFAULT_THEME_STATE,
   type ChromeTheme,
+  type ThemeFontFaceSelection,
+  type ThemeFontSlot,
   type ThemeFonts,
   type ThemeMode,
   type ThemePack,
@@ -24,10 +26,12 @@ import {
   resolveThemeVariant,
   serializeThemeState,
   setThemeCodeThemeId,
+  setThemeFontSelection,
   setThemeFonts,
   updateChromeTheme,
   updateThemePackFromShareString,
 } from "../theme/theme.logic";
+import { syncThemeLocalFontFaces } from "../theme/themeLocalFontFaces";
 
 type ThemeSnapshot = {
   state: ThemeState;
@@ -175,6 +179,29 @@ function applyThemeState(state: ThemeState, suppressTransitions = false) {
     root.style.setProperty(name, value);
   }
 
+  const localFontAliases = syncThemeLocalFontFaces(activeTheme.theme.fonts);
+  if (!state.systemUiFont && localFontAliases.ui) {
+    const fallback = root.style.getPropertyValue("--theme-font-ui-family").trim();
+    root.style.setProperty(
+      "--theme-font-ui-family",
+      fallback ? `${localFontAliases.ui}, ${fallback}` : localFontAliases.ui,
+    );
+  }
+  if (localFontAliases.content) {
+    const fallback = root.style.getPropertyValue("--theme-font-content-family").trim();
+    root.style.setProperty(
+      "--theme-font-content-family",
+      fallback ? `${localFontAliases.content}, ${fallback}` : localFontAliases.content,
+    );
+  }
+  if (localFontAliases.code) {
+    const fallback = root.style.getPropertyValue("--theme-font-code-family").trim();
+    root.style.setProperty(
+      "--theme-font-code-family",
+      fallback ? `${localFontAliases.code}, ${fallback}` : localFontAliases.code,
+    );
+  }
+
   syncDesktopTheme(state.mode);
 
   if (suppressTransitions) {
@@ -242,6 +269,15 @@ function updateThemeFonts(variant: ThemeVariant, patch: Partial<ThemeFonts>) {
   updateStoredThemeState((state) => setThemeFonts(state, variant, patch));
 }
 
+function updateThemeFontSelection(
+  variant: ThemeVariant,
+  slot: ThemeFontSlot,
+  family: string | null,
+  face: ThemeFontFaceSelection | null,
+) {
+  updateStoredThemeState((state) => setThemeFontSelection(state, variant, slot, family, face));
+}
+
 function setCodeThemeId(variant: ThemeVariant, codeThemeId: string) {
   updateStoredThemeState((state) => setThemeCodeThemeId(state, variant, codeThemeId));
 }
@@ -304,9 +340,19 @@ export function useTheme() {
     setTheme,
     theme,
     themeState: snapshot.state,
+    updateThemeFontSelection,
     updateThemeFonts,
     updateThemePack,
   } as const;
 }
 
-export type { ChromeTheme, ThemeFonts, ThemeMode, ThemePack, ThemeState, ThemeVariant };
+export type {
+  ChromeTheme,
+  ThemeFontFaceSelection,
+  ThemeFontSlot,
+  ThemeFonts,
+  ThemeMode,
+  ThemePack,
+  ThemeState,
+  ThemeVariant,
+};

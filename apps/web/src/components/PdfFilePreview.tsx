@@ -21,6 +21,7 @@ import { usePdfDocument } from "~/lib/pdf/usePdfDocument";
 import { usePdfPageNavigation } from "~/lib/pdf/usePdfPageNavigation";
 import { usePdfZoomController } from "~/lib/pdf/usePdfZoomController";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { PdfPageView } from "./pdf/PdfPageView";
 import { PdfViewerToolbar } from "./pdf/PdfViewerToolbar";
 
@@ -40,6 +41,7 @@ export function PdfFilePreview(props: {
   onPreviewReady?: (() => void) | undefined;
   onPreviewError?: (() => void) | undefined;
 }) {
+  const { t, tError } = useUiLanguage();
   const previewUrl = buildLocalImageUrl({
     src: props.filePath,
     cwd: props.cwd ?? undefined,
@@ -126,7 +128,9 @@ export function PdfFilePreview(props: {
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-4 text-center">
           <TriangleAlertIcon className="size-5 text-destructive/80" aria-hidden="true" />
           <p className="text-[12px] text-muted-foreground">
-            {doc.error ?? "Could not open this PDF."}
+            {doc.error
+              ? tError(doc.error, "Could not open this PDF.")
+              : t("Could not open this PDF.")}
           </p>
           {props.onReload ? (
             <button
@@ -134,7 +138,7 @@ export function PdfFilePreview(props: {
               className="rounded-md px-2 py-1 text-xs hover:bg-foreground/8"
               onClick={props.onReload}
             >
-              Reload file from disk
+              {t("Reload file from disk")}
             </button>
           ) : null}
         </div>
@@ -147,7 +151,7 @@ export function PdfFilePreview(props: {
       <div
         className="flex min-h-0 flex-1 items-center justify-center"
         role="status"
-        aria-label="Loading PDF..."
+        aria-label={t("Loading PDF...")}
       >
         <Loader2Icon className="size-4 animate-spin opacity-60" aria-hidden="true" />
       </div>

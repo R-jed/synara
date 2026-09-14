@@ -71,6 +71,14 @@ const approvedAttributions: readonly ApprovedAttribution[] = [
     line: `"A review of the Synara codebase found an analytics configuration that came from the original ${retiredFirstSpacedDisplayName} codebase when Synara was created as a clone in March.",`,
   },
   {
+    path: "apps/web/src/uiLanguageMessages/whatsNew.partA.ts",
+    line: `"A review of the Synara codebase found an analytics configuration that came from the original ${retiredFirstSpacedDisplayName} codebase when Synara was created as a clone in March.":`,
+  },
+  {
+    path: "apps/web/src/uiLanguageMessages/whatsNew.partA.ts",
+    line: `"审查 Synara 代码库时发现了一项分析配置，它来自最初的 ${retiredFirstDisplayName.slice(0, 2)} Code 代码库，是 Synara 在 3 月克隆创建时一并带入的。",`,
+  },
+  {
     // The website's copy of the same published disclosure as CHANGELOG.md.
     path: "apps/marketing/src/data/changelog.ts",
     line: `"A review of the Synara codebase found an analytics configuration that came from the original ${retiredFirstDisplayName.slice(0, 2)} Code codebase when Synara was created as a clone in March.",`,

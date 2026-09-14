@@ -27,6 +27,7 @@ import {
 } from "~/lib/projectReactQuery";
 import { buildMatchSegments } from "~/lib/matchHighlight";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   Command,
   CommandDialog,
@@ -280,7 +281,18 @@ export function WorkspaceSearchPalette(props: WorkspaceSearchPaletteProps) {
 }
 
 function WorkspaceSearchPaletteContent(props: WorkspaceSearchPaletteProps) {
+  const { language, t } = useUiLanguage();
   const copy = MODE_COPY[props.mode];
+  const localizedCopy = {
+    groupLabel: t(copy.groupLabel),
+    placeholder: t(copy.placeholder),
+    noResults: t(copy.noResults),
+    error: t(copy.error),
+    prompt:
+      language === "zh-CN" && props.mode === "snippets"
+        ? `输入至少 ${PROJECT_SEARCH_CONTENT_MIN_QUERY_LENGTH} 个字符以搜索代码`
+        : t(copy.prompt),
+  };
 
   const [query, setQuery] = useState("");
   const trimmedQuery = query.trim();
@@ -374,10 +386,10 @@ function WorkspaceSearchPaletteContent(props: WorkspaceSearchPaletteProps) {
 
   const statusMessage = !hasRows
     ? activeQuery.isError
-      ? copy.error
+      ? localizedCopy.error
       : hasUsableQuery && isSettled
-        ? copy.noResults
-        : copy.prompt
+        ? localizedCopy.noResults
+        : localizedCopy.prompt
     : null;
 
   return (
@@ -393,7 +405,7 @@ function WorkspaceSearchPaletteContent(props: WorkspaceSearchPaletteProps) {
         <AutocompletePrimitive.Input
           autoFocus
           className={INPUT_CLASS}
-          placeholder={copy.placeholder}
+          placeholder={localizedCopy.placeholder}
           value={query}
           onChange={(event) => setQuery(event.currentTarget.value)}
         />
@@ -405,7 +417,7 @@ function WorkspaceSearchPaletteContent(props: WorkspaceSearchPaletteProps) {
       <CommandStatus>
         {statusMessage ? (
           <div className="text-start">
-            <div className={GROUP_LABEL_CLASS}>{copy.groupLabel}</div>
+            <div className={GROUP_LABEL_CLASS}>{localizedCopy.groupLabel}</div>
             <div className="px-2.5 pt-0.5 pb-2 text-[13px] text-zinc-700 dark:text-zinc-300">
               {statusMessage}
             </div>
@@ -416,7 +428,9 @@ function WorkspaceSearchPaletteContent(props: WorkspaceSearchPaletteProps) {
       <CommandList className={LIST_CLASS}>
         {props.mode === "files" && fileEntries.length > 0 ? (
           <CommandGroup>
-            <CommandGroupLabel className={GROUP_LABEL_CLASS}>{copy.groupLabel}</CommandGroupLabel>
+            <CommandGroupLabel className={GROUP_LABEL_CLASS}>
+              {localizedCopy.groupLabel}
+            </CommandGroupLabel>
             {fileEntries.map((entry, index) => (
               <FileResultRow
                 key={entry.path}
@@ -431,7 +445,9 @@ function WorkspaceSearchPaletteContent(props: WorkspaceSearchPaletteProps) {
         ) : null}
         {props.mode === "snippets" && snippetMatches.length > 0 ? (
           <CommandGroup>
-            <CommandGroupLabel className={GROUP_LABEL_CLASS}>{copy.groupLabel}</CommandGroupLabel>
+            <CommandGroupLabel className={GROUP_LABEL_CLASS}>
+              {localizedCopy.groupLabel}
+            </CommandGroupLabel>
             {snippetMatches.map((match, index) => (
               <SnippetResultRow
                 key={`${match.path}:${match.lineNumber}`}

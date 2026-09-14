@@ -18,43 +18,21 @@ export function resolveDesktopUpdateButtonAction(
   ) {
     return "check";
   }
-  if (state.status === "available") {
-    return "download";
-  }
-  if (state.status === "downloaded") {
-    return "install";
-  }
-  if (state.status === "error") {
-    if (state.errorContext === "install" && !state.downloadedVersion && state.availableVersion) {
-      return "download";
-    }
-    if (
-      state.downloadedVersion &&
-      (state.errorContext === "install" || state.errorContext === null)
-    ) {
-      return "install";
-    }
-    if (
-      state.availableVersion &&
-      (state.errorContext === "download" || state.errorContext === null)
-    ) {
-      return "download";
-    }
-  }
+  // Local customized builds deliberately stop at version discovery. Download and
+  // install actions stay unavailable so an upstream release cannot replace local changes.
   return "none";
 }
 
 export function shouldShowDesktopUpdateButton(state: DesktopUpdateState | null): boolean {
   if (!state?.enabled) return false;
-  // Only show the button when there's actually something to do:
-  // a version being prepared, a downloaded update to install, or a retryable error.
-  // Update checks stay background-only so periodic polling never flashes sidebar UI.
-  const action = resolveDesktopUpdateButtonAction(state);
+  // Keep a non-interactive version notice visible after a successful check.
   return (
     state.status === "available" ||
     state.status === "downloading" ||
     state.status === "downloaded" ||
-    (state.status === "error" && state.errorContext !== "check" && action !== "none")
+    (state.status === "error" &&
+      state.errorContext !== "check" &&
+      (state.availableVersion !== null || state.downloadedVersion !== null))
   );
 }
 
@@ -63,11 +41,8 @@ export function shouldShowArm64IntelBuildWarning(state: DesktopUpdateState | nul
 }
 
 export function isDesktopUpdateButtonDisabled(state: DesktopUpdateState | null): boolean {
-  return (
-    state?.status === "downloading" ||
-    state?.status === "checking" ||
-    (state?.status === "available" && state.errorContext !== "download")
-  );
+  if (!state) return true;
+  return state.status === "checking" || resolveDesktopUpdateButtonAction(state) === "none";
 }
 
 export interface DesktopUpdateButtonPresentation {
@@ -102,36 +77,25 @@ export function getDesktopUpdateButtonPresentation(
 
   if (state.status === "downloading") {
     return {
-      label: "Preparing",
-      secondaryLabel: null,
+      label: "Update available",
+      secondaryLabel: state.availableVersion,
+    };
+  }
+
+  if (
+    state.status === "available" ||
+    state.status === "downloaded" ||
+    (state.status === "error" &&
+      state.errorContext !== "check" &&
+      (state.availableVersion !== null || state.downloadedVersion !== null))
+  ) {
+    return {
+      label: "Update available",
+      secondaryLabel: state.availableVersion ?? state.downloadedVersion,
     };
   }
 
   const action = resolveDesktopUpdateButtonAction(state);
-  if (action === "download") {
-    if (state.errorContext === "download" || state.errorContext === "install") {
-      return {
-        label: "Retry",
-        secondaryLabel: null,
-      };
-    }
-    return {
-      label: "Preparing",
-      secondaryLabel: null,
-    };
-  }
-  if (action === "install") {
-    if (state.errorContext === "install") {
-      return {
-        label: "Retry",
-        secondaryLabel: null,
-      };
-    }
-    return {
-      label: "Update",
-      secondaryLabel: null,
-    };
-  }
   if (action === "check") {
     return {
       label: "Check updates",
@@ -161,14 +125,7 @@ export function getArm64IntelBuildWarningDescription(state: DesktopUpdateState):
     return "This install is using the correct architecture.";
   }
 
-  const action = resolveDesktopUpdateButtonAction(state);
-  if (action === "download") {
-    return "This Mac has Apple Silicon, but Synara is still running the Intel build under Rosetta. Synara is preparing the native Apple Silicon update.";
-  }
-  if (action === "install") {
-    return "This Mac has Apple Silicon, but Synara is still running the Intel build under Rosetta. Click Update to restart into the native Apple Silicon build.";
-  }
-  return "This Mac has Apple Silicon, but Synara is still running the Intel build under Rosetta. The next app update will replace it with the native Apple Silicon build.";
+  return "This Mac has Apple Silicon, but Synara is still running the Intel build under Rosetta. This local build will not replace it automatically.";
 }
 
 export function getDesktopUpdateButtonTooltip(
@@ -187,37 +144,21 @@ export function getDesktopUpdateButtonTooltip(
   if (state.status === "up-to-date") {
     return `You're up to date on ${state.currentVersion}. Click to check again.`;
   }
-  if (state.errorContext === "install" && !state.downloadedVersion && state.availableVersion) {
-    return `Synara restarted, but update ${state.availableVersion} was not installed. Click to try again.`;
-  }
-  if (state.errorContext === "download" && state.availableVersion) {
-    return `Could not prepare update ${state.availableVersion}. Click to retry.`;
-  }
-  if (state.errorContext === "install" && (state.downloadedVersion || state.availableVersion)) {
-    return `Could not install update ${state.downloadedVersion ?? state.availableVersion}. Click to retry.`;
-  }
-  if (state.status === "available") {
-    return `Preparing update ${state.availableVersion ?? ""}`.trim();
-  }
-  if (state.status === "downloading") {
-    const progress =
-      typeof state.downloadPercent === "number" ? ` (${Math.floor(state.downloadPercent)}%)` : "";
-    return `Preparing update${progress}`;
-  }
-  if (state.status === "downloaded") {
-    return `Update ${state.downloadedVersion ?? state.availableVersion ?? "ready"} is ready. Click to restart and install.`;
+  if (
+    state.status === "available" ||
+    state.status === "downloading" ||
+    state.status === "downloaded" ||
+    (state.status === "error" &&
+      state.errorContext !== "check" &&
+      (state.availableVersion !== null || state.downloadedVersion !== null))
+  ) {
+    return "A newer version is available. This local build only checks for updates and will not download or install it.";
   }
   if (state.status === "error") {
     if (state.errorContext === "check") {
       return state.message
         ? `${state.message}. Click to check again.`
         : "Update check failed. Click to try again.";
-    }
-    if (state.errorContext === "download" && state.availableVersion) {
-      return `Could not prepare update ${state.availableVersion}. Click to retry.`;
-    }
-    if (state.errorContext === "install" && state.downloadedVersion) {
-      return `Could not install update ${state.downloadedVersion}. Click to retry.`;
     }
     return state.message ?? "Update failed";
   }

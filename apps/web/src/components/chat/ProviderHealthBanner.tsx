@@ -12,6 +12,7 @@ import {
 } from "../ui/notificationSurface";
 import { CircleAlertIcon, TriangleAlertIcon, XIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { ChatColumnBannerFrame } from "./ChatColumnBannerFrame";
 
 export const ProviderHealthBanner = function ProviderHealthBanner({
@@ -21,6 +22,7 @@ export const ProviderHealthBanner = function ProviderHealthBanner({
   onDismiss?: () => void;
   status: ServerProviderStatus | null;
 }) {
+  const { t, tError } = useUiLanguage();
   if (!status || status.status === "ready") {
     return null;
   }
@@ -28,9 +30,10 @@ export const ProviderHealthBanner = function ProviderHealthBanner({
   const providerLabel = PROVIDER_DISPLAY_NAMES[status.provider] ?? status.provider;
   const defaultMessage =
     status.status === "error"
-      ? `${providerLabel} provider is unavailable.`
-      : `${providerLabel} provider has limited availability.`;
-  const title = `${providerLabel} provider status`;
+      ? `${providerLabel} ${t("provider is unavailable.")}`
+      : `${providerLabel} ${t("provider has limited availability.")}`;
+  const message = status.message ? tError(status.message, defaultMessage) : defaultMessage;
+  const title = `${providerLabel} ${t("provider status")}`;
   const Icon = status.status === "error" ? CircleAlertIcon : TriangleAlertIcon;
 
   return (
@@ -41,18 +44,15 @@ export const ProviderHealthBanner = function ProviderHealthBanner({
       >
         <Icon className={NOTIFICATION_ICON_CLASS_NAME} />
         <AlertTitle className="font-normal text-[var(--notification-fg)]">{title}</AlertTitle>
-        <AlertDescription
-          className="line-clamp-3 text-[var(--notification-fg)]/72"
-          title={status.message ?? defaultMessage}
-        >
-          {status.message ?? defaultMessage}
+        <AlertDescription className="line-clamp-3 text-[var(--notification-fg)]/72" title={message}>
+          {message}
         </AlertDescription>
         {onDismiss ? (
           <AlertAction className="absolute top-2 right-2">
             <IconButton
               className="size-6 rounded-full text-[var(--notification-fg)]/65 hover:bg-[var(--notification-fg)]/10 hover:text-[var(--notification-fg)] focus-visible:ring-[var(--notification-fg)]/35 sm:size-6"
-              label="Dismiss provider status"
-              title="Dismiss provider status"
+              label={t("Dismiss provider status")}
+              title={t("Dismiss provider status")}
               onClick={onDismiss}
             >
               <XIcon className="size-3.5" />

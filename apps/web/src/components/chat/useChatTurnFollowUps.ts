@@ -42,6 +42,7 @@ import { useChatTimelineMessages } from "./useChatTimelineMessages";
 import { useChatTranscriptScroll } from "./useChatTranscriptScroll";
 import { useChatWorkLog } from "./useChatWorkLog";
 import { toastManager } from "../ui/toast";
+import { useUiLanguage } from "~/uiLanguage";
 
 import type { LateComposerSendHandlers } from "./chatSendTypes";
 interface ChatTurnFollowUpsInput {
@@ -143,6 +144,7 @@ export function useChatTurnFollowUps({
   planSidebarOpenOnNextThreadRef,
   navigate,
 }: ChatTurnFollowUpsInput) {
+  const { t, tError } = useUiLanguage();
   async function onSubmitPlanFollowUp({
     text,
     interactionMode: nextInteractionMode,
@@ -290,10 +292,7 @@ export function useChatTurnFollowUps({
       setOptimisticUserMessages((existing) =>
         existing.filter((message) => message.id !== messageIdForSend),
       );
-      setThreadError(
-        threadIdForSend,
-        err instanceof Error ? err.message : "Failed to send plan follow-up.",
-      );
+      setThreadError(threadIdForSend, tError(err, "Failed to send plan follow-up."));
       sendInFlightRef.current = false;
       // The turn RPC failed, so no server turn exists for the watchdog to
       // recover — drop the marker armed when the dispatch began.
@@ -318,16 +317,22 @@ export function useChatTurnFollowUps({
             : null,
       });
       if (!editTarget.editable) {
-        setThreadError(activeThread.id, "Only the latest rollbackable user message can be edited.");
+        setThreadError(
+          activeThread.id,
+          t("Only the latest rollbackable user message can be edited."),
+        );
         return false;
       }
       const originalMessage = activeThread.messages[editTarget.messageIndex];
       if (!originalMessage || originalMessage.role !== "user") {
-        setThreadError(activeThread.id, "Only the latest rollbackable user message can be edited.");
+        setThreadError(
+          activeThread.id,
+          t("Only the latest rollbackable user message can be edited."),
+        );
         return false;
       }
       if (isSendBusy || isConnecting || sendInFlightRef.current) {
-        setThreadError(activeThread.id, "Wait for the current send to start before editing.");
+        setThreadError(activeThread.id, t("Wait for the current send to start before editing."));
         return false;
       }
 
@@ -369,10 +374,7 @@ export function useChatTurnFollowUps({
         return true;
       })()
         .catch((err: unknown) => {
-          setThreadError(
-            activeThread.id,
-            err instanceof Error ? err.message : "Failed to edit message.",
-          );
+          setThreadError(activeThread.id, tError(err, "Failed to edit message."));
           return false;
         })
         .finally(() => {
@@ -397,6 +399,8 @@ export function useChatTurnFollowUps({
       selectedProvider,
       setThreadError,
       assistantDeliveryMode,
+      t,
+      tError,
     ],
   );
   // Resuming a workflow is a normal composer turn instructing the agent to
@@ -572,9 +576,8 @@ export function useChatTurnFollowUps({
         }
         toastManager.add({
           type: "error",
-          title: "Could not start implementation thread",
-          description:
-            err instanceof Error ? err.message : "An error occurred while creating the new thread.",
+          title: t("Could not start implementation thread"),
+          description: tError(err, "An error occurred while creating the new thread."),
         });
       })
       .then(finish, finish);
@@ -600,6 +603,8 @@ export function useChatTurnFollowUps({
     assistantDeliveryMode,
     syncServerShellSnapshot,
     selectedModel,
+    t,
+    tError,
   ]);
   return {
     onSubmitPlanFollowUp,

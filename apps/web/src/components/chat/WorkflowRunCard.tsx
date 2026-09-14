@@ -12,7 +12,6 @@
 
 import type { ThreadId } from "@synara/contracts";
 import { getModelCapabilities } from "@synara/shared/model";
-import { pluralize } from "@synara/shared/text";
 import { useState } from "react";
 
 import { formatContextWindowTokens } from "~/lib/contextWindow";
@@ -35,6 +34,7 @@ import {
 import { cn } from "~/lib/utils";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useNowMs } from "~/hooks/useNowMs";
+import { useUiLanguage } from "~/uiLanguage";
 import { formatClockDuration } from "../../session-logic";
 import { Button } from "../ui/button";
 import { DisclosureChevron } from "../ui/DisclosureChevron";
@@ -88,10 +88,16 @@ function settledWorkflowPresentation(workflowRun: WorkflowRunState): {
   }
 }
 
-function agentRowMeta(agent: WorkflowAgentRow, nowMs: number): string | null {
+function agentRowMeta(
+  agent: WorkflowAgentRow,
+  nowMs: number,
+  t: (text: string) => string,
+): string | null {
   const elapsedMs = workflowElapsedMs(agent, nowMs);
   const parts = [
-    agent.totalTokens !== null ? `${formatContextWindowTokens(agent.totalTokens)} tokens` : null,
+    agent.totalTokens !== null
+      ? `${formatContextWindowTokens(agent.totalTokens)} ${t("tokens")}`
+      : null,
     elapsedMs !== null ? formatClockDuration(elapsedMs) : null,
   ].filter((part): part is string => part !== null);
   return parts.length > 0 ? parts.join(" · ") : null;
@@ -107,13 +113,17 @@ function agentContextWindowTokens(agent: WorkflowAgentRow): number | undefined {
     : undefined;
 }
 
-function agentDetailStatsLine(agent: WorkflowAgentRow, nowMs: number): string | null {
+function agentDetailStatsLine(
+  agent: WorkflowAgentRow,
+  nowMs: number,
+  t: (text: string) => string,
+): string | null {
   const elapsedMs = workflowElapsedMs(agent, nowMs);
   const parts = [
-    agent.totalTokens !== null ? `${formatContextWindowTokens(agent.totalTokens)} tokens` : null,
-    agent.toolCalls !== null
-      ? `${agent.toolCalls} ${pluralize(agent.toolCalls, "tool call")}`
+    agent.totalTokens !== null
+      ? `${formatContextWindowTokens(agent.totalTokens)} ${t("tokens")}`
       : null,
+    agent.toolCalls !== null ? `${agent.toolCalls} ${t("tool calls")}` : null,
     elapsedMs !== null ? formatClockDuration(elapsedMs) : null,
   ].filter((part): part is string => part !== null);
   return parts.length > 0 ? parts.join(" · ") : null;
@@ -128,19 +138,20 @@ function WorkflowAgentDetail({
   nowMs: number;
   onOpenThread: (threadId: ThreadId) => void;
 }) {
+  const { t } = useUiLanguage();
   const [promptOpen, setPromptOpen] = useState(false);
   const contextWindowTokens = agentContextWindowTokens(agent);
   const identityLine = [
-    agent.statusLabel,
+    t(agent.statusLabel),
     agent.modelLabel,
-    agent.effortLabel ? `${agent.effortLabel} effort` : null,
+    agent.effortLabel ? `${t("Effort")}: ${agent.effortLabel}` : null,
     contextWindowTokens !== undefined
-      ? `${formatContextWindowTokens(contextWindowTokens)} window`
+      ? `${t("Context window")}: ${formatContextWindowTokens(contextWindowTokens)}`
       : null,
   ]
     .filter((part): part is string => part !== null && part !== undefined)
     .join(" · ");
-  const statsLine = agentDetailStatsLine(agent, nowMs);
+  const statsLine = agentDetailStatsLine(agent, nowMs, t);
   const { threadId } = agent;
 
   return (
@@ -160,7 +171,7 @@ function WorkflowAgentDetail({
             className="h-5 shrink-0 px-1.5 text-[10px] text-muted-foreground/70"
             onClick={() => onOpenThread(threadId)}
           >
-            Open thread
+            {t("Open thread")}
           </Button>
         ) : null}
       </div>
@@ -177,7 +188,7 @@ function WorkflowAgentDetail({
           >
             <DisclosureChevron open={promptOpen} className="shrink-0" />
             <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/45">
-              Prompt
+              {t("Prompt")}
             </span>
           </button>
           {promptOpen ? null : (
@@ -195,7 +206,7 @@ function WorkflowAgentDetail({
       {agent.recentToolNames.length > 0 ? (
         <div className="min-w-0 truncate text-[11px] text-muted-foreground/55">
           <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/45">
-            Recent
+            {t("Recent")}
           </span>{" "}
           <span className="font-mono">{agent.recentToolNames.join(" · ")}</span>
         </div>
@@ -217,7 +228,9 @@ function WorkflowAgentRowView({
   onToggle: () => void;
   onOpenThread: (threadId: ThreadId) => void;
 }) {
-  const meta = agentRowMeta(agent, nowMs);
+  const { t } = useUiLanguage();
+  const meta = agentRowMeta(agent, nowMs, t);
+  const description = agent.description === "Task" ? t("Task") : agent.description;
 
   return (
     <div>
@@ -225,7 +238,7 @@ function WorkflowAgentRowView({
         type="button"
         data-testid="workflow-agent-row"
         className="group -mx-1 flex w-[calc(100%+0.5rem)] min-w-0 items-center gap-2 rounded-md px-1 py-1 text-left transition-colors hover:bg-[var(--color-background-button-secondary-hover)]"
-        title={agent.description}
+        title={description}
         aria-expanded={expanded}
         onClick={onToggle}
       >
@@ -236,7 +249,7 @@ function WorkflowAgentRowView({
           )}
         />
         <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-foreground/85">
-          {agent.description}
+          {description}
           {agent.subagentType ? (
             <span className="ml-1 text-[11px] font-normal text-muted-foreground/55">
               ({agent.subagentType})
@@ -259,7 +272,7 @@ function WorkflowAgentRowView({
         <span
           className={cn("shrink-0 text-[11px]", subagentStatusTextToneClassName(agent.statusKind))}
         >
-          {agent.statusLabel}
+          {t(agent.statusLabel)}
         </span>
         <DisclosureChevron
           open={expanded}
@@ -287,6 +300,7 @@ export function WorkflowRunCard({
   onDismiss,
   attachedToPrevious: attachedToPreviousProp,
 }: WorkflowRunCardProps) {
+  const { t } = useUiLanguage();
   // Keep elapsed-time ticks local to the card instead of rerendering ChatView.
   const nowMs = useNowMs(!workflowRun.settled);
   const attachedToPrevious = attachedToPreviousProp ?? false;
@@ -315,11 +329,11 @@ export function WorkflowRunCard({
   const countLabel =
     totalCount > 0
       ? workflowRun.runningCount > 0
-        ? `${workflowRun.runningCount} of ${totalCount} ${pluralize(totalCount, "agent")} running`
-        : `${totalCount} ${pluralize(totalCount, "agent")}`
+        ? `${workflowRun.runningCount}/${totalCount} ${t("agents running")}`
+        : `${totalCount} ${t("agents")}`
       : workflowRun.settled
         ? null
-        : "Starting agents";
+        : t("Starting agents");
   const settledPresentation = workflowRun.settled ? settledWorkflowPresentation(workflowRun) : null;
   const canResume =
     workflowRun.settled && workflowRun.runId !== null && workflowRun.scriptPath !== null;
@@ -367,7 +381,7 @@ export function WorkflowRunCard({
             <span className="font-medium text-foreground/80">{workflowRun.name}</span>
             {settledPresentation ? (
               <span className={cn("ml-1.5", settledPresentation.toneClassName)}>
-                {settledPresentation.label}
+                {t(settledPresentation.label)}
               </span>
             ) : null}
             {countLabel ? <span className="ml-1.5">{countLabel}</span> : null}
@@ -384,8 +398,8 @@ export function WorkflowRunCard({
                   size="icon-xs"
                   className={COMPOSER_STACKED_PANEL_ICON_BUTTON_CLASS_NAME}
                   onClick={onResume}
-                  aria-label="Resume workflow"
-                  title="Resume workflow"
+                  aria-label={t("Resume workflow")}
+                  title={t("Resume workflow")}
                 >
                   <PlayIcon className="size-3" />
                 </Button>
@@ -396,8 +410,8 @@ export function WorkflowRunCard({
                 size="icon-xs"
                 className={COMPOSER_STACKED_PANEL_ICON_BUTTON_CLASS_NAME}
                 onClick={onDismiss}
-                aria-label="Dismiss workflow panel"
-                title="Dismiss workflow panel"
+                aria-label={t("Dismiss workflow panel")}
+                title={t("Dismiss workflow panel")}
               >
                 <XIcon className="size-3" />
               </Button>
@@ -410,8 +424,8 @@ export function WorkflowRunCard({
                 size="icon-xs"
                 className={COMPOSER_STACKED_PANEL_ICON_BUTTON_CLASS_NAME}
                 onClick={onPause}
-                aria-label="Pause workflow"
-                title="Pause workflow (resume replays completed agents from cache)"
+                aria-label={t("Pause workflow")}
+                title={t("Pause workflow (resume replays completed agents from cache)")}
               >
                 <PauseIcon className="size-3" />
               </Button>
@@ -421,8 +435,8 @@ export function WorkflowRunCard({
                 size="icon-xs"
                 className={COMPOSER_STACKED_PANEL_ICON_BUTTON_CLASS_NAME}
                 onClick={onStop}
-                aria-label="Stop workflow"
-                title="Stop workflow"
+                aria-label={t("Stop workflow")}
+                title={t("Stop workflow")}
               >
                 <StopIcon className="size-3" />
               </Button>
@@ -434,8 +448,8 @@ export function WorkflowRunCard({
             size="icon-xs"
             className={COMPOSER_STACKED_PANEL_ICON_BUTTON_CLASS_NAME}
             onClick={() => onCompactChange(!compact)}
-            aria-label={compact ? "Expand workflow panel" : "Collapse workflow panel"}
-            title={compact ? "Expand workflow panel" : "Collapse workflow panel"}
+            aria-label={compact ? t("Expand workflow panel") : t("Collapse workflow panel")}
+            title={compact ? t("Expand workflow panel") : t("Collapse workflow panel")}
           >
             {compact ? (
               <PanelExpandIcon className="size-3" />
@@ -469,7 +483,7 @@ export function WorkflowRunCard({
                   onClick={() => selectPhase(phase.title)}
                 >
                   <span className={cn("truncate", phase.isCurrent && "font-medium")}>
-                    {phase.title}
+                    {phase.title === "Other" ? t("Other") : phase.title}
                   </span>
                   {phase.totalCount > 0 ? (
                     <span className="tabular-nums opacity-60">
@@ -489,7 +503,7 @@ export function WorkflowRunCard({
                 visibleGroups.map(({ phase, agents }) => (
                   <div key={phase.title}>
                     <div className="pt-1 text-[10px] font-medium text-muted-foreground/50">
-                      {phase.title}
+                      {phase.title === "Other" ? t("Other") : phase.title}
                     </div>
                     {agents.map((agent) => (
                       <WorkflowAgentRowView
@@ -504,7 +518,9 @@ export function WorkflowRunCard({
                   </div>
                 ))
               ) : (
-                <div className="py-1 text-[11px] text-muted-foreground/45">No agents yet</div>
+                <div className="py-1 text-[11px] text-muted-foreground/45">
+                  {t("No agents yet")}
+                </div>
               )
             ) : workflowRun.agents.length > 0 ? (
               workflowRun.agents.map((agent) => (
@@ -518,7 +534,7 @@ export function WorkflowRunCard({
                 />
               ))
             ) : (
-              <div className="py-1 text-[11px] text-muted-foreground/45">No agents yet</div>
+              <div className="py-1 text-[11px] text-muted-foreground/45">{t("No agents yet")}</div>
             )}
           </div>
           {savedLine.length > 0 ? (
@@ -526,7 +542,7 @@ export function WorkflowRunCard({
               data-testid="workflow-saved-line"
               className="mt-0.5 flex min-w-0 items-center gap-1.5"
             >
-              <span className="shrink-0 text-[11px] text-muted-foreground/50">Saved</span>
+              <span className="shrink-0 text-[11px] text-muted-foreground/50">{t("Saved")}</span>
               <span
                 className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground/45"
                 title={savedLine}
@@ -539,7 +555,7 @@ export function WorkflowRunCard({
                 size="icon-xs"
                 className={COMPOSER_STACKED_PANEL_ICON_BUTTON_CLASS_NAME}
                 onClick={() => copyToClipboard(savedLine, undefined)}
-                aria-label="Copy script path and run id"
+                aria-label={t("Copy script path and run id")}
                 title={savedLine}
               >
                 {isCopied ? <CheckIcon className="size-3" /> : <CopyIcon className="size-3" />}

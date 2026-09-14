@@ -221,7 +221,9 @@ export function buildRecentViewDisplayEntries(input: {
   projects: readonly Project[];
   pinnedThreadIds: readonly ThreadId[];
   terminalVisualIdentityByThreadId?: ReadonlyMap<ThreadId, ResolvedTerminalVisualIdentity>;
+  translate?: (text: string) => string;
 }): RecentViewDisplayEntry[] {
+  const translate = input.translate ?? ((text: string) => text);
   const currentKey = input.currentView ? recentViewKey(input.currentView) : null;
   const projectNameById = new Map(input.projects.map((project) => [project.id, project.name]));
   const pinnedThreadIds = new Set(input.pinnedThreadIds);
@@ -247,11 +249,11 @@ export function buildRecentViewDisplayEntries(input: {
         const thread = summary ?? input.draftThreadsById?.[view.threadId];
         const projectName = thread ? projectNameById.get(thread.projectId) : null;
         const provider = summary?.modelSelection.provider;
-        const title = normalizeOptionalId(thread?.title) ?? "New chat";
+        const title = normalizeOptionalId(thread?.title) ?? translate("New chat");
         const subtitleParts = [
-          projectName ?? "Chat",
-          base.isTerminal ? "Terminal" : "Chat",
-          base.isSplit ? "Split" : null,
+          projectName ?? translate("Chat"),
+          base.isTerminal ? translate("Terminal") : translate("Chat"),
+          base.isSplit ? translate("Split") : null,
         ].filter((part): part is string => Boolean(part));
         return {
           ...base,
@@ -266,15 +268,17 @@ export function buildRecentViewDisplayEntries(input: {
         return {
           ...base,
           icon: { kind: "settings" },
-          title: "Settings",
-          subtitle: view.section ? (SETTINGS_LABELS[view.section] ?? view.section) : "App settings",
+          title: translate("Settings"),
+          subtitle: view.section
+            ? translate(SETTINGS_LABELS[view.section] ?? view.section)
+            : translate("App settings"),
         };
       case "plugins":
         return {
           ...base,
           icon: { kind: "plugins" },
-          title: "Plugins",
-          subtitle: "Extensions and integrations",
+          title: translate("Plugins"),
+          subtitle: translate("Extensions and integrations"),
         };
     }
   });

@@ -17,6 +17,7 @@ import { useState } from "react";
 
 import { ChevronDownIcon, FastModeIcon, SettingsIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { type ProviderModelOption } from "../../providerModelOptions";
 import { Button } from "../ui/button";
 import { Menu, MenuSeparator, MenuSub, MenuSubTrigger, MenuTrigger } from "../ui/menu";
@@ -89,6 +90,7 @@ type ComposerModelEffortPickerProps = {
 // reasoning radio group (with fast mode as an icon toggle in its Effort
 // header); the model is reachable via a sub-menu so the footer stays compact.
 export function ComposerModelEffortPicker(props: ComposerModelEffortPickerProps) {
+  const { t } = useUiLanguage();
   const { onOpenChange, open } = props;
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const isMenuOpen = open ?? uncontrolledOpen;
@@ -144,7 +146,7 @@ export function ComposerModelEffortPicker(props: ComposerModelEffortPickerProps)
 
   const hiddenTriggerTitle = [
     props.hideModelLabel ? modelLabel : null,
-    props.hideStatusLabel ? triggerStatusLabel : null,
+    props.hideStatusLabel && triggerStatusLabel ? t(triggerStatusLabel) : null,
   ]
     .filter((part): part is string => typeof part === "string" && part.length > 0)
     .join(" · ");
@@ -158,7 +160,7 @@ export function ComposerModelEffortPicker(props: ComposerModelEffortPickerProps)
         "min-w-0 shrink-0 justify-start gap-1.5 whitespace-nowrap px-2 sm:px-2.5 [&_svg]:mx-0",
         COMPOSER_PICKER_TRIGGER_TEXT_CLASS_NAME,
       )}
-      aria-label="Change model and reasoning"
+      aria-label={t("Change model and reasoning")}
       {...(hiddenTriggerTitle.length > 0 ? { title: hiddenTriggerTitle } : {})}
     />
   );
@@ -195,7 +197,7 @@ export function ComposerModelEffortPicker(props: ComposerModelEffortPickerProps)
           </>
         ) : (
           <span className={cn("shrink-0", COMPOSER_MUTED_ACCENT_TEXT_CLASS_NAME)}>
-            {triggerStatusLabel}
+            {t(triggerStatusLabel)}
           </span>
         )
       ) : null}
@@ -262,7 +264,7 @@ export function ComposerModelEffortPicker(props: ComposerModelEffortPickerProps)
           {!isMenuOpen ? (
             <TooltipPopup side="top" sideOffset={6} variant="picker">
               <span className="inline-flex items-center gap-2 px-1 py-0.5">
-                <span>Change model</span>
+                <span>{t("Change model")}</span>
                 <ShortcutKbd
                   shortcutLabel={props.shortcutLabel}
                   className="h-4 min-w-4 px-1 text-[length:var(--app-font-size-ui-2xs,9px)] text-muted-foreground"

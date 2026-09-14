@@ -65,6 +65,7 @@ import { findProviderStatus } from "~/lib/providerAvailability";
 import { serverSettingsQueryOptions } from "~/lib/serverReactQuery";
 import { cn, isMacNavigatorPlatform, newCommandId, newThreadId, randomUUID } from "~/lib/utils";
 import { readNativeApi } from "~/nativeApi";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   mergeProjectInstructionsIntoThreadNotes,
   useProjectInstructionsStore,
@@ -420,16 +421,19 @@ function ComposerControlSkeleton(props: { widthClassName: string }) {
 }
 
 function ComposerModelLoadingControl(props: { widthClassName: string }) {
+  const { t } = useUiLanguage();
   return (
     <div
-      aria-label="Loading models"
+      aria-label={t("Loading models")}
       className={cn(
         "flex h-8 shrink-0 items-center gap-2 rounded-md border border-border/50 px-2 text-muted-foreground",
         props.widthClassName,
       )}
     >
       <RefreshCwIcon aria-hidden="true" className="size-3.5 animate-spin" />
-      <span className="truncate text-[length:var(--app-font-size-ui-xs,11px)]">Loading models</span>
+      <span className="truncate text-[length:var(--app-font-size-ui-xs,11px)]">
+        {t("Loading models")}
+      </span>
     </div>
   );
 }
@@ -483,6 +487,7 @@ export default function ChatView({
   onChangeThreadInSplitPane,
   onCloseThreadPane,
 }: ChatViewProps) {
+  const { t, tError } = useUiLanguage();
   // Prop defaults are resolved here instead of in the destructuring pattern: an
   // AssignmentPattern in the parameter list makes React Compiler bail out (silently —
   // `panicThreshold` is unset) on this entire component, the hottest one in the app.
@@ -1363,9 +1368,11 @@ export default function ChatView({
       sidebarPlanSourceThreadProposedPlans,
     ],
   );
-  const planSidebarLabel = sidebarProposedPlan ? "Plan details" : "Tasks";
-  const planSidebarToggleLabel = planSidebarOpen ? `Hide ${planSidebarLabel}` : planSidebarLabel;
-  const planSidebarToggleTitle = `${planSidebarOpen ? "Hide" : "Show"} ${planSidebarLabel.toLowerCase()} sidebar`;
+  const planSidebarLabel = sidebarProposedPlan ? t("Plan details") : t("Tasks");
+  const planSidebarToggleLabel = planSidebarOpen
+    ? `${t("Hide")} ${planSidebarLabel}`
+    : planSidebarLabel;
+  const planSidebarToggleTitle = `${planSidebarOpen ? t("Hide") : t("Show")} ${planSidebarLabel} ${t("sidebar")}`;
   const activeTaskList = useMemo((): ActiveTaskListState | null => {
     if (showDebugTaskBanner) {
       return {
@@ -1373,15 +1380,15 @@ export default function ChatView({
         turnId: activeLatestTurn?.turnId ?? null,
         tasks: [
           {
-            task: "Inspect banner layout without overlapping transcript text",
+            task: t("Inspect banner layout without overlapping transcript text"),
             status: "inProgress",
           },
           {
-            task: "Confirm compact task banner width",
+            task: t("Confirm compact task banner width"),
             status: "pending",
           },
           {
-            task: "Verify sidebar task controls",
+            task: t("Verify sidebar task controls"),
             status: "completed",
           },
         ],
@@ -1395,7 +1402,7 @@ export default function ChatView({
     return latestTurnSettled
       ? null
       : deriveActiveTaskListState(threadActivities, activeLatestTurn?.turnId);
-  }, [activeLatestTurn?.turnId, latestTurnSettled, showDebugTaskBanner, threadActivities]);
+  }, [activeLatestTurn?.turnId, latestTurnSettled, showDebugTaskBanner, t, threadActivities]);
   const activeBackgroundTasks = useMemo(
     () =>
       latestTurnSettled
@@ -1676,13 +1683,13 @@ export default function ChatView({
       .then(() => {
         toastManager.add({
           type: "success",
-          title: "Project instructions added to notepad.",
+          title: t("Project instructions added to notepad."),
         });
       })
       .catch(() => {
         // `handleNotesChange` already surfaces the save failure through the shared notes toast.
       });
-  }, [activeThreadId, handleNotesChange, projectInstructions, threadNotes]);
+  }, [activeThreadId, handleNotesChange, projectInstructions, t, threadNotes]);
   const handleJumpToPinnedMessage = useCallback(
     (messageId: MessageId) => {
       timelineControllerRef.current?.scrollToMessage(messageId);
@@ -2065,7 +2072,7 @@ export default function ChatView({
         : [],
     [activeThread, providerStatuses, serverSettingsQuery.data?.providers],
   );
-  const handoffActionLabel = activeThread ? "Hand off thread" : "Create handoff thread";
+  const handoffActionLabel = activeThread ? t("Hand off thread") : t("Create handoff thread");
   const activeProviderStatus = useMemo(
     () => findProviderStatus(providerStatuses, selectedProvider),
     [selectedProvider, providerStatuses],
@@ -2219,9 +2226,8 @@ export default function ChatView({
       void api?.browser.open({ threadId, initialUrl: url }).catch((error) => {
         toastManager.add({
           type: "error",
-          title: "Could not open repository",
-          description:
-            error instanceof Error ? error.message : "The in-app browser could not open GitHub.",
+          title: t("Could not open repository"),
+          description: tError(error, "The in-app browser could not open GitHub."),
         });
       });
       if (onOpenBrowserUrl) {
@@ -2238,7 +2244,7 @@ export default function ChatView({
         }),
       });
     },
-    [navigate, onOpenBrowserUrl, threadId],
+    [navigate, onOpenBrowserUrl, t, tError, threadId],
   );
 
   const envLocked = Boolean(
@@ -2436,7 +2442,7 @@ export default function ChatView({
     refreshVoiceStatus: refreshProviderStatuses,
     actionArmDelayMs: VOICE_RECORDER_ACTION_ARM_DELAY_MS,
     failureCopy: {
-      transcriptionFailedTitle: "Couldn't transcribe voice note",
+      transcriptionFailedTitle: t("Couldn't transcribe voice note"),
     },
     onGuardWarning: warnVoiceGuard,
   });
@@ -3168,14 +3174,11 @@ export default function ChatView({
     void onInterrupt().catch((error: unknown) => {
       toastManager.add({
         type: "error",
-        title: "Could not stop the current response",
-        description:
-          error instanceof Error
-            ? error.message
-            : "The interrupt request failed. Try again in a moment.",
+        title: t("Could not stop the current response"),
+        description: tError(error, "The interrupt request failed. Try again in a moment."),
       });
     });
-  }, [onInterrupt]);
+  }, [onInterrupt, t, tError]);
 
   const onStopWorkflowRun = useCallback(async () => {
     const api = readNativeApi();
@@ -3400,14 +3403,14 @@ export default function ChatView({
       if (pendingUserInputs.length > 0) {
         toastManager.add({
           type: "error",
-          title: "Attach images after answering plan questions.",
+          title: t("Attach images after answering plan questions."),
         });
         return;
       }
 
       enqueueComposerImages(files);
     },
-    [activeThreadId, enqueueComposerImages, isSidechatExpired, pendingUserInputs.length],
+    [activeThreadId, enqueueComposerImages, isSidechatExpired, pendingUserInputs.length, t],
   );
 
   const removeComposerImage = (imageId: string) => {
@@ -3421,7 +3424,7 @@ export default function ChatView({
       if (pendingUserInputs.length > 0) {
         toastManager.add({
           type: "error",
-          title: "Attach files after answering plan questions.",
+          title: t("Attach files after answering plan questions."),
         });
         return;
       }
@@ -3437,7 +3440,7 @@ export default function ChatView({
       setThreadError(
         activeThreadId,
         insertedCount < nextFiles.length
-          ? `You can attach up to ${PROVIDER_SEND_TURN_MAX_ATTACHMENTS} references per message.`
+          ? `${t("You can attach up to")} ${PROVIDER_SEND_TURN_MAX_ATTACHMENTS} ${t("references per message.")}`
           : error,
       );
     },
@@ -3447,6 +3450,7 @@ export default function ChatView({
       isSidechatExpired,
       pendingUserInputs.length,
       setThreadError,
+      t,
     ],
   );
 
@@ -3498,14 +3502,17 @@ export default function ChatView({
       if (!api || !activeThread || isRevertingCheckpoint) return;
 
       if (hasLiveTurn || isSendBusy || isConnecting) {
-        setThreadError(activeThread.id, "Interrupt the current turn before reverting checkpoints.");
+        setThreadError(
+          activeThread.id,
+          t("Interrupt the current turn before reverting checkpoints."),
+        );
         return;
       }
       const confirmed = await api.dialogs.confirm(
         [
-          `Revert this thread to checkpoint ${turnCount}?`,
-          "This will discard newer messages and turn diffs in this thread.",
-          "This action cannot be undone.",
+          `${t("Revert this thread to checkpoint")} ${turnCount}?`,
+          t("This will discard newer messages and turn diffs in this thread."),
+          t("This action cannot be undone."),
         ].join("\n"),
       );
       if (!confirmed) {
@@ -3524,10 +3531,7 @@ export default function ChatView({
           createdAt: new Date().toISOString(),
         });
       } catch (err) {
-        setThreadError(
-          activeThread.id,
-          err instanceof Error ? err.message : "Failed to revert thread state.",
-        );
+        setThreadError(activeThread.id, tError(err, "Failed to revert thread state."));
       }
       setIsRevertingCheckpoint(false);
     },
@@ -3539,6 +3543,8 @@ export default function ChatView({
       isRevertingCheckpoint,
       isSendBusy,
       setThreadError,
+      t,
+      tError,
     ],
   );
 
@@ -3548,15 +3554,18 @@ export default function ChatView({
       if (!api || !activeThread || isRevertingCheckpoint || turnCounts.length === 0) return;
 
       if (hasLiveTurn || isSendBusy || isConnecting) {
-        setThreadError(activeThread.id, "Interrupt the current turn before undoing file changes.");
+        setThreadError(
+          activeThread.id,
+          t("Interrupt the current turn before undoing file changes."),
+        );
         return;
       }
       const confirmed = await api.dialogs.confirm(
         [
-          "Undo the file changes shown in this card?",
-          "Earlier file changes will remain available to undo.",
-          "Messages and provider conversation history will be kept.",
-          "This action cannot be undone.",
+          t("Undo the file changes shown in this card?"),
+          t("Earlier file changes will remain available to undo."),
+          t("Messages and provider conversation history will be kept."),
+          t("This action cannot be undone."),
         ].join("\n"),
       );
       if (!confirmed) return;
@@ -3590,10 +3599,7 @@ export default function ChatView({
       await dispatchReverts().catch((err: unknown) => {
         setPendingFileUndo(null);
         setIsRevertingCheckpoint(false);
-        setThreadError(
-          activeThread.id,
-          err instanceof Error ? err.message : "Failed to undo file changes.",
-        );
+        setThreadError(activeThread.id, tError(err, "Failed to undo file changes."));
       });
     },
     [
@@ -3605,6 +3611,8 @@ export default function ChatView({
       isRevertingCheckpoint,
       isSendBusy,
       setThreadError,
+      t,
+      tError,
     ],
   );
 
@@ -3619,15 +3627,12 @@ export default function ChatView({
       } catch (error) {
         toastManager.add({
           type: "error",
-          title: "Could not create handoff thread",
-          description:
-            error instanceof Error
-              ? error.message
-              : "An error occurred while creating the handoff thread.",
+          title: t("Could not create handoff thread"),
+          description: tError(error, "An error occurred while creating the handoff thread."),
         });
       }
     },
-    [activeThread, createThreadHandoff, handoffDisabled],
+    [activeThread, createThreadHandoff, handoffDisabled, t, tError],
   );
 
   const clearComposerInput = useCallback(
@@ -4237,8 +4242,8 @@ export default function ChatView({
       if (!activeProject) {
         toastManager.add({
           type: "warning",
-          title: "Clear is unavailable",
-          description: "Open a project before starting a fresh thread.",
+          title: t("Clear is unavailable"),
+          description: t("Open a project before starting a fresh thread."),
         });
         return;
       }
@@ -4517,7 +4522,7 @@ export default function ChatView({
             <div className="flex items-center gap-2">
               <SidebarHeaderTrigger className="size-7 shrink-0" />
               <span className="text-sm font-medium text-[var(--color-text-foreground)]">
-                Threads
+                {t("Threads")}
               </span>
             </div>
           </header>
@@ -4532,12 +4537,12 @@ export default function ChatView({
             )}
           >
             <SidebarHeaderNavigationControls />
-            <span className="text-xs text-muted-foreground/50">No active thread</span>
+            <span className="text-xs text-muted-foreground/50">{t("No active thread")}</span>
           </div>
         )}
         <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
-            <p className="text-sm">Select a thread or create a new one to get started.</p>
+            <p className="text-sm">{t("Select a thread or create a new one to get started.")}</p>
           </div>
         </div>
       </div>
@@ -4567,8 +4572,8 @@ export default function ChatView({
     }).catch((error) => {
       toastManager.add({
         type: "error",
-        title: "Failed to rename thread",
-        description: error instanceof Error ? error.message : "An error occurred.",
+        title: t("Failed to rename thread"),
+        description: tError(error, "An error occurred."),
       });
       throw error;
     });
@@ -4576,7 +4581,7 @@ export default function ChatView({
     if (outcome === "empty") {
       toastManager.add({
         type: "warning",
-        title: "Thread title cannot be empty",
+        title: t("Thread title cannot be empty"),
       });
       return;
     }
@@ -4756,10 +4761,10 @@ export default function ChatView({
           onClick={toggleDraftTemporary}
           title={
             isThreadTemporary
-              ? "Temporary chat — deleted when you leave. Click to keep it."
-              : "Make this a temporary chat (deleted when you leave)"
+              ? t("Temporary chat — deleted when you leave. Click to keep it.")
+              : t("Make this a temporary chat (deleted when you leave)")
           }
-          aria-label="Temporary chat"
+          aria-label={t("Temporary chat")}
           className={cn(
             "ml-auto shrink-0 gap-1.5 whitespace-nowrap px-2 sm:px-2.5",
             COMPOSER_TOOLBAR_CAPSULE_HOVER_CLASS_NAME,
@@ -4769,7 +4774,7 @@ export default function ChatView({
           )}
         >
           <TemporaryThreadIcon className="size-3.5" />
-          <span className="sr-only sm:not-sr-only">Temporary</span>
+          <span className="sr-only sm:not-sr-only">{t("Temporary")}</span>
         </Button>
       ) : null}
     </div>
@@ -4854,8 +4859,8 @@ export default function ChatView({
         if (!createSidechat) {
           toastManager.add({
             type: "warning",
-            title: "Side chat is unavailable",
-            description: "Open the parent chat before starting a replacement side chat.",
+            title: t("Side chat is unavailable"),
+            description: t("Open the parent chat before starting a replacement side chat."),
           });
           return;
         }
@@ -4864,11 +4869,8 @@ export default function ChatView({
       .catch((error) => {
         toastManager.add({
           type: "error",
-          title: "Could not start side chat",
-          description:
-            error instanceof Error
-              ? error.message
-              : "An error occurred while creating the side chat.",
+          title: t("Could not start side chat"),
+          description: tError(error, "An error occurred while creating the side chat."),
         });
       });
   };
@@ -5093,7 +5095,7 @@ export default function ChatView({
                       {isLocalFolderBrowserOpen ? (
                         <ComposerLocalDirectoryMenu
                           mentionQuery={mentionTriggerQuery}
-                          rootLabel={localFolderBrowseRootPath ?? "Local folders unavailable"}
+                          rootLabel={localFolderBrowseRootPath ?? t("Local folders unavailable")}
                           homeDir={serverConfigQuery.data?.homeDir ?? null}
                           onSelectEntry={(absolutePath) =>
                             handleSelectLocalDirectoryMention(absolutePath)
@@ -5126,7 +5128,9 @@ export default function ChatView({
                         role="status"
                       >
                         <LoaderCircleIcon className="size-3.5 animate-spin" />
-                        Optimizing {pendingComposerImageCount === 1 ? "image" : "images"}…
+                        {pendingComposerImageCount === 1
+                          ? t("Optimizing image…")
+                          : t("Optimizing images…")}
                       </div>
                     )}
                   {!isComposerApprovalState &&
@@ -5183,20 +5187,26 @@ export default function ChatView({
                       : {})}
                     placeholder={
                       isComposerApprovalState
-                        ? "Resolve this approval request to continue"
+                        ? t("Resolve this approval request to continue")
                         : activePendingProgress
                           ? activePendingProgress.activeQuestion?.options.length === 0
-                            ? "Type your answer to continue"
-                            : "Type your own answer, or leave this blank to use the selected option"
+                            ? t("Type your answer to continue")
+                            : t(
+                                "Type your own answer, or leave this blank to use the selected option",
+                              )
                           : showPlanFollowUpPrompt && activeProposedPlan
-                            ? "Add feedback to refine the plan, or leave this blank to implement it"
+                            ? t(
+                                "Add feedback to refine the plan, or leave this blank to implement it",
+                              )
                             : activeThread?.parentThreadId
-                              ? "Message this subagent while it works"
+                              ? t("Message this subagent while it works")
                               : hasLiveTurn
-                                ? "Ask for follow-up changes"
+                                ? t("Ask for follow-up changes")
                                 : phase === "disconnected"
-                                  ? "Ask for follow-up changes or attach images"
-                                  : "Ask anything, @tag files/folders, or use / to show available commands"
+                                  ? t("Ask for follow-up changes or attach images")
+                                  : t(
+                                      "Ask anything, @tag files/folders, or use / to show available commands",
+                                    )
                     }
                     disabled={isComposerEditorDisabled}
                   />
@@ -5520,16 +5530,16 @@ export default function ChatView({
                       CHAT_COLUMN_FRAME_CLASS_NAME,
                     )}
                   >
-                    <SynaraLogo aria-label="Synara logo" className="size-10" />
+                    <SynaraLogo aria-label={t("Synara logo")} className="size-10" />
                     <h2
                       data-testid="empty-landing-heading"
                       className="text-[26px] font-normal leading-[1.15] tracking-[-0.015em] text-foreground/95 sm:text-[30px]"
                     >
                       {isEmptyChatLanding ? (
-                        "What should we work on?"
+                        t("What should we work on?")
                       ) : (
                         <>
-                          What should we do in{" "}
+                          {t("What should we do in")}{" "}
                           {showEmptyLandingProjectPicker ? (
                             <ProjectPicker
                               align="center"
@@ -5547,13 +5557,13 @@ export default function ChatView({
                                   data-testid="empty-landing-heading-project-trigger"
                                   className="cursor-pointer rounded-sm text-inherit underline decoration-dotted decoration-[1.5px] underline-offset-[6px] transition-colors duration-150 ease-out hover:text-foreground/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 motion-reduce:transition-none"
                                 >
-                                  {activeProjectDisplayName ?? "this folder"}
+                                  {activeProjectDisplayName ?? t("this folder")}
                                 </button>
                               }
                             />
                           ) : (
                             <span className="text-inherit">
-                              {activeProjectDisplayName ?? "this folder"}
+                              {activeProjectDisplayName ?? t("this folder")}
                             </span>
                           )}
                           ?

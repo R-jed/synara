@@ -12,11 +12,12 @@ import type { StudioOutputEntry, ThreadId } from "@synara/contracts";
 import { isSupportedLocalImagePath } from "@synara/shared/localPreviewFiles";
 import { useQuery } from "@tanstack/react-query";
 
-import { formatRelativeTime } from "~/lib/relativeTime";
+import { formatRelativeTimeForLanguage } from "~/lib/relativeTime";
 import { studioThreadOutputsQueryOptions } from "~/lib/serverReactQuery";
 import { humanizeStudioOutputName } from "~/lib/studioOutputDisplay";
 import { useWorkspaceFileOpener } from "~/lib/workspaceFileOpener";
 import { readNativeApi } from "~/nativeApi";
+import { useUiLanguage } from "~/uiLanguage";
 
 import { FileEntryIcon } from "../FileEntryIcon";
 import { EnvironmentLabeledSection, EnvironmentRow } from "./EnvironmentRow";
@@ -33,6 +34,7 @@ export function EnvironmentStudioOutputsSection({
   threadId: ThreadId;
   enabled: boolean;
 }) {
+  const { language, t } = useUiLanguage();
   const outputsQuery = useQuery(studioThreadOutputsQueryOptions({ threadId, enabled }));
   const fileOpener = useWorkspaceFileOpener();
 
@@ -50,7 +52,7 @@ export function EnvironmentStudioOutputsSection({
   }
 
   return (
-    <EnvironmentLabeledSection label="Output">
+    <EnvironmentLabeledSection label={t("Output")}>
       {entries.map((entry) => (
         <EnvironmentRow
           key={entry.fullPath}
@@ -76,7 +78,7 @@ export function EnvironmentStudioOutputsSection({
           // label keeps the full relative path for whoever needs it.
           trailing={
             <span className="text-[length:var(--app-font-size-ui-xs,10px)] tabular-nums text-muted-foreground/50">
-              {formatRelativeTime(entry.modifiedAt)}
+              {formatRelativeTimeForLanguage(entry.modifiedAt, language)}
             </span>
           }
           onClick={(event) => openEntry(entry, event.metaKey || event.ctrlKey)}

@@ -22,6 +22,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { cn } from "~/lib/utils";
+import { useReducedMotion } from "~/hooks/useReducedMotion";
+import { useUiLanguage } from "~/uiLanguage";
 import { DISCLOSURE_CONTENT_MOTION_CLASS } from "~/lib/disclosureMotion";
 import { APP_TOOLTIP_SURFACE_CLASS_NAME } from "./composerPickerStyles";
 import {
@@ -79,6 +81,8 @@ const TOOLTIP_ESTIMATED_H_PX = 56;
 const TOOLTIP_OFFSET_X_PX = 8;
 
 export function MessageTrail({ items, activeStore, onSelect }: MessageTrailProps) {
+  const { language, t } = useUiLanguage();
+  const reduceMotion = useReducedMotion();
   const rootRef = useRef<HTMLElement | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -372,13 +376,10 @@ export function MessageTrail({ items, activeStore, onSelect }: MessageTrailProps
     }
   }, [anchorIndex, applyRest, visibleIndexes]);
 
-  // Read the motion preference once (continuous width morphing is motion).
+  // Keep the hot-path ref synchronized with the combined system + Synara preference.
   useEffect(() => {
-    reducedMotionRef.current =
-      typeof window !== "undefined" && typeof window.matchMedia === "function"
-        ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        : false;
-  }, []);
+    reducedMotionRef.current = reduceMotion;
+  }, [reduceMotion]);
 
   // Going inert (narrow pane / N<=1): stop the loop and clear transient state.
   useEffect(() => {
@@ -523,7 +524,7 @@ export function MessageTrail({ items, activeStore, onSelect }: MessageTrailProps
   return (
     <nav
       ref={rootRef}
-      aria-label="Message navigation"
+      aria-label={t("Message navigation")}
       aria-hidden={!visible}
       onKeyDown={handleKeyDown}
       onBlur={handleRailBlur}
@@ -558,7 +559,11 @@ export function MessageTrail({ items, activeStore, onSelect }: MessageTrailProps
               }}
               type="button"
               tabIndex={visible && index === tabStop ? 0 : -1}
-              aria-label={`Message ${item.ordinal}: ${item.preview.slice(0, 60)}`}
+              aria-label={
+                language === "zh-CN"
+                  ? `消息 ${item.ordinal}：${item.preview.slice(0, 60)}`
+                  : `Message ${item.ordinal}: ${item.preview.slice(0, 60)}`
+              }
               aria-describedby={tooltipId}
               aria-current={index === anchorIndex ? "location" : undefined}
               onFocus={() => handleTickFocus(index)}

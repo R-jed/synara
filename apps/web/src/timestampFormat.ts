@@ -1,4 +1,8 @@
 import { type TimestampFormat } from "./appSettings";
+import { getActiveUiLanguage } from "./uiLanguage";
+
+const systemHour12 = new Intl.DateTimeFormat(undefined, { hour: "numeric" }).resolvedOptions()
+  .hour12;
 
 export function getTimestampFormatOptions(
   timestampFormat: TimestampFormat,
@@ -11,7 +15,10 @@ export function getTimestampFormatOptions(
   };
 
   if (timestampFormat === "locale") {
-    return baseOptions;
+    return {
+      ...baseOptions,
+      ...(typeof systemHour12 === "boolean" ? { hour12: systemHour12 } : {}),
+    };
   }
 
   return {
@@ -33,13 +40,14 @@ function getTimestampFormatter(
   includeSeconds: boolean,
   includeDate = false,
 ): Intl.DateTimeFormat {
-  const cacheKey = `${timestampFormat}:${includeSeconds ? "seconds" : "minutes"}:${includeDate ? "date" : "time"}`;
+  const locale = getActiveUiLanguage();
+  const cacheKey = `${locale}:${timestampFormat}:${includeSeconds ? "seconds" : "minutes"}:${includeDate ? "date" : "time"}`;
   const cachedFormatter = timestampFormatterCache.get(cacheKey);
   if (cachedFormatter) {
     return cachedFormatter;
   }
 
-  const formatter = new Intl.DateTimeFormat(undefined, {
+  const formatter = new Intl.DateTimeFormat(locale, {
     ...(includeDate ? CALENDAR_DATE_OPTIONS : {}),
     ...getTimestampFormatOptions(timestampFormat, includeSeconds),
   });
@@ -65,13 +73,14 @@ export function formatShortDateTimestamp(
 const dayLabelFormatterCache = new Map<string, Intl.DateTimeFormat>();
 
 function getDayLabelFormatter(options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
-  const cacheKey = JSON.stringify(options);
+  const locale = getActiveUiLanguage();
+  const cacheKey = `${locale}:${JSON.stringify(options)}`;
   const cachedFormatter = dayLabelFormatterCache.get(cacheKey);
   if (cachedFormatter) {
     return cachedFormatter;
   }
 
-  const formatter = new Intl.DateTimeFormat(undefined, options);
+  const formatter = new Intl.DateTimeFormat(locale, options);
   dayLabelFormatterCache.set(cacheKey, formatter);
   return formatter;
 }

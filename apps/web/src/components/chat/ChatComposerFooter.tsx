@@ -3,6 +3,7 @@ import { type ReactNode } from "react";
 import { GoTasklist } from "react-icons/go";
 import { BugIcon, ChevronDownIcon, ComposerSendArrowIcon, LayoutSidebarIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import type { derivePendingUserInputProgress } from "../../pendingUserInput";
 import type { SessionPhase } from "../../types";
 import { Button } from "../ui/button";
@@ -62,6 +63,7 @@ export function ChatComposerFooter({
   pendingInput,
   submission,
 }: ChatComposerFooterProps) {
+  const { t } = useUiLanguage();
   return (
     <div
       data-chat-composer-footer="true"
@@ -93,7 +95,11 @@ export function ChatComposerFooter({
                 size="sm"
                 type="button"
                 onClick={resetInteractionMode}
-                title={`${interactionMode === "plan" ? "Plan" : "Debug"} mode — click to return to normal build mode`}
+                title={t(
+                  interactionMode === "plan"
+                    ? "Plan mode — click to return to normal build mode"
+                    : "Debug mode — click to return to normal build mode",
+                )}
               >
                 {interactionMode === "plan" ? (
                   <GoTasklist className="size-3.5" />
@@ -101,7 +107,7 @@ export function ChatComposerFooter({
                   <BugIcon className="size-3.5" />
                 )}
                 <span className="sr-only sm:not-sr-only">
-                  {interactionMode === "plan" ? "Plan" : "Debug"}
+                  {interactionMode === "plan" ? t("Plan") : t("Debug")}
                 </span>
               </Button>
             ) : null}
@@ -159,10 +165,10 @@ export function ChatComposerFooter({
             }
           >
             {pendingInput.responding
-              ? "Submitting..."
+              ? t("Submitting...")
               : pendingInput.progress.isLastQuestion
-                ? "Submit answers"
-                : "Next question"}
+                ? t("Submit answers")
+                : t("Next question")}
           </Button>
         ) : submission.phase === "running" ? (
           <Button
@@ -171,8 +177,8 @@ export function ChatComposerFooter({
             size="icon-xs"
             className="sm:size-[26px]"
             onClick={submission.onInterrupt}
-            aria-label="Stop generation"
-            title="Stop the current response. On Mac, press Ctrl+C to interrupt."
+            aria-label={t("Stop generation")}
+            title={t("Stop the current response. On Mac, press Ctrl+C to interrupt.")}
           >
             <span aria-hidden="true" className="block size-2 rounded-[1px] bg-current" />
           </Button>
@@ -185,7 +191,7 @@ export function ChatComposerFooter({
                 className="h-9 rounded-full px-4 sm:h-8"
                 disabled={submission.busy || submission.connecting || submission.expired}
               >
-                {submission.connecting || submission.busy ? "Sending..." : "Refine"}
+                {submission.connecting || submission.busy ? t("Sending...") : t("Refine")}
               </Button>
             ) : (
               <div className="flex items-center">
@@ -195,7 +201,7 @@ export function ChatComposerFooter({
                   className="h-9 rounded-l-full rounded-r-none px-4 sm:h-8"
                   disabled={submission.busy || submission.connecting || submission.expired}
                 >
-                  {submission.connecting || submission.busy ? "Sending..." : "Implement"}
+                  {submission.connecting || submission.busy ? t("Sending...") : t("Implement")}
                 </Button>
                 <Menu>
                   <MenuTrigger
@@ -204,7 +210,7 @@ export function ChatComposerFooter({
                         size="sm"
                         variant="default"
                         className="h-9 rounded-l-none rounded-r-full border-l-white/12 px-2 sm:h-8"
-                        aria-label="Implementation actions"
+                        aria-label={t("Implementation actions")}
                         disabled={submission.busy || submission.connecting || submission.expired}
                       />
                     }
@@ -216,7 +222,7 @@ export function ChatComposerFooter({
                       disabled={submission.busy || submission.connecting || submission.expired}
                       onClick={() => void submission.onImplementInNewThread()}
                     >
-                      Implement in a new thread
+                      {t("Implement in a new thread")}
                     </MenuItem>
                   </ComposerPickerMenuPopup>
                 </Menu>
@@ -248,16 +254,16 @@ export function ChatComposerFooter({
                 }
                 aria-label={
                   submission.connecting
-                    ? "Connecting"
+                    ? t("Connecting")
                     : voice.transcribing
-                      ? "Transcribing voice note"
+                      ? t("Transcribing voice note")
                       : submission.preparingImages
-                        ? "Optimizing image"
+                        ? t("Optimizing image")
                         : submission.preparingWorktree
-                          ? "Preparing worktree"
+                          ? t("Preparing worktree")
                           : submission.busy
-                            ? "Sending"
-                            : "Send message"
+                            ? t("Sending")
+                            : t("Send message")
                 }
               >
                 {submission.connecting || submission.busy || submission.preparingImages ? (

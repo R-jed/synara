@@ -64,8 +64,8 @@ import {
   CHAT_WIDTH_MODES,
   normalizeChatWidthMode as normalizeChatWidthModeValue,
 } from "./lib/chatWidth";
+import { APP_SETTINGS_STORAGE_KEY } from "./appSettingsStorage";
 
-const APP_SETTINGS_STORAGE_KEY = "synara:app-settings:v1";
 const SERVER_SETTINGS_MIGRATION_STORAGE_KEY = "synara:server-settings-migrated:v1";
 const MAX_CUSTOM_MODEL_COUNT = 32;
 export const MAX_CUSTOM_MODEL_LENGTH = 256;
@@ -76,29 +76,24 @@ export const MIN_TERMINAL_FONT_SIZE_PX = 10;
 export const MAX_TERMINAL_FONT_SIZE_PX = 22;
 export const DEFAULT_TERMINAL_FONT_SIZE_PX = 12;
 
-// Terminal font is a free-form font-family value: the user can type any font
-// installed on their machine. An empty value keeps the bundled default stack
-// (defined in index.css). The list below is only autocomplete inspiration shown
-// in the settings input — it does NOT restrict what can be entered.
+// An empty terminal font family keeps the bundled default stack from index.css.
+// Existing free-form values remain decodable for backward compatibility, while
+// the settings UI now writes families and optional faces from the local font catalog.
 export const DEFAULT_TERMINAL_FONT_FAMILY = "";
 
-export const TERMINAL_FONT_FAMILY_SUGGESTIONS: ReadonlyArray<string> = [
-  "JetBrains Mono",
-  "Fira Code",
-  "Cascadia Code",
-  "SF Mono",
-  "Menlo",
-  "Source Code Pro",
-  "IBM Plex Mono",
-  "Hack",
-  "Roboto Mono",
-  "Ubuntu Mono",
-  "Consolas",
-];
+const TerminalFontFaceSelection = Schema.Struct({
+  family: Schema.String.check(Schema.isMaxLength(256)),
+  fullName: Schema.String.check(Schema.isMaxLength(256)),
+  postscriptName: Schema.String.check(Schema.isMaxLength(256)),
+  style: Schema.String.check(Schema.isMaxLength(256)),
+});
 
 export const TimestampFormat = Schema.Literals(["locale", "12-hour", "24-hour"]);
 export type TimestampFormat = typeof TimestampFormat.Type;
 export const DEFAULT_TIMESTAMP_FORMAT: TimestampFormat = "locale";
+export const UiLanguagePreference = Schema.Literals(["system", "en", "zh-CN"]);
+export type UiLanguagePreference = typeof UiLanguagePreference.Type;
+export const DEFAULT_UI_LANGUAGE: UiLanguagePreference = "system";
 export const SidebarProjectSortOrder = Schema.Literals(["updated_at", "created_at", "manual"]);
 export type SidebarProjectSortOrder = typeof SidebarProjectSortOrder.Type;
 export const DEFAULT_SIDEBAR_PROJECT_SORT_ORDER: SidebarProjectSortOrder = "manual";
@@ -258,12 +253,14 @@ export const AppSettingsSchema = Schema.Struct({
   onboardingCompletedAt: Schema.NullOr(Schema.String).pipe(withDefaults((): string | null => null)),
   uiDensity: UiDensity.pipe(withDefaults(() => DEFAULT_UI_DENSITY)),
   chatWidth: ChatWidthMode.pipe(withDefaults(() => DEFAULT_CHAT_WIDTH)),
+  reduceMotion: Schema.Boolean.pipe(withDefaults(() => false)),
   chatFontSizePx: Schema.Number.pipe(withDefaults(() => DEFAULT_CHAT_FONT_SIZE_PX)),
   chatCodeFontFamily: Schema.String.check(Schema.isMaxLength(256)).pipe(withDefaults(() => "")),
   terminalFontSizePx: Schema.Number.pipe(withDefaults(() => DEFAULT_TERMINAL_FONT_SIZE_PX)),
   terminalFontFamily: Schema.String.check(Schema.isMaxLength(256)).pipe(
     withDefaults(() => DEFAULT_TERMINAL_FONT_FAMILY),
   ),
+  terminalFontFace: Schema.NullOr(TerminalFontFaceSelection).pipe(withDefaults(() => null)),
   codexBinaryPath: Schema.String.check(Schema.isMaxLength(4096)).pipe(withDefaults(() => "")),
   codexHomePath: Schema.String.check(Schema.isMaxLength(4096)).pipe(withDefaults(() => "")),
   cursorBinaryPath: Schema.String.check(Schema.isMaxLength(4096)).pipe(withDefaults(() => "")),
@@ -353,6 +350,7 @@ export const AppSettingsSchema = Schema.Struct({
   sidebarThreadSortOrder: SidebarThreadSortOrder.pipe(
     withDefaults(() => DEFAULT_SIDEBAR_THREAD_SORT_ORDER),
   ),
+  uiLanguage: UiLanguagePreference.pipe(withDefaults(() => DEFAULT_UI_LANGUAGE)),
   timestampFormat: TimestampFormat.pipe(withDefaults(() => DEFAULT_TIMESTAMP_FORMAT)),
   customCodexModels: Schema.Array(Schema.String).pipe(withDefaults(() => [])),
   customClaudeModels: Schema.Array(Schema.String).pipe(withDefaults(() => [])),
@@ -564,6 +562,23 @@ export function normalizeTerminalFontFamily(value: string | null | undefined): s
   return (value ?? "").replace(/[;{}<>\n\r]/g, "").slice(0, 256);
 }
 
+export function normalizeTerminalFontFaceSelection(
+  value: AppSettings["terminalFontFace"],
+  selectedFamily: string | null | undefined,
+): AppSettings["terminalFontFace"] {
+  const family = normalizeTerminalFontFamily(selectedFamily).trim();
+  if (!family || !value) return null;
+
+  const faceFamily = normalizeTerminalFontFamily(value.family).trim();
+  const fullName = value.fullName.trim();
+  const postscriptName = value.postscriptName.trim();
+  const style = value.style.trim();
+  if (!faceFamily || !fullName || !postscriptName || !style) return null;
+  if (faceFamily.toLocaleLowerCase() !== family.toLocaleLowerCase()) return null;
+
+  return { family: faceFamily, fullName, postscriptName, style };
+}
+
 // Build the CSS font-family stack written to `--terminal-font-family`, or null
 // when the bundled default (defined in index.css) should stay in effect.
 //
@@ -633,6 +648,10 @@ function normalizeAppSettings(settings: AppSettings): AppSettings {
     chatFontSizePx: normalizeChatFontSizePx(settings.chatFontSizePx),
     terminalFontSizePx: normalizeTerminalFontSizePx(settings.terminalFontSizePx),
     terminalFontFamily: normalizeTerminalFontFamily(settings.terminalFontFamily),
+    terminalFontFace: normalizeTerminalFontFaceSelection(
+      settings.terminalFontFace,
+      settings.terminalFontFamily,
+    ),
     customCodexModels: normalizeCustomModelSlugs(settings.customCodexModels, "codex"),
     customClaudeModels: normalizeCustomModelSlugs(settings.customClaudeModels, "claudeAgent"),
     customCursorModels: normalizeCustomModelSlugs(settings.customCursorModels, "cursor"),

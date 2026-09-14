@@ -81,4 +81,17 @@ describe("pullRequestMergeBlocker", () => {
       pullRequestMergeBlocker({ stackMetadataIncomplete: true, mergeability: "mergeable" }, null),
     ).toBe("Stack details are temporarily unavailable. Refresh before merging.");
   });
+
+  it("localizes a dynamic stack blocker for Chinese UI", () => {
+    const assessment = assessPullRequestStack(
+      stack({ entries: [entry(1, { isDraft: true }), entry(2), entry(3)] }),
+    );
+    expect(
+      pullRequestMergeBlocker(
+        { stackMetadataIncomplete: false, mergeability: "mergeable" },
+        assessment,
+        "zh-CN",
+      ),
+    ).toBe("#101 仍是草稿。");
+  });
 });

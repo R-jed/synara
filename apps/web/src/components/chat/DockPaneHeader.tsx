@@ -11,6 +11,7 @@ import { type ReactNode } from "react";
 
 import { cn } from "~/lib/utils";
 import { XIcon } from "~/lib/icons";
+import { useUiLanguage } from "~/uiLanguage";
 import { IconButton } from "../ui/icon-button";
 import {
   CHAT_SURFACE_HEADER_ROW_CLASS_NAME,
@@ -23,6 +24,7 @@ export function DockPaneHeader(props: {
   onClose?: (() => void) | undefined;
   closeLabel?: string;
 }) {
+  const { t } = useUiLanguage();
   return (
     <header className={cn(CHAT_SURFACE_HEADER_ROW_CLASS_NAME, "gap-1 px-4")}>
       <span className="text-[13px] font-medium tracking-[-0.01em] text-foreground">
@@ -34,7 +36,7 @@ export function DockPaneHeader(props: {
           <IconButton
             size="icon-xs"
             variant="chrome"
-            label={props.closeLabel ?? "Close panel"}
+            label={props.closeLabel ?? t("Close panel")}
             className={DOCK_HEADER_ICON_BUTTON_CLASS}
             onClick={props.onClose}
           >

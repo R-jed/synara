@@ -25,6 +25,7 @@ import {
 import { slashCommandIcon } from "~/lib/slashCommandIcons";
 import { formatSkillScope } from "~/lib/providerDiscovery";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   Command,
   CommandGroup,
@@ -318,6 +319,7 @@ export function ComposerCommandMenu(props: {
   onHighlightedItemChange: (itemId: string | null) => void;
   onSelect: (item: ComposerCommandItem) => void;
 }) {
+  const { t } = useUiLanguage();
   const itemRefs = useRef<Record<string, HTMLElement | null>>({});
   const groups = groupCommandItems(
     props.items,
@@ -355,7 +357,7 @@ export function ComposerCommandMenu(props: {
                 <CommandGroup>
                   {group.label ? (
                     <CommandGroupLabel className={COMPOSER_COMMAND_GROUP_LABEL_CLASSNAME}>
-                      {group.label}
+                      {t(group.label)}
                     </CommandGroupLabel>
                   ) : null}
                   {group.items.map((item) => (
@@ -385,10 +387,10 @@ export function ComposerCommandMenu(props: {
                       "px-2 py-0 font-medium text-muted-foreground text-xs",
                     )}
                   >
-                    Files
+                    {t("Files")}
                   </p>
                   <p className="px-2 pt-0.5 text-[11px] text-muted-foreground/55">
-                    Type to search for files
+                    {t("Type to search for files")}
                   </p>
                 </div>
               </>
@@ -406,16 +408,17 @@ export function ComposerCommandMenu(props: {
           >
             {props.isLoading
               ? props.triggerKind === "mention"
-                ? "Searching mentions..."
+                ? t("Searching mentions...")
                 : props.triggerKind === "skill"
-                  ? "Loading skills..."
-                  : "Loading commands..."
-              : (props.emptyStateText ??
-                (props.triggerKind === "mention"
-                  ? "No matching plugin, chat, or file."
+                  ? t("Loading skills...")
+                  : t("Loading commands...")
+              : props.emptyStateText
+                ? t(props.emptyStateText)
+                : props.triggerKind === "mention"
+                  ? t("No matching plugin, chat, or file.")
                   : props.triggerKind === "skill"
-                    ? "No matching skill."
-                    : "No matching command."))}
+                    ? t("No matching skill.")
+                    : t("No matching command.")}
           </p>
         )}
       </div>
@@ -529,6 +532,7 @@ const ComposerCommandMenuItem = memo(function ComposerCommandMenuItem({
   onHighlight: (itemId: string | null) => void;
   onSelect: (item: ComposerCommandItem) => void;
 }) {
+  const { t } = useUiLanguage();
   const secondaryText = commandMenuSecondaryText(item);
   const trailingMeta = commandMenuTrailingMeta(item);
 
@@ -555,16 +559,18 @@ const ComposerCommandMenuItem = memo(function ComposerCommandMenuItem({
         <div className="min-w-0 flex flex-1 items-center gap-1.5 overflow-hidden">
           <span className="shrink-0 text-[11.5px] font-medium text-foreground/80">
             {item.type === "slash-command" || item.type === "provider-native-command"
-              ? commandMenuTitle(item)
-              : item.label}
+              ? t(commandMenuTitle(item))
+              : t(item.label)}
           </span>
           {secondaryText ? (
-            <span className="truncate text-[11px] text-muted-foreground/55">{secondaryText}</span>
+            <span className="truncate text-[11px] text-muted-foreground/55">
+              {t(secondaryText)}
+            </span>
           ) : null}
         </div>
         {trailingMeta ? (
           <span className="shrink-0 pl-2 text-right text-[10.5px] text-muted-foreground/42">
-            {trailingMeta}
+            {t(trailingMeta)}
           </span>
         ) : null}
       </div>

@@ -20,6 +20,7 @@ import {
   PlusIcon,
   WindowIcon,
 } from "~/lib/icons";
+import { useUiLanguage } from "~/uiLanguage";
 import { toastManager } from "../ui/toast";
 import { ComposerPickerMenuPopup, ComposerPickerMenuSubPopup } from "./ComposerPickerMenuPopup";
 import { Button } from "../ui/button";
@@ -37,15 +38,20 @@ import {
 const APP_SNAP_MAX_WINDOWS_HEIGHT_CLASS = "max-h-80 overflow-y-auto";
 const APP_SNAP_WINDOW_LIST_ATTEMPT_LIMIT = 2;
 
-function appSnapUnavailableMessage(state: DesktopAppSnapState): string {
-  if (!state.enabled || state.status === "disabled") return "Enable AppSnap in Settings";
-  if (state.status === "permission-required") return "Finish AppSnap permissions in Settings";
-  if (state.status === "starting") return "AppSnap is starting…";
-  return state.message?.trim() || "AppSnap is unavailable.";
+function appSnapUnavailableMessage(
+  state: DesktopAppSnapState,
+  t: (text: string) => string,
+  tError: (error: unknown, fallback?: string) => string,
+): string {
+  if (!state.enabled || state.status === "disabled") return t("Enable AppSnap in Settings");
+  if (state.status === "permission-required") return t("Finish AppSnap permissions in Settings");
+  if (state.status === "starting") return t("AppSnap is starting…");
+  return tError(state.message, "AppSnap is unavailable.");
 }
 
 function AppSnapWindowRowContent(props: { window: DesktopAppSnapWindowEntry }) {
-  const appName = props.window.appName?.trim() || "Captured app";
+  const { t } = useUiLanguage();
+  const appName = props.window.appName?.trim() || t("Captured app");
   const windowTitle = props.window.windowTitle?.trim() || null;
   return (
     <span className="flex min-w-0 items-center gap-2">
@@ -73,6 +79,7 @@ export const ComposerExtrasMenu = function ComposerExtrasMenu(props: {
   onToggleFastMode: () => void;
   onInteractionModeChange: (mode: ProviderInteractionMode) => void;
 }) {
+  const { t, tError } = useUiLanguage();
   const inputId = useId();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const appSnapRequestIdRef = useRef(0);
@@ -132,7 +139,7 @@ export const ComposerExtrasMenu = function ComposerExtrasMenu(props: {
         .catch((error) => {
           if (!disposed && appSnapRequestIdRef.current === requestId) {
             listedForReadyState = false;
-            setAppSnapError(error instanceof Error ? error.message : "Could not list windows.");
+            setAppSnapError(tError(error, "Could not list windows."));
           }
         });
     };
@@ -146,7 +153,7 @@ export const ComposerExtrasMenu = function ComposerExtrasMenu(props: {
       })
       .catch((error) => {
         if (!disposed && appSnapRequestIdRef.current === requestId) {
-          setAppSnapError(error instanceof Error ? error.message : "Could not list windows.");
+          setAppSnapError(tError(error, "Could not list windows."));
         }
       });
 
@@ -155,7 +162,7 @@ export const ComposerExtrasMenu = function ComposerExtrasMenu(props: {
       appSnapRequestIdRef.current += 1;
       unsubscribe();
     };
-  }, [appSnapBridge, appSnapSubmenuOpen]);
+  }, [appSnapBridge, appSnapSubmenuOpen, tError]);
 
   const captureAppSnapWindow = (windowId: number) => {
     const bridge = window.desktopBridge?.appSnap;
@@ -165,13 +172,18 @@ export const ComposerExtrasMenu = function ComposerExtrasMenu(props: {
     void bridge
       .captureWindow({ windowId })
       .then(async (capture) => {
-        await attachAppSnapCapture(threadId, capture, () => bridge.acknowledgeCapture(capture.id));
+        await attachAppSnapCapture(
+          threadId,
+          capture,
+          () => bridge.acknowledgeCapture(capture.id),
+          t,
+        );
       })
       .catch((error) => {
         toastManager.add({
           type: "error",
-          title: "AppSnap failed",
-          description: error instanceof Error ? error.message : "Could not capture the window.",
+          title: t("AppSnap failed"),
+          description: tError(error, "Could not capture the window."),
           data: { allowCrossThreadVisibility: true },
         });
       })
@@ -209,7 +221,7 @@ export const ComposerExtrasMenu = function ComposerExtrasMenu(props: {
               size="icon-sm"
               variant="chrome"
               className="shrink-0 rounded-md"
-              aria-label="Composer extras"
+              aria-label={t("Composer extras")}
             />
           }
         >
@@ -222,7 +234,7 @@ export const ComposerExtrasMenu = function ComposerExtrasMenu(props: {
             }}
           >
             <PaperclipIcon className="size-4 shrink-0" />
-            Add files
+            {t("Add files")}
           </MenuItem>
 
           {appSnapAvailable ? (
@@ -240,18 +252,20 @@ export const ComposerExtrasMenu = function ComposerExtrasMenu(props: {
             >
               <MenuSubTrigger>
                 <WindowIcon className="size-4 shrink-0" />
-                Attach window
+                {t("Attach window")}
               </MenuSubTrigger>
               <ComposerPickerMenuSubPopup className={APP_SNAP_MAX_WINDOWS_HEIGHT_CLASS}>
                 {appSnapSubmenuOpen ? (
                   appSnapError ? (
                     <MenuItem disabled>{appSnapError}</MenuItem>
                   ) : appSnapState && !appSnapListening ? (
-                    <MenuItem disabled>{appSnapUnavailableMessage(appSnapState)}</MenuItem>
+                    <MenuItem disabled>
+                      {appSnapUnavailableMessage(appSnapState, t, tError)}
+                    </MenuItem>
                   ) : appSnapWindows === null ? (
-                    <MenuItem disabled>Loading windows…</MenuItem>
+                    <MenuItem disabled>{t("Loading windows…")}</MenuItem>
                   ) : appSnapWindows.length === 0 ? (
-                    <MenuItem disabled>No other app windows are visible.</MenuItem>
+                    <MenuItem disabled>{t("No other app windows are visible.")}</MenuItem>
                   ) : (
                     appSnapWindows.map((window) => (
                       <MenuItem
@@ -272,7 +286,7 @@ export const ComposerExtrasMenu = function ComposerExtrasMenu(props: {
 
           <MenuSeparator />
           <MenuSub>
-            <MenuSubTrigger>Mode</MenuSubTrigger>
+            <MenuSubTrigger>{t("Mode")}</MenuSubTrigger>
             <ComposerPickerMenuSubPopup>
               <MenuRadioGroup
                 value={props.interactionMode}
@@ -285,19 +299,19 @@ export const ComposerExtrasMenu = function ComposerExtrasMenu(props: {
                 <MenuRadioItem value="default">
                   <span className="inline-flex items-center gap-2">
                     <MessageCircleIcon className="size-4 shrink-0" />
-                    Default
+                    {t("Default")}
                   </span>
                 </MenuRadioItem>
                 <MenuRadioItem value="plan">
                   <span className="inline-flex items-center gap-2">
                     <ListTodoIcon className="size-4 shrink-0" />
-                    Plan
+                    {t("Plan")}
                   </span>
                 </MenuRadioItem>
                 <MenuRadioItem value="debug">
                   <span className="inline-flex items-center gap-2">
                     <BugIcon className="size-4 shrink-0" />
-                    Debug
+                    {t("Debug")}
                   </span>
                 </MenuRadioItem>
               </MenuRadioGroup>
@@ -308,7 +322,7 @@ export const ComposerExtrasMenu = function ComposerExtrasMenu(props: {
             <>
               <MenuSeparator />
               <MenuSub>
-                <MenuSubTrigger>Fast</MenuSubTrigger>
+                <MenuSubTrigger>{t("Fast")}</MenuSubTrigger>
                 <ComposerPickerMenuSubPopup>
                   <MenuRadioGroup
                     value={props.fastModeEnabled ? "fast" : "normal"}
@@ -318,8 +332,8 @@ export const ComposerExtrasMenu = function ComposerExtrasMenu(props: {
                       props.onToggleFastMode();
                     }}
                   >
-                    <MenuRadioItem value="normal">Default</MenuRadioItem>
-                    <MenuRadioItem value="fast">Fast</MenuRadioItem>
+                    <MenuRadioItem value="normal">{t("Default")}</MenuRadioItem>
+                    <MenuRadioItem value="fast">{t("Fast")}</MenuRadioItem>
                   </MenuRadioGroup>
                 </ComposerPickerMenuSubPopup>
               </MenuSub>

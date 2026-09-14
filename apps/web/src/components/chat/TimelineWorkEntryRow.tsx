@@ -43,6 +43,7 @@ import {
 } from "~/lib/icons";
 import { describeLinkChip } from "~/lib/linkChips";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 
 import { isFileChangeWorkLogEntry, type WorkLogEntry } from "../../session-logic";
 import {
@@ -395,16 +396,16 @@ function isFileChangeWorkEntry(workEntry: TimelineWorkEntry): boolean {
   return isFileChangeWorkLogEntry(workEntry);
 }
 
-function commandTooltipContent(command: string, displayText: string) {
+function commandTooltipContent(command: string, displayText: string, t: (text: string) => string) {
   return (
     <div className="max-w-96 whitespace-pre-wrap leading-tight">
       <div className="space-y-2">
         <div className="space-y-0.5">
-          <div className="text-muted-foreground/70">Summary</div>
+          <div className="text-muted-foreground/70">{t("Summary")}</div>
           <div>{displayText}</div>
         </div>
         <div className="space-y-0.5">
-          <div className="text-muted-foreground/70">Raw call</div>
+          <div className="text-muted-foreground/70">{t("Raw call")}</div>
           <code className="block whitespace-pre-wrap break-words font-chat-code text-[11px] text-foreground/92">
             {command}
           </code>
@@ -421,9 +422,10 @@ function toolRowTooltipContent(
   rawCommand: string | null | undefined,
   displayText: string,
   fallback: string | undefined,
+  t: (text: string) => string,
 ): ReactNode {
   if (rawCommand) {
-    return commandTooltipContent(rawCommand, displayText);
+    return commandTooltipContent(rawCommand, displayText, t);
   }
   return fallback ? <span className="whitespace-pre-wrap">{fallback}</span> : null;
 }
@@ -460,6 +462,7 @@ export const TimelineWorkEntryRow = memo(function TimelineWorkEntryRow(props: {
   onOpenAutomation?: (automationId: string) => void;
   timestampFormat: TimestampFormat;
 }) {
+  const { t } = useUiLanguage();
   // Defaults are applied in the body (not in the destructuring pattern): a default
   // value inside a destructuring pattern makes React Compiler bail out on the whole
   // component, silently dropping memoization for every tool-call row.
@@ -510,6 +513,8 @@ export const TimelineWorkEntryRow = memo(function TimelineWorkEntryRow(props: {
             ? "mcp"
             : undefined;
   const heading = toolWorkEntryHeading(workEntry);
+  const displayHeading =
+    heading === "Agent task" || heading === "Reasoning trace" ? t(heading) : heading;
   const rawPreview = workEntryPreview(workEntry);
   const preview =
     isSynaraBrowserToolRow || isSynaraToolRow
@@ -526,7 +531,7 @@ export const TimelineWorkEntryRow = memo(function TimelineWorkEntryRow(props: {
     ? describeLinkChip(webFetchUrl).label
     : isReasoningUpdateWorkEntry(workEntry) && preview
       ? preview
-      : combineWorkEntryDisplayText(heading, preview);
+      : combineWorkEntryDisplayText(displayHeading, preview);
   const showInlineAgentTaskPreview =
     workEntry.itemType === "collab_agent_tool_call" &&
     Boolean(preview) &&
@@ -559,6 +564,7 @@ export const TimelineWorkEntryRow = memo(function TimelineWorkEntryRow(props: {
   const liveActivityMetaText = workEntry.liveActivity
     ? formatLiveActivityMeta(workEntry.liveActivity, liveActivityNowMs, {
         subagent: workEntry.itemType === "collab_agent_tool_call",
+        translate: t,
       })
     : null;
 
@@ -760,7 +766,7 @@ export const TimelineWorkEntryRow = memo(function TimelineWorkEntryRow(props: {
                 }
                 compact={compact}
                 timestampFormat={timestampFormat}
-                tooltip={toolRowTooltipContent(rawCommand, displayText, displayText)}
+                tooltip={toolRowTooltipContent(rawCommand, displayText, displayText, t)}
               >
                 {rowContentChildren}
               </ToolDetailsDisclosure>
@@ -777,6 +783,7 @@ export const TimelineWorkEntryRow = memo(function TimelineWorkEntryRow(props: {
                 rawCommand,
                 displayText,
                 canOpenReadFile ? (readFilePath ?? hoverText) : hoverText,
+                t,
               )}
             >
               {rowContentChildren}
@@ -801,6 +808,7 @@ export function EditedFileRowContent(props: {
   fontSizePx: number;
   compact: boolean;
 }) {
+  const { t } = useUiLanguage();
   const { filePath, additions, deletions, fontSizePx, compact } = props;
   const hasStat = (additions ?? 0) + (deletions ?? 0) > 0;
   return (
@@ -819,7 +827,7 @@ export function EditedFileRowContent(props: {
         className={cn("font-system-ui shrink-0", WORK_ROW_MUTED_HOVER_TONE["file-row"])}
         style={{ fontSize: `${fontSizePx}px` }}
       >
-        Edited
+        {t("Edited")}
       </span>
       <span
         className={cn(
@@ -904,6 +912,7 @@ function providerContextLifecycleReasonLabel(
 function ProviderContextLifecycleDetails(props: {
   info: NonNullable<TimelineWorkEntry["providerContextLifecycle"]>;
 }) {
+  const { t } = useUiLanguage();
   const { info } = props;
   const provider =
     PROVIDER_DESCRIPTORS.find((descriptor) => descriptor.kind === info.provider)?.displayName ??
@@ -911,26 +920,30 @@ function ProviderContextLifecycleDetails(props: {
   return (
     <div className="space-y-3" data-provider-context-lifecycle-details="true">
       <dl className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3 gap-y-1.5 rounded-lg border border-border/45 bg-background/60 px-3 py-2.5 text-[11px]">
-        <dt className="text-muted-foreground/56">Provider</dt>
+        <dt className="text-muted-foreground/56">{t("Provider")}</dt>
         <dd className="text-foreground/84">{provider}</dd>
-        <dt className="text-muted-foreground/56">Previous history</dt>
+        <dt className="text-muted-foreground/56">{t("Previous history")}</dt>
         <dd className="text-foreground/84">
-          {info.nativeHistory === "available" ? "Available" : "Lost"}
+          {info.nativeHistory === "available" ? t("Available") : t("Lost")}
         </dd>
-        <dt className="text-muted-foreground/56">Session restarted</dt>
-        <dd className="text-foreground/84">{info.sessionRestarted ? "Yes" : "No"}</dd>
-        <dt className="text-muted-foreground/56">Why</dt>
+        <dt className="text-muted-foreground/56">{t("Session restarted")}</dt>
+        <dd className="text-foreground/84">{info.sessionRestarted ? t("Yes") : t("No")}</dd>
+        <dt className="text-muted-foreground/56">{t("Why")}</dt>
         <dd className="text-foreground/84">
-          {providerContextLifecycleReasonLabel(info.restartReason)}
+          {t(providerContextLifecycleReasonLabel(info.restartReason))}
         </dd>
-        <dt className="text-muted-foreground/56">Summary included</dt>
+        <dt className="text-muted-foreground/56">{t("Summary included")}</dt>
         <dd className="text-foreground/84">
-          {info.recapInjected ? `${info.recapCharacters.toLocaleString()} characters` : "No"}
+          {info.recapInjected
+            ? `${info.recapCharacters.toLocaleString()} ${t("characters")}`
+            : t("No")}
         </dd>
       </dl>
       {info.recapPreview ? (
         <section className="space-y-2">
-          <h3 className="text-[11px] font-medium text-muted-foreground/56">Summary preview</h3>
+          <h3 className="text-[11px] font-medium text-muted-foreground/56">
+            {t("Summary preview")}
+          </h3>
           <pre
             className="max-h-56 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border/45 bg-background/60 px-3 py-2.5 font-chat-code text-[11px] leading-relaxed text-foreground/84"
             data-session-context-recap-preview="true"
@@ -939,7 +952,7 @@ function ProviderContextLifecycleDetails(props: {
           </pre>
           {info.recapPreviewTruncated ? (
             <p className="text-[10px] text-muted-foreground/56">
-              Showing a short preview of the summary sent with your message.
+              {t("Showing a short preview of the summary sent with your message.")}
             </p>
           ) : null}
         </section>

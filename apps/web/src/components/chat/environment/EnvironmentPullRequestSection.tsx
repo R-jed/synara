@@ -79,8 +79,9 @@ import {
   pullRequestDetailQueryOptions,
 } from "~/lib/pullRequestReactQuery";
 import { type PullRequestContextScope } from "~/lib/pullRequestContext";
-import { formatRelativeTime } from "~/lib/relativeTime";
+import { formatRelativeTimeForLanguage } from "~/lib/relativeTime";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { ensureNativeApi } from "~/nativeApi";
 import { useRightDockStore } from "~/rightDockStore";
 import {
@@ -127,6 +128,21 @@ const ACTION_SUCCESS_TITLES: Record<PullRequestAction, string> = {
   close: "Pull request closed",
   reopen: "Pull request reopened",
 };
+
+function localizePullRequestChecksSummary(label: string, t: (text: string) => string): string {
+  const counted = /^(\d+) (failing|cancelled|pending) checks?$/.exec(label);
+  if (!counted) return t(label);
+  return `${counted[1]} ${t(`${counted[2]} checks`)}`;
+}
+
+function localizePullRequestCommentsSummary(
+  count: number,
+  truncated: boolean,
+  t: (text: string) => string,
+): string {
+  if (count === 0) return t(truncated ? "Comments may exist" : "No comments");
+  return `${count}${truncated ? "+" : ""} ${t("comments")}`;
+}
 
 function checksToneIcon(tone: PullRequestChecksTone) {
   const colorClass = PULL_REQUEST_CHECKS_TONE_TEXT_CLASS[tone];
@@ -184,6 +200,7 @@ function ChecksMenuRow({
   check: GitPullRequestCheck;
   onOpenUrl: (url: string) => void;
 }) {
+  const { t } = useUiLanguage();
   return (
     <MenuRow
       url={check.url}
@@ -193,7 +210,7 @@ function ChecksMenuRow({
       <PullRequestCheckStatusIcon status={check.status} />
       <span className="min-w-0 truncate text-[var(--color-text-foreground)]">{check.name}</span>
       <span className="shrink-0 text-[length:var(--app-font-size-ui-xs,10px)] text-muted-foreground">
-        {PULL_REQUEST_CHECK_STATUS_LABELS[check.status]}
+        {t(PULL_REQUEST_CHECK_STATUS_LABELS[check.status])}
       </span>
     </MenuRow>
   );
@@ -206,6 +223,7 @@ function CommentsMenuRow({
   comment: GitPullRequestComment;
   onOpenUrl: (url: string) => void;
 }) {
+  const { language, t } = useUiLanguage();
   const display = describePullRequestComment(comment);
   return (
     // items-stretch overrides the menu-option default items-center for this column layout.
@@ -215,7 +233,7 @@ function CommentsMenuRow({
       className="flex flex-col items-stretch gap-0.5 px-2 py-1.5"
     >
       <span className="line-clamp-2 text-[length:var(--app-font-size-ui,12px)] text-[var(--color-text-foreground)]">
-        {display.title}
+        {t(display.title)}
       </span>
       {display.snippet ? (
         <span className="line-clamp-2 text-[length:var(--app-font-size-ui-xs,10px)] text-muted-foreground">
@@ -244,7 +262,9 @@ function CommentsMenuRow({
         ) : null}
         <span className="min-w-0 flex-1 truncate">{comment.path ?? comment.author ?? ""}</span>
         {comment.createdAt ? (
-          <span className="shrink-0 tabular-nums">{formatRelativeTime(comment.createdAt)}</span>
+          <span className="shrink-0 tabular-nums">
+            {formatRelativeTimeForLanguage(comment.createdAt, language)}
+          </span>
         ) : null}
       </span>
     </MenuRow>
@@ -299,6 +319,7 @@ export function EnvironmentPullRequestSection({
   onOpenUrl: (url: string) => void;
   onClose: () => void;
 }) {
+  const { t, tError } = useUiLanguage();
   const showDiffColors = showDiffColorsProp ?? true;
   const openPane = useRightDockStore((store) => store.openPane);
   const queryClient = useQueryClient();
@@ -385,8 +406,8 @@ export function EnvironmentPullRequestSection({
       .catch((error: unknown) => {
         toastManager.add({
           type: "error",
-          title: "Could not open GitHub",
-          description: error instanceof Error ? error.message : "The link could not be opened.",
+          title: t("Could not open GitHub"),
+          description: tError(error, "The link could not be opened."),
         });
       });
     onClose();
@@ -424,15 +445,15 @@ export function EnvironmentPullRequestSection({
           type: "success",
           title:
             action === "merge" && result.mergeOutcome === "enqueued"
-              ? "Pull request added to merge queue"
-              : ACTION_SUCCESS_TITLES[action],
+              ? t("Pull request added to merge queue")
+              : t(ACTION_SUCCESS_TITLES[action]),
         });
       })
       .catch((error: unknown) => {
         toastManager.add({
           type: "error",
-          title: "Pull request action failed",
-          description: error instanceof Error ? error.message : "GitHub CLI action failed.",
+          title: t("Pull request action failed"),
+          description: tError(error, "GitHub CLI action failed."),
         });
       });
   };
@@ -470,13 +491,14 @@ export function EnvironmentPullRequestSection({
           : null;
   const canRunActions = actionInput !== null && settledState === null;
   const repairDisabled = loading || failed || !activeThreadId || repairs.total === 0;
-  const stateLabel = settledState
+  const stateLabelSource = settledState
     ? settledState === "merged"
       ? "Merged"
       : "Closed"
     : displayPr.isDraft
       ? "Draft"
       : "Ready for review";
+  const stateLabel = t(stateLabelSource);
 
   const rowTrailing = settledState ? (
     <span className={cn("text-muted-foreground", PR_QUIET_INK_CLASS_NAME)}>{stateLabel}</span>
@@ -488,15 +510,15 @@ export function EnvironmentPullRequestSection({
     checksToneIcon(checksSummary.tone)
   );
   const rowTitle = settledState
-    ? `${stateLabel} on GitHub`
+    ? `${stateLabel} ${t("on GitHub")}`
     : loading
-      ? "Loading checks and comments…"
+      ? t("Loading checks and comments…")
       : failed
-        ? "Couldn't load PR data"
-        : checksSummary.label;
+        ? t("Couldn't load PR data")
+        : localizePullRequestChecksSummary(checksSummary.label, t);
 
   return (
-    <EnvironmentLabeledSection label="Pull request">
+    <EnvironmentLabeledSection label={t("Pull request")}>
       <Menu open={menuOpen} onOpenChange={setMenuOpen} keepOpenOnSubmenuInteraction>
         <MenuTrigger
           render={<button type="button" className={ENVIRONMENT_ROW_CLASS_NAME} title={rowTitle} />}
@@ -535,13 +557,13 @@ export function EnvironmentPullRequestSection({
           <MenuItem onClick={() => openPullRequest()}>
             <MenuRowLabel
               icon={<FileIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-              label="View PR"
+              label={t("View PR")}
             />
           </MenuItem>
           <MenuItem onClick={() => openPullRequest("code")}>
             <MenuRowLabel
               icon={<DiffIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-              label="Code changes"
+              label={t("Code changes")}
               trailing={
                 diffStat ? (
                   <PullRequestDiffStat
@@ -560,8 +582,14 @@ export function EnvironmentPullRequestSection({
                 <MenuSubTrigger disabled={loading}>
                   <MenuRowLabel
                     icon={checksToneIcon(checksSummary.tone)}
-                    label="Checks"
-                    trailing={loading ? "Loading…" : failed ? "Unavailable" : checksSummary.label}
+                    label={t("Checks")}
+                    trailing={
+                      loading
+                        ? t("Loading…")
+                        : failed
+                          ? t("Unavailable")
+                          : localizePullRequestChecksSummary(checksSummary.label, t)
+                    }
                   />
                 </MenuSubTrigger>
                 <ComposerPickerMenuSubPopup side={SUBMENU_SIDE} className="w-72 min-w-72">
@@ -569,11 +597,11 @@ export function EnvironmentPullRequestSection({
                     <MenuItem onClick={() => void snapshotQuery.refetch()}>
                       <MenuRowLabel
                         icon={<RefreshCwIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-                        label="Retry loading checks"
+                        label={t("Retry loading checks")}
                       />
                     </MenuItem>
                   ) : checks.length === 0 ? (
-                    <MenuPlaceholder text="No checks reported for this PR." />
+                    <MenuPlaceholder text={t("No checks reported for this PR.")} />
                   ) : (
                     <div className="flex max-h-64 flex-col gap-0.5 overflow-y-auto [&>*]:shrink-0">
                       {withStableCheckKeys(checks).map(({ key, check }) => (
@@ -594,13 +622,17 @@ export function EnvironmentPullRequestSection({
                 <MenuSubTrigger disabled={loading}>
                   <MenuRowLabel
                     icon={<ChatBubbleIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-                    label="Comments"
+                    label={t("Comments")}
                     trailing={
                       loading
-                        ? "Loading…"
+                        ? t("Loading…")
                         : failed || commentsError
-                          ? "Unavailable"
-                          : summarizePullRequestComments(comments.length, commentsTruncated)
+                          ? t("Unavailable")
+                          : localizePullRequestCommentsSummary(
+                              comments.length,
+                              commentsTruncated,
+                              t,
+                            )
                     }
                   />
                 </MenuSubTrigger>
@@ -609,17 +641,21 @@ export function EnvironmentPullRequestSection({
                     <MenuItem onClick={() => void snapshotQuery.refetch()}>
                       <MenuRowLabel
                         icon={<RefreshCwIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-                        label="Retry loading comments"
+                        label={t("Retry loading comments")}
                       />
                     </MenuItem>
                   ) : commentsError ? (
-                    <MenuPlaceholder text={`Couldn't load review comments: ${commentsError}`} />
+                    <MenuPlaceholder
+                      text={`${t("Couldn't load review comments")}: ${commentsError}`}
+                    />
                   ) : comments.length === 0 ? (
                     <MenuPlaceholder
                       text={
                         commentsTruncated
-                          ? "Review comments may be hidden by the bounded preview. Open the PR on GitHub."
-                          : "No unresolved review comments."
+                          ? t(
+                              "Review comments may be hidden by the bounded preview. Open the PR on GitHub.",
+                            )
+                          : t("No unresolved review comments.")
                       }
                     />
                   ) : (
@@ -638,7 +674,9 @@ export function EnvironmentPullRequestSection({
                         />
                       ))}
                       {commentsTruncated ? (
-                        <MenuPlaceholder text="More review comments may be available on GitHub." />
+                        <MenuPlaceholder
+                          text={t("More review comments may be available on GitHub.")}
+                        />
                       ) : null}
                     </div>
                   )}
@@ -650,7 +688,7 @@ export function EnvironmentPullRequestSection({
                 <MenuSubTrigger disabled={repairDisabled} data-testid="pr-repair-trigger">
                   <MenuRowLabel
                     icon={<HammerIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-                    label="Repair"
+                    label={t("Repair")}
                     trailing={
                       repairs.total > 0 ? (
                         <span className={cn(!repairDisabled && "text-destructive")}>
@@ -667,7 +705,7 @@ export function EnvironmentPullRequestSection({
                   >
                     <MenuRowLabel
                       icon={<ChatBubbleIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-                      label="Comments"
+                      label={t("Comments")}
                       trailing={repairs.comments > 0 ? repairs.comments : null}
                     />
                   </MenuItem>
@@ -677,7 +715,7 @@ export function EnvironmentPullRequestSection({
                   >
                     <MenuRowLabel
                       icon={<CircleAlertIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-                      label="Failing checks"
+                      label={t("Failing checks")}
                       trailing={repairs.failingChecks > 0 ? repairs.failingChecks : null}
                     />
                   </MenuItem>
@@ -687,14 +725,14 @@ export function EnvironmentPullRequestSection({
                   >
                     <MenuRowLabel
                       icon={<GitMergeConflictIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-                      label="Merge conflicts"
+                      label={t("Merge conflicts")}
                     />
                   </MenuItem>
                   <MenuSeparator />
                   <MenuItem onClick={() => attachContextCard("everything")}>
                     <MenuRowLabel
                       icon={<HammerIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-                      label="Everything"
+                      label={t("Everything")}
                     />
                   </MenuItem>
                 </ComposerPickerMenuSubPopup>
@@ -705,18 +743,18 @@ export function EnvironmentPullRequestSection({
                   <MenuSubTrigger
                     disabled={mergeDisabled}
                     title={
-                      mergeBlocker ??
-                      (detailQuery.error instanceof Error ? detailQuery.error.message : undefined)
+                      (mergeBlocker ? t(mergeBlocker) : null) ??
+                      (detailQuery.error instanceof Error ? tError(detailQuery.error) : undefined)
                     }
                   >
                     <MenuRowLabel
                       icon={<GitMergeIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
                       label={
                         actionPending && actionMutation.variables?.action === "merge"
-                          ? "Merging…"
-                          : "Merge"
+                          ? t("Merging…")
+                          : t("Merge")
                       }
-                      trailing={mergeTrailing}
+                      trailing={mergeTrailing ? t(mergeTrailing) : null}
                     />
                   </MenuSubTrigger>
                   <ComposerPickerMenuSubPopup side={SUBMENU_SIDE} className="w-56 min-w-56">
@@ -724,7 +762,7 @@ export function EnvironmentPullRequestSection({
                       <MenuItem key={method} onClick={() => setConfirmMerge(method)}>
                         <MenuRowLabel
                           icon={<GitMergeIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-                          label={MERGE_METHOD_LABELS[method]}
+                          label={t(MERGE_METHOD_LABELS[method])}
                         />
                       </MenuItem>
                     ))}
@@ -738,7 +776,7 @@ export function EnvironmentPullRequestSection({
             <MenuItem onClick={() => attachContextCard("reference")}>
               <MenuRowLabel
                 icon={<MessageCircleIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-                label="Add to chat"
+                label={t("Add to chat")}
               />
             </MenuItem>
           ) : null}
@@ -750,7 +788,7 @@ export function EnvironmentPullRequestSection({
               <MenuSubTrigger disabled={actionPending}>
                 <MenuRowLabel
                   icon={<GitPullRequestIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-                  label="Status"
+                  label={t("Status")}
                   trailing={stateLabel}
                 />
               </MenuSubTrigger>
@@ -764,11 +802,11 @@ export function EnvironmentPullRequestSection({
                 >
                   <MenuRadioItem value="draft" disabled={actionPending}>
                     <GitPullRequestDraftIcon className={MENU_ICON_CLASS_NAME} aria-hidden />
-                    <span>Draft</span>
+                    <span>{t("Draft")}</span>
                   </MenuRadioItem>
                   <MenuRadioItem value="ready" disabled={actionPending}>
                     <GitPullRequestIcon className={MENU_ICON_CLASS_NAME} aria-hidden />
-                    <span>Ready for review</span>
+                    <span>{t("Ready for review")}</span>
                   </MenuRadioItem>
                 </MenuRadioGroup>
               </ComposerPickerMenuSubPopup>
@@ -777,7 +815,7 @@ export function EnvironmentPullRequestSection({
             <MenuItem disabled>
               <MenuRowLabel
                 icon={<GitPullRequestIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-                label="Status"
+                label={t("Status")}
                 trailing={stateLabel}
               />
             </MenuItem>
@@ -785,7 +823,7 @@ export function EnvironmentPullRequestSection({
           <MenuItem onClick={openInGitHub}>
             <MenuRowLabel
               icon={<ExternalLinkIcon className={MENU_ICON_CLASS_NAME} aria-hidden />}
-              label="Open in GitHub"
+              label={t("Open in GitHub")}
             />
           </MenuItem>
         </ComposerPickerMenuPopup>
@@ -806,7 +844,7 @@ export function EnvironmentPullRequestSection({
               />
             )
           }
-          label={settledState === "merged" ? "Merged on GitHub" : "Closed on GitHub"}
+          label={settledState === "merged" ? t("Merged on GitHub") : t("Closed on GitHub")}
           onClick={() => {
             openPullRequest();
           }}
@@ -823,18 +861,20 @@ export function EnvironmentPullRequestSection({
           <AlertDialogHeader>
             <AlertDialogTitle>
               {detail?.stack && stackAssessment
-                ? `Merge ${stackAssessment.mergeTargetCount} ${stackAssessment.mergeTargetCount === 1 ? "pull request" : "pull requests"}?`
-                : "Merge pull request?"}
+                ? `${t("Merge")} ${stackAssessment.mergeTargetCount} ${t(
+                    stackAssessment.mergeTargetCount === 1 ? "pull request" : "pull requests",
+                  )}?`
+                : t("Merge pull request?")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {detail?.stack
-                ? `This will atomically merge every open pull request through #${displayPr.number} into ${detail.stack.baseBranch} using ${confirmMerge ?? "merge"}.`
-                : `This will merge #${displayPr.number} into ${displayPr.baseBranch} using ${confirmMerge ?? "merge"}.`}
+                ? `${t("This will atomically merge every open pull request through")} #${displayPr.number} ${t("into")} ${detail.stack.baseBranch} ${t("using")} ${confirmMerge ?? "merge"}.`
+                : `${t("This will merge")} #${displayPr.number} ${t("into")} ${displayPr.baseBranch} ${t("using")} ${confirmMerge ?? "merge"}.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogClose render={<Button variant="outline" size="sm" />}>
-              Cancel
+              {t("Cancel")}
             </AlertDialogClose>
             <Button
               size="sm"
@@ -848,7 +888,7 @@ export function EnvironmentPullRequestSection({
                 }
               }}
             >
-              {detail?.stack ? "Merge stack" : "Merge"}
+              {detail?.stack ? t("Merge stack") : t("Merge")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogPopup>

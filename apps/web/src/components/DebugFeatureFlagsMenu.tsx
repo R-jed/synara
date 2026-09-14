@@ -21,6 +21,7 @@ import {
 import { ComposerPickerMenuPopup } from "./chat/ComposerPickerMenuPopup";
 import { SidebarMenuButton } from "./ui/sidebar";
 import { toastManager } from "./ui/toast";
+import { useUiLanguage } from "~/uiLanguage";
 
 // Triggers local-only toast scenarios that are awkward to reproduce through real Git failures.
 function triggerActionFailedToasts(values: Record<ToggleFeatureFlagId, boolean>): void {
@@ -48,6 +49,7 @@ function triggerActionFailedToasts(values: Record<ToggleFeatureFlagId, boolean>)
 }
 
 export function DebugFeatureFlagsMenu() {
+  const { t } = useUiLanguage();
   const values = useFeatureFlags();
 
   return (
@@ -61,11 +63,11 @@ export function DebugFeatureFlagsMenu() {
         }
       >
         <FlagIcon className="size-[15px]" />
-        <span>Feature flags</span>
+        <span>{t("Feature flags")}</span>
       </MenuTrigger>
       <ComposerPickerMenuPopup align="start" side="top" className="min-w-72">
         <MenuGroup>
-          <MenuGroupLabel>Local feature flags</MenuGroupLabel>
+          <MenuGroupLabel>{t("Local feature flags")}</MenuGroupLabel>
           {FEATURE_FLAGS.map((flag) => {
             if (flag.kind === "action") {
               return (

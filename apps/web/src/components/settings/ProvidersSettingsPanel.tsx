@@ -59,6 +59,7 @@ import {
   SETTINGS_STACKED_ROWS_DIVIDER_CLASS_NAME,
 } from "~/settingsPanelStyles";
 import { ELEVATED_HOVER_SURFACE_RAISED_TEXT_CLASS_NAME } from "~/surfaceStyles";
+import { useUiLanguage } from "~/uiLanguage";
 
 import { Button } from "../ui/button";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "../ui/collapsible";
@@ -119,6 +120,35 @@ type ProviderInstallSettings = {
   readonly fields: readonly ProviderInstallField[];
 };
 
+function PathFallbackDescription({ command }: { readonly command: string }) {
+  const { t } = useUiLanguage();
+  return (
+    <>
+      {t("Leave blank to use")} <code>{command}</code> {t("from your PATH.")}
+    </>
+  );
+}
+
+function CursorPathFallbackDescription() {
+  const { t } = useUiLanguage();
+  return (
+    <>
+      {t("Leave blank to use")} <code>cursor-agent</code> {t("from your PATH.")}{" "}
+      {t("Cursor editor CLI paths are accepted too.")}
+    </>
+  );
+}
+
+function DevinPathFallbackDescription() {
+  const { t } = useUiLanguage();
+  return (
+    <>
+      {t("Leave blank to use")} <code>devin</code> {t("from your PATH.")} {t("Authenticate with")}{" "}
+      <code>devin auth login</code> {t("or set")} WINDSURF_API_KEY.
+    </>
+  );
+}
+
 const PROVIDER_VISIBILITY_OPTIONS: ReadonlyArray<{ provider: ProviderKind; title: string }> =
   PROVIDER_DESCRIPTORS.map((descriptor) => ({
     provider: descriptor.kind,
@@ -139,11 +169,7 @@ const PROVIDER_INSTALL_SETTINGS: readonly ProviderInstallSettings[] = [
         settingsKey: "codexBinaryPath",
         label: "Codex binary path",
         placeholder: "Codex binary path",
-        description: (
-          <>
-            Leave blank to use <code>codex</code> from your PATH.
-          </>
-        ),
+        description: <PathFallbackDescription command="codex" />,
       },
       {
         kind: "text",
@@ -167,11 +193,7 @@ const PROVIDER_INSTALL_SETTINGS: readonly ProviderInstallSettings[] = [
         settingsKey: "claudeBinaryPath",
         label: "Claude binary path",
         placeholder: "Claude binary path",
-        description: (
-          <>
-            Leave blank to use <code>claude</code> from your PATH.
-          </>
-        ),
+        description: <PathFallbackDescription command="claude" />,
       },
     ],
   },
@@ -188,12 +210,7 @@ const PROVIDER_INSTALL_SETTINGS: readonly ProviderInstallSettings[] = [
         settingsKey: "cursorBinaryPath",
         label: "Cursor binary path",
         placeholder: "Cursor Agent or Cursor CLI path",
-        description: (
-          <>
-            Leave blank to use <code>cursor-agent</code> from your PATH. Cursor editor CLI paths are
-            accepted too.
-          </>
-        ),
+        description: <CursorPathFallbackDescription />,
       },
       {
         kind: "text",
@@ -217,11 +234,7 @@ const PROVIDER_INSTALL_SETTINGS: readonly ProviderInstallSettings[] = [
         settingsKey: "antigravityBinaryPath",
         label: "Antigravity binary path",
         placeholder: "Antigravity CLI binary path",
-        description: (
-          <>
-            Leave blank to use <code>agy</code> from your PATH.
-          </>
-        ),
+        description: <PathFallbackDescription command="agy" />,
       },
     ],
   },
@@ -238,11 +251,7 @@ const PROVIDER_INSTALL_SETTINGS: readonly ProviderInstallSettings[] = [
         settingsKey: "grokBinaryPath",
         label: "Grok binary path",
         placeholder: "Grok binary path",
-        description: (
-          <>
-            Leave blank to use <code>grok</code> from your PATH.
-          </>
-        ),
+        description: <PathFallbackDescription command="grok" />,
       },
     ],
   },
@@ -260,11 +269,7 @@ const PROVIDER_INSTALL_SETTINGS: readonly ProviderInstallSettings[] = [
         settingsKey: "droidBinaryPath",
         label: "Droid binary path",
         placeholder: "droid",
-        description: (
-          <>
-            Leave blank to use <code>droid</code> from your PATH.
-          </>
-        ),
+        description: <PathFallbackDescription command="droid" />,
       },
     ],
   },
@@ -281,12 +286,7 @@ const PROVIDER_INSTALL_SETTINGS: readonly ProviderInstallSettings[] = [
         settingsKey: "devinBinaryPath",
         label: "Devin binary path",
         placeholder: "devin",
-        description: (
-          <>
-            Leave blank to use <code>devin</code> from your PATH. Authenticate with{" "}
-            <code>devin auth login</code> or set WINDSURF_API_KEY.
-          </>
-        ),
+        description: <DevinPathFallbackDescription />,
       },
     ],
   },
@@ -303,11 +303,7 @@ const PROVIDER_INSTALL_SETTINGS: readonly ProviderInstallSettings[] = [
         settingsKey: "openCodeBinaryPath",
         label: "OpenCode binary path",
         placeholder: "OpenCode binary path",
-        description: (
-          <>
-            Leave blank to use <code>opencode</code> from your PATH.
-          </>
-        ),
+        description: <PathFallbackDescription command="opencode" />,
       },
       {
         kind: "text",
@@ -346,11 +342,7 @@ const PROVIDER_INSTALL_SETTINGS: readonly ProviderInstallSettings[] = [
         settingsKey: "piBinaryPath",
         label: "Pi binary path",
         placeholder: "Pi binary path",
-        description: (
-          <>
-            Leave blank to use <code>pi</code> from your PATH.
-          </>
-        ),
+        description: <PathFallbackDescription command="pi" />,
       },
       {
         kind: "text",
@@ -442,6 +434,7 @@ function SortableProviderVisibilityRow(props: {
   isHidden: boolean;
   onHiddenChange: (hidden: boolean) => void;
 }) {
+  const { t } = useUiLanguage();
   const {
     attributes,
     listeners,
@@ -474,7 +467,7 @@ function SortableProviderVisibilityRow(props: {
             ELEVATED_HOVER_SURFACE_RAISED_TEXT_CLASS_NAME,
             SETTINGS_INSET_RADIUS_CLASS_NAME,
           )}
-          aria-label={`Reorder ${props.option.title}`}
+          aria-label={`${t("Reorder")} ${props.option.title}`}
           {...attributes}
           {...listeners}
         >
@@ -484,7 +477,7 @@ function SortableProviderVisibilityRow(props: {
         <span className="min-w-0">
           <span className="block truncate text-sm text-foreground">{props.option.title}</span>
           <span className="block text-[11px] text-muted-foreground">
-            {isChecking ? "Checking" : isAvailable ? "Installed" : "CLI not installed"}
+            {isChecking ? t("Checking") : isAvailable ? t("Installed") : t("CLI not installed")}
           </span>
         </span>
       </div>
@@ -494,10 +487,10 @@ function SortableProviderVisibilityRow(props: {
         onCheckedChange={(checked) => props.onHiddenChange(!Boolean(checked))}
         aria-label={
           isChecking
-            ? `Checking ${props.option.title} CLI availability`
+            ? `${t("Checking CLI availability")}: ${props.option.title}`
             : isAvailable
-              ? `Show ${props.option.title} in the provider picker`
-              : `${props.option.title} CLI is not installed`
+              ? `${t("Show in provider picker")}: ${props.option.title}`
+              : `${props.option.title}: ${t("CLI is not installed")}`
         }
       />
     </div>
@@ -505,10 +498,11 @@ function SortableProviderVisibilityRow(props: {
 }
 
 function ProviderDocsLinks({ docs }: { docs: ProviderInstallSettings["docs"] }) {
+  const { t } = useUiLanguage();
   return (
     <div className={cn(SETTINGS_OUTLINED_SURFACE_CLASS_NAME, "px-3 py-2.5")}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <span className="text-xs font-medium text-foreground">CLI docs</span>
+        <span className="text-xs font-medium text-foreground">{t("CLI docs")}</span>
         <div className="flex flex-wrap gap-2">
           {docs.map((doc) => (
             <Button
@@ -517,7 +511,7 @@ function ProviderDocsLinks({ docs }: { docs: ProviderInstallSettings["docs"] }) 
               size="sm"
               render={<a href={doc.href} target="_blank" rel="noreferrer" />}
             >
-              <span>{doc.label}</span>
+              <span>{t(doc.label)}</span>
               <ExternalLinkIcon className="size-3" />
             </Button>
           ))}
@@ -562,6 +556,7 @@ function ProviderUpdateAction(props: {
   disabled: boolean;
   onUpdate: (provider: ProviderKind) => void;
 }) {
+  const { t } = useUiLanguage();
   const advisory = props.providerStatus.versionAdvisory;
   return (
     <Button
@@ -569,7 +564,7 @@ function ProviderUpdateAction(props: {
       size="xs"
       variant="outline"
       disabled={props.disabled}
-      title={advisory?.updateCommand ? `Run ${advisory.updateCommand}` : undefined}
+      title={advisory?.updateCommand ? `${t("Run")} ${advisory.updateCommand}` : undefined}
       onClick={(event: MouseEvent<HTMLButtonElement>) => {
         event.stopPropagation();
         props.onUpdate(props.providerStatus.provider);
@@ -580,7 +575,7 @@ function ProviderUpdateAction(props: {
       ) : (
         <DownloadIcon className="size-3.5" />
       )}
-      {props.active ? "Updating" : "Update"}
+      {props.active ? t("Updating") : t("Update")}
     </Button>
   );
 }
@@ -590,6 +585,7 @@ function ProviderInstallFieldControl(props: {
   settings: AppSettings;
   updateSettings: (patch: Partial<AppSettings>) => void;
 }) {
+  const { t } = useUiLanguage();
   const id = `provider-install-${props.field.settingsKey}`;
   if (props.field.kind === "boolean") {
     return (
@@ -598,9 +594,11 @@ function ProviderInstallFieldControl(props: {
         className="flex items-start justify-between gap-3 rounded-md border border-border/70 bg-background/60 px-3 py-2"
       >
         <span className="min-w-0">
-          <span className="block text-xs font-medium text-foreground">{props.field.label}</span>
+          <span className="block text-xs font-medium text-foreground">{t(props.field.label)}</span>
           <span className="mt-1 block text-xs text-muted-foreground">
-            {props.field.description}
+            {typeof props.field.description === "string"
+              ? t(props.field.description)
+              : props.field.description}
           </span>
         </span>
         <Switch
@@ -619,7 +617,7 @@ function ProviderInstallFieldControl(props: {
   const isPassword = props.field.kind === "password";
   return (
     <label htmlFor={id} className="block">
-      <span className="block text-xs font-medium text-foreground">{props.field.label}</span>
+      <span className="block text-xs font-medium text-foreground">{t(props.field.label)}</span>
       <DebouncedSettingTextInput
         id={id}
         size="sm"
@@ -631,14 +629,18 @@ function ProviderInstallFieldControl(props: {
         }
         placeholder={
           isPassword && configured
-            ? "Configured — enter a replacement or leave blank"
-            : props.field.placeholder
+            ? t("Configured — enter a replacement or leave blank")
+            : t(props.field.placeholder)
         }
         type={isPassword ? "password" : undefined}
         autoComplete={isPassword ? "new-password" : undefined}
         spellCheck={false}
       />
-      <span className="mt-1 block text-xs text-muted-foreground">{props.field.description}</span>
+      <span className="mt-1 block text-xs text-muted-foreground">
+        {typeof props.field.description === "string"
+          ? t(props.field.description)
+          : props.field.description}
+      </span>
     </label>
   );
 }
@@ -656,6 +658,7 @@ function ProviderToolRow(props: {
   onUpdate: (provider: ProviderKind) => void;
   updateSettings: (patch: Partial<AppSettings>) => void;
 }) {
+  const { t } = useUiLanguage();
   const title = PROVIDER_DISPLAY_NAMES[props.config.provider];
   const isDirty = isProviderInstallConfigDirty(props.config, props.settings, props.defaults);
   const showProviderUpdateStatus = props.providerStatus
@@ -703,7 +706,7 @@ function ProviderToolRow(props: {
           >
             <span className="min-w-0 flex-1 text-sm font-medium text-foreground">{title}</span>
             {isDirty ? (
-              <span className="shrink-0 text-[11px] text-muted-foreground">Custom</span>
+              <span className="shrink-0 text-[11px] text-muted-foreground">{t("Custom")}</span>
             ) : null}
             {providerUpdateLabel ? (
               <span
@@ -714,7 +717,11 @@ function ProviderToolRow(props: {
                     : "text-muted-foreground",
                 )}
               >
-                {providerUpdateLabel}
+                {providerUpdateLabel.startsWith("Current ")
+                  ? `${t("Current")} ${providerUpdateLabel.slice(8)}`
+                  : providerUpdateLabel.startsWith("Latest ")
+                    ? `${t("Latest")} ${providerUpdateLabel.slice(7)}`
+                    : t(providerUpdateLabel)}
               </span>
             ) : null}
             <DisclosureChevron
@@ -740,19 +747,23 @@ function ProviderToolRow(props: {
                 <div className="text-xs text-muted-foreground">
                   {updateAdvisory.canUpdate && updateAdvisory.updateCommand ? (
                     <>
-                      <span>Command: </span>
+                      <span>{t("Command")}: </span>
                       <code className="font-mono">{updateAdvisory.updateCommand}</code>
                     </>
                   ) : (
-                    "A newer version is available, but Synara could not identify a safe one-click update command for this installation."
+                    t(
+                      "A newer version is available, but Synara could not identify a safe one-click update command for this installation.",
+                    )
                   )}
                 </div>
               ) : null}
               {showSelfManagedUpdate && props.providerStatus ? (
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0 text-xs text-muted-foreground">
-                    {title} manages its own releases, so Synara cannot tell whether a newer version
-                    exists. Run the update to be sure.
+                    {title}{" "}
+                    {t(
+                      "manages its own releases, so Synara cannot tell whether a newer version exists. Run the update to be sure.",
+                    )}
                   </div>
                   <ProviderUpdateAction
                     providerStatus={props.providerStatus}
@@ -792,6 +803,7 @@ export function ProvidersSettingsPanel({
   active,
   resetEpoch,
 }: ProvidersSettingsPanelProps) {
+  const { t, tError } = useUiLanguage();
   const queryClient = useQueryClient();
   const serverConfigQuery = useQuery(serverConfigQueryOptions());
   const localProviderStatuses = useProviderStatusesForLocalConfig();
@@ -914,27 +926,31 @@ export function ProvidersSettingsPanel({
           const failureMessage = providerUpdateFailureMessage(refreshedProvider);
           if (failureMessage) {
             const manualCommand = refreshedProvider?.versionAdvisory?.updateCommand?.trim();
+            const localizedFailureMessage = tError(
+              failureMessage,
+              "The provider update did not complete.",
+            );
             toastManager.add({
               type: "error",
-              title: `Could not update ${PROVIDER_DISPLAY_NAMES[provider]}`,
+              title: `${t("Could not update")} ${PROVIDER_DISPLAY_NAMES[provider]}`,
               description: manualCommand
-                ? `${failureMessage}\n\nCopy the command below to update manually in a terminal.`
-                : failureMessage,
+                ? `${localizedFailureMessage}\n\n${t("Copy the command below to update manually in a terminal.")}`
+                : localizedFailureMessage,
               ...(manualCommand ? { data: { copyText: manualCommand } } : {}),
             });
             return;
           }
           toastManager.add({
             type: "success",
-            title: `${PROVIDER_DISPLAY_NAMES[provider]} update finished`,
-            description: "New sessions will use the refreshed provider.",
+            title: `${PROVIDER_DISPLAY_NAMES[provider]} ${t("update finished")}`,
+            description: t("New sessions will use the refreshed provider."),
           });
         })
         .catch((error: unknown) => {
           toastManager.add({
             type: "error",
-            title: `Could not update ${PROVIDER_DISPLAY_NAMES[provider]}`,
-            description: error instanceof Error ? error.message : "The provider update failed.",
+            title: `${t("Could not update")} ${PROVIDER_DISPLAY_NAMES[provider]}`,
+            description: tError(error, "The provider update failed."),
           });
         })
         .finally(async () => {
@@ -948,21 +964,23 @@ export function ProvidersSettingsPanel({
           });
         });
     },
-    [queryClient, updatingProviders],
+    [queryClient, t, tError, updatingProviders],
   );
 
   if (!active) return null;
 
   return (
     <div className="space-y-6">
-      <SettingsSection title="Provider activity">
+      <SettingsSection title={t("Provider activity")}>
         <SettingsRow
-          title="Enabled providers"
-          description="Disabling a provider stops its background health checks, model and command discovery, updates, and new turns. Existing threads stay visible and continue after you re-enable it; a turn already running is not interrupted."
+          title={t("Enabled providers")}
+          description={t(
+            "Disabling a provider stops its background health checks, model and command discovery, updates, and new turns. Existing threads stay visible and continue after you re-enable it; a turn already running is not interrupted.",
+          )}
           status={
             providerEnablementMutationPending
-              ? "Saving provider activity"
-              : `${enabledProviderCount} of ${PROVIDER_VISIBILITY_OPTIONS.length} enabled`
+              ? t("Saving provider activity")
+              : `${enabledProviderCount}/${PROVIDER_VISIBILITY_OPTIONS.length} ${t("enabled")}`
           }
           resetAction={
             disabledProviderSet.size > 0 && !providerEnablementMutationPending ? (
@@ -991,7 +1009,9 @@ export function ProvidersSettingsPanel({
                       <span>{option.title}</span>
                     </span>
                   }
-                  description={enabled ? "Background activity allowed" : "Disabled on the server"}
+                  description={
+                    enabled ? t("Background activity allowed") : t("Disabled on the server")
+                  }
                   actions={
                     <Switch
                       checked={enabled}
@@ -1005,7 +1025,7 @@ export function ProvidersSettingsPanel({
                           ),
                         )
                       }
-                      aria-label={`${enabled ? "Disable" : "Enable"} ${option.title}`}
+                      aria-label={`${enabled ? t("Disable") : t("Enable")} ${option.title}`}
                     />
                   }
                 />
@@ -1015,20 +1035,22 @@ export function ProvidersSettingsPanel({
         </SettingsRow>
       </SettingsSection>
 
-      <SettingsSection title="Provider picker">
+      <SettingsSection title={t("Provider picker")}>
         <SettingsRow
-          title="Available CLIs"
-          description="Show or hide installed providers in the picker and drag them into your preferred order. Hiding a provider here does not disable its server activity."
+          title={t("Available CLIs")}
+          description={t(
+            "Show or hide installed providers in the picker and drag them into your preferred order. Hiding a provider here does not disable its server activity.",
+          )}
           status={
             serverConfigQuery.isPending || hasPendingProviderStatuses
-              ? "Checking installed CLIs"
+              ? t("Checking installed CLIs")
               : availableProviderCount === 0
-                ? "No CLIs detected"
+                ? t("No CLIs detected")
                 : visibleAvailableProviderCount < availableProviderCount
-                  ? `${visibleAvailableProviderCount} of ${availableProviderCount} installed shown`
+                  ? `${visibleAvailableProviderCount}/${availableProviderCount} ${t("installed shown")}`
                   : isProviderOrderDirty
-                    ? `${availableProviderCount} installed · custom order`
-                    : `${availableProviderCount} installed`
+                    ? `${availableProviderCount} ${t("installed")} · ${t("custom order")}`
+                    : `${availableProviderCount} ${t("installed")}`
           }
           resetAction={
             hiddenProviderCount > 0 || isProviderOrderDirty ? (
@@ -1080,10 +1102,12 @@ export function ProvidersSettingsPanel({
       </SettingsSection>
 
       <div id={SETTINGS_TARGETS.providerUpdates}>
-        <SettingsSection title="Updates">
+        <SettingsSection title={t("Updates")}>
           <SettingsRow
-            title="Automatic CLI update checks"
-            description="Check Codex, Claude, and other provider CLIs for newer versions in the background."
+            title={t("Automatic CLI update checks")}
+            description={t(
+              "Check Codex, Claude, and other provider CLIs for newer versions in the background.",
+            )}
             resetAction={
               settings.enableProviderUpdateChecks !== defaults.enableProviderUpdateChecks ? (
                 <SettingResetButton
@@ -1102,20 +1126,20 @@ export function ProvidersSettingsPanel({
                 onCheckedChange={(checked) =>
                   updateSettings({ enableProviderUpdateChecks: Boolean(checked) })
                 }
-                aria-label="Automatic CLI update checks"
+                aria-label={t("Automatic CLI update checks")}
               />
             }
           />
 
           <SettingsRow
-            title="Provider updates"
-            description="Review installed provider tools that Synara can safely update."
+            title={t("Provider updates")}
+            description={t("Review installed provider tools that Synara can safely update.")}
             status={
               !settings.enableProviderUpdateChecks
-                ? "Automatic checks off"
+                ? t("Automatic checks off")
                 : outdatedProviderCount > 0
-                  ? `${outdatedProviderCount} ${pluralize(outdatedProviderCount, "update")} available`
-                  : "No provider updates detected"
+                  ? `${outdatedProviderCount} ${t("updates available")}`
+                  : t("No provider updates detected")
             }
           >
             {settings.enableProviderUpdateChecks && outdatedProviderStatuses.length > 0 ? (
@@ -1131,11 +1155,18 @@ export function ProvidersSettingsPanel({
                     isProviderUpdateActive(providerStatus) ||
                     updatingProviders.has(providerStatus.provider);
                   const updateLabel = providerUpdateStatusLabel(providerStatus);
+                  const translatedUpdateLabel = updateLabel
+                    ? updateLabel.startsWith("Current ")
+                      ? `${t("Current")} ${updateLabel.slice(8)}`
+                      : updateLabel.startsWith("Latest ")
+                        ? `${t("Latest")} ${updateLabel.slice(7)}`
+                        : t(updateLabel)
+                    : null;
                   return (
                     <SettingsListRow
                       key={providerStatus.provider}
                       title={PROVIDER_DISPLAY_NAMES[providerStatus.provider]}
-                      description={updateLabel || undefined}
+                      description={translatedUpdateLabel || undefined}
                       actions={
                         providerStatus.versionAdvisory?.canUpdate ? (
                           <ProviderUpdateAction
@@ -1145,7 +1176,9 @@ export function ProvidersSettingsPanel({
                             onUpdate={(provider) => void runProviderUpdate(provider)}
                           />
                         ) : (
-                          <span className="text-[11px] text-muted-foreground">Manual update</span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {t("Manual update")}
+                          </span>
                         )
                       }
                     />
@@ -1158,16 +1191,18 @@ export function ProvidersSettingsPanel({
       </div>
 
       <div>
-        <SettingsSection title="Provider tools">
+        <SettingsSection title={t("Provider tools")}>
           <SettingsRow
-            title="Installed CLIs"
-            description="Review provider versions and update tools. Open a row only when you need binary overrides."
+            title={t("Installed CLIs")}
+            description={t(
+              "Review provider versions and update tools. Open a row only when you need binary overrides.",
+            )}
             status={
               !settings.enableProviderUpdateChecks
-                ? "Automatic checks off"
+                ? t("Automatic checks off")
                 : outdatedProviderCount > 0
-                  ? `${outdatedProviderCount} ${pluralize(outdatedProviderCount, "update")} available`
-                  : "No provider updates detected"
+                  ? `${outdatedProviderCount} ${t("updates available")}`
+                  : t("No provider updates detected")
             }
             resetAction={
               installSettingsDirty ? (

@@ -15,17 +15,29 @@ import {
 } from "../projectScripts";
 import { useStore } from "../store";
 import type { Project, ProjectScript, Thread } from "../types";
+import { useUiLanguage } from "../uiLanguage";
 
 /** Success toast for one handoff. Module scope: its ternaries live outside the caller's `try`. */
 function reportThreadHandoffSuccess(
   targetMode: "local" | "worktree",
   result: { conflictsDetected: boolean; message?: string | null },
+  translate: (text: string) => string,
+  translateMessage: (message: unknown, fallback?: string) => string,
 ): void {
   toastManager.add({
     type: result.conflictsDetected ? "warning" : "success",
     title:
-      targetMode === "worktree" ? "Thread handed off to worktree" : "Thread handed off to local",
-    ...(result.message ? { description: result.message } : {}),
+      targetMode === "worktree"
+        ? translate("Thread handed off to worktree")
+        : translate("Thread handed off to local"),
+    ...(result.message
+      ? {
+          description: translateMessage(
+            result.message,
+            result.conflictsDetected ? "Handoff completed with a warning." : "Handoff completed.",
+          ),
+        }
+      : {}),
   });
 }
 
@@ -45,6 +57,7 @@ export function useThreadWorkspaceHandoff(input: {
     options?: ProjectScriptRunOptions,
   ) => Promise<ProjectScriptRunResult | null>;
 }) {
+  const { t, tError } = useUiLanguage();
   const queryClient = useQueryClient();
   const setThreadWorkspace = useStore((store) => store.setThreadWorkspace);
   const handoffThreadMutation = useMutation(
@@ -110,22 +123,22 @@ export function useThreadWorkspaceHandoff(input: {
           }
         }
 
-        reportThreadHandoffSuccess(targetMode, result);
+        reportThreadHandoffSuccess(targetMode, result, t, tError);
         return true;
       } catch (error) {
         toastManager.add({
           type: "error",
-          title:
+          title: t(
             targetMode === "worktree"
               ? "Could not hand off to worktree"
               : "Could not hand off to local",
-          description:
-            error instanceof Error ? error.message : "An error occurred during the handoff.",
+          ),
+          description: tError(error, "An error occurred during the handoff."),
         });
         return false;
       }
     },
-    [handoffThreadMutation, input, setThreadWorkspace],
+    [handoffThreadMutation, input, setThreadWorkspace, t, tError],
   );
 
   const onHandoffToWorktree = useCallback(() => {

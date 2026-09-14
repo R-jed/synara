@@ -8,7 +8,7 @@ import { PROVIDER_DESCRIPTORS } from "@synara/shared/providerMetadata";
 import { sameAppSnapShortcut } from "@synara/shared/appSnapShortcut";
 import { SafariAccessSetupButton } from "../components/SafariAccessOnboarding";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   type AppSettings,
@@ -24,7 +24,6 @@ import {
   normalizeTerminalFontFamily,
   normalizeTerminalFontSizePx,
   isGitTextGenerationSettingsDirty,
-  TERMINAL_FONT_FAMILY_SUGGESTIONS,
   useAppSettings,
 } from "../appSettings";
 import { APP_VERSION } from "../branding";
@@ -61,7 +60,8 @@ import {
 } from "../components/settings/SettingsPanelPrimitives";
 import { SkillsSettingsPanel } from "../components/settings/SkillsSettingsPanel";
 import { ThemeModePicker } from "../components/settings/ThemeModePicker";
-import { ThemePackEditor } from "../components/ThemePackEditor";
+import { LocalFontControl } from "../components/settings/LocalFontControl";
+import { ThemeLivePreview, ThemePackEditor } from "../components/ThemePackEditor";
 import {
   CHAT_CONTENT_CARD_CLASS_NAME,
   CHAT_MAIN_VIEWPORT_SHELL_CLASS_NAME,
@@ -70,14 +70,6 @@ import {
   CHAT_SURFACE_HEADER_HEIGHT_CLASS,
   CHAT_SURFACE_HEADER_PADDING_X_CLASS,
 } from "../components/chat/chatHeaderControls";
-import {
-  Autocomplete,
-  AutocompleteEmpty,
-  AutocompleteInput,
-  AutocompleteItem,
-  AutocompleteList,
-  AutocompletePopup,
-} from "../components/ui/autocomplete";
 import { Button } from "../components/ui/button";
 import { useOnboardingDialogStore } from "../onboarding/onboardingDialogStore";
 import { Input } from "../components/ui/input";
@@ -88,11 +80,14 @@ import { RouteInsetSurface } from "../components/RouteInsetSurface";
 import { SidebarHeaderNavigationControls } from "../components/SidebarHeaderNavigationControls";
 import { useDesktopCustomTitleBarState } from "../hooks/useDesktopCustomTitleBar";
 import { useDesktopTopBarTrafficLightGutterClassName } from "../hooks/useDesktopTopBarGutter";
+import { useReducedMotion } from "../hooks/useReducedMotion";
 import { useTheme } from "../hooks/useTheme";
+import { useUiLanguage } from "../uiLanguage";
 import { isUiDensity } from "../lib/appDensity";
 import { isChatWidthMode, type ChatWidthMode } from "../lib/chatWidth";
 import { isElectron } from "../env";
 import { ResetIcon } from "../lib/icons";
+import { queryLocalFontFamilies, type LocalFontFamily } from "../lib/localFonts";
 import {
   cn,
   getNavigatorPlatform,
@@ -164,6 +159,12 @@ const TIMESTAMP_FORMAT_LABELS = {
   "24-hour": "24-hour",
 } as const;
 
+const UI_LANGUAGE_LABELS = {
+  system: "Follow System",
+  en: "English",
+  "zh-CN": "Simplified Chinese",
+} as const;
+
 const SIDEBAR_PROJECT_SORT_ORDER_LABELS = {
   updated_at: "Recently active",
   created_at: "Recently added",
@@ -197,25 +198,22 @@ type BooleanSettingKey = {
 // ── Route screen ───────────────────────────────────────────────────────────
 
 function SettingsRouteView() {
+  const { t, tError } = useUiLanguage();
   const routeSearch = useSearch({ strict: false }) as Record<string, unknown>;
   const activeSection = normalizeSettingsSection(routeSearch.section);
   const settingsTarget = typeof routeSearch.target === "string" ? routeSearch.target : null;
   const activeSectionItem = SETTINGS_NAV_ITEMS.find((item) => item.id === activeSection)!;
 
-  const {
-    isDefaultActiveTheme,
-    resetAllThemes,
-    resolvedTheme,
-    theme,
-    setTheme,
-    systemUiFont,
-    setSystemUiFont,
-  } = useTheme();
+  const { isDefaultThemePack, resetAllThemes, resolvedTheme, theme, setTheme } = useTheme();
   const { settings, defaults, updateSettings, updateSettingsAndWait, resetSettings } =
     useAppSettings();
+  const reduceMotion = useReducedMotion();
   const desktopTopBarTrafficLightGutterClassName = useDesktopTopBarTrafficLightGutterClassName();
   const [releaseHistoryOpen, setReleaseHistoryOpen] = useState(false);
   const [resetEpoch, setResetEpoch] = useState(0);
+  const [terminalFontFamilies, setTerminalFontFamilies] =
+    useState<ReadonlyArray<LocalFontFamily> | null>(null);
+  const [terminalFontsLoading, setTerminalFontsLoading] = useState(false);
   const platform = getNavigatorPlatform();
   const shouldShowFontSmoothing = isMacPlatform(platform);
   const supportsCustomTitleBarSetting =
@@ -232,11 +230,11 @@ function SettingsRouteView() {
   function showCustomTitleBarRestartToast(): void {
     toastManager.add({
       type: "warning",
-      title: "Restart to apply title bar",
-      description: "The window frame updates the next time Synara launches.",
+      title: t("Restart to apply title bar"),
+      description: t("The window frame updates the next time Synara launches."),
       actionProps: {
-        "aria-label": "Restart Synara",
-        children: "Restart",
+        "aria-label": t("Restart Synara"),
+        children: t("Restart"),
         onClick: () => {
           void window.desktopBridge?.customTitleBar?.relaunch();
         },
@@ -249,17 +247,17 @@ function SettingsRouteView() {
   ): Promise<{ readonly restartRequired: boolean } | null> {
     try {
       const bridge = window.desktopBridge?.customTitleBar;
-      if (!bridge) throw new Error("Desktop title bar bridge is unavailable.");
+      if (!bridge) throw new Error(t("Desktop title bar bridge is unavailable."));
       const state = await bridge.setPreference(enabled);
       if (!state.supported || state.preference !== enabled) {
-        throw new Error("Desktop title bar preference was not persisted.");
+        throw new Error(t("Desktop title bar preference was not persisted."));
       }
       return state;
     } catch (error) {
       toastManager.add({
         type: "error",
-        title: "Could not update title bar",
-        description: error instanceof Error ? error.message : String(error),
+        title: t("Could not update title bar"),
+        description: tError(error, "Could not update title bar"),
       });
       return null;
     }
@@ -276,13 +274,18 @@ function SettingsRouteView() {
     if (state.restartRequired) showCustomTitleBarRestartToast();
   }
 
-  const visibleTerminalFontFamilySuggestions = useMemo(() => {
-    const query = settings.terminalFontFamily.trim().toLowerCase();
-    if (!query) return TERMINAL_FONT_FAMILY_SUGGESTIONS;
-    return TERMINAL_FONT_FAMILY_SUGGESTIONS.filter((suggestion) =>
-      suggestion.toLowerCase().includes(query),
-    );
-  }, [settings.terminalFontFamily]);
+  const requestTerminalFonts = useCallback(() => {
+    if (terminalFontsLoading || terminalFontFamilies !== null) return;
+    setTerminalFontsLoading(true);
+    void queryLocalFontFamilies()
+      .then(setTerminalFontFamilies, () => setTerminalFontFamilies(null))
+      .finally(() => setTerminalFontsLoading(false));
+  }, [terminalFontFamilies, terminalFontsLoading]);
+
+  useEffect(() => {
+    if (activeSection !== "appearance") return;
+    requestTerminalFonts();
+  }, [activeSection, requestTerminalFonts]);
 
   const isGitTextGenerationModelDirty = isGitTextGenerationSettingsDirty(settings, defaults);
   const isInstallSettingsDirty = isProviderInstallSettingsDirty(settings, defaults);
@@ -300,14 +303,16 @@ function SettingsRouteView() {
     const frame = window.requestAnimationFrame(() => {
       document
         .getElementById(settingsTarget)
-        ?.scrollIntoView({ block: "start", behavior: "smooth" });
+        ?.scrollIntoView({ block: "start", behavior: reduceMotion ? "auto" : "smooth" });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [activeSection, settingsTarget]);
+  }, [activeSection, reduceMotion, settingsTarget]);
 
   const changedSettingLabels = [
     ...(theme !== "system" ? ["Theme"] : []),
-    ...(!isDefaultActiveTheme ? [`${resolvedTheme === "dark" ? "Dark" : "Light"} theme pack`] : []),
+    ...(settings.uiLanguage !== defaults.uiLanguage ? ["Language"] : []),
+    ...(!isDefaultThemePack("light") ? ["Light theme pack"] : []),
+    ...(!isDefaultThemePack("dark") ? ["Dark theme pack"] : []),
     ...(settings.defaultProvider !== defaults.defaultProvider ? ["Default provider"] : []),
     ...(settings.defaultThreadEnvMode !== defaults.defaultThreadEnvMode ? ["New thread mode"] : []),
     ...(settings.sidebarProjectSortOrder !== defaults.sidebarProjectSortOrder
@@ -325,9 +330,15 @@ function SettingsRouteView() {
     ...(settings.chatWidth !== defaults.chatWidth ? ["Chat width"] : []),
     ...(settings.desktopAppIcon !== defaults.desktopAppIcon ? ["App icon"] : []),
     ...(customTitleBarPreferenceDirty ? ["Custom title bar"] : []),
-    ...(settings.chatFontSizePx !== defaults.chatFontSizePx ? ["Base font size"] : []),
+    ...(settings.reduceMotion !== defaults.reduceMotion ? ["Reduce motion"] : []),
+    ...(settings.chatFontSizePx !== defaults.chatFontSizePx
+      ? ["Interface and chat font size"]
+      : []),
     ...(settings.terminalFontSizePx !== defaults.terminalFontSizePx ? ["Terminal font size"] : []),
-    ...(settings.terminalFontFamily !== defaults.terminalFontFamily ? ["Terminal font"] : []),
+    ...(settings.terminalFontFamily !== defaults.terminalFontFamily ||
+    settings.terminalFontFace?.postscriptName !== defaults.terminalFontFace?.postscriptName
+      ? ["Terminal font"]
+      : []),
     ...(shouldShowFontSmoothing &&
     settings.enableNativeFontSmoothing !== defaults.enableNativeFontSmoothing
       ? ["Font smoothing"]
@@ -391,9 +402,10 @@ function SettingsRouteView() {
 
     const api = readNativeApi();
     const confirmed = await (api ?? ensureNativeApi()).dialogs.confirm(
-      ["Restore default settings?", `This will reset: ${changedSettingLabels.join(", ")}.`].join(
-        "\n",
-      ),
+      [
+        t("Restore default settings?"),
+        `${t("This will reset:")} ${changedSettingLabels.map(t).join(", ")}.`,
+      ].join("\n"),
     );
     if (!confirmed) return;
 
@@ -416,16 +428,18 @@ function SettingsRouteView() {
   const renderBooleanSettingRow = (config: {
     settingKey: BooleanSettingKey;
     title: string;
+    anchorTitle?: string;
     description: string;
     resetLabel: string;
     ariaLabel: string;
   }) => {
-    const { settingKey, title, description, resetLabel, ariaLabel } = config;
+    const { settingKey, title, anchorTitle, description, resetLabel, ariaLabel } = config;
     const isChanged = settings[settingKey] !== defaults[settingKey];
     return (
       <SettingsRow
-        title={title}
-        description={description}
+        title={t(title)}
+        anchorTitle={anchorTitle ?? title}
+        description={t(description)}
         resetAction={
           isChanged ? (
             <SettingResetButton
@@ -442,7 +456,7 @@ function SettingsRouteView() {
             onCheckedChange={(checked) =>
               updateSettings({ [settingKey]: Boolean(checked) } as Partial<AppSettings>)
             }
-            aria-label={ariaLabel}
+            aria-label={t(ariaLabel)}
           />
         }
       />
@@ -452,10 +466,13 @@ function SettingsRouteView() {
   const renderGeneralPanel = () => (
     <div className="space-y-6">
       <SafariAccessSetupButton />
-      <SettingsSection title="Core defaults">
+      <SettingsSection title={t("Core defaults")}>
         <SettingsRow
-          title="Default provider"
-          description="Provider used for new chats until you pick a model. New chats then reuse your most recent model and options."
+          title={t("Default provider")}
+          anchorTitle="Default provider"
+          description={t(
+            "Provider used for new chats until you pick a model. New chats then reuse your most recent model and options.",
+          )}
           resetAction={
             settings.defaultProvider !== defaults.defaultProvider ? (
               <SettingResetButton
@@ -471,7 +488,7 @@ function SettingsRouteView() {
                 if (!isProviderSelectOption(value)) return;
                 updateSettings({ defaultProvider: value });
               }}
-              ariaLabel="Default provider"
+              ariaLabel={t("Default provider")}
               valueContent={
                 <ProviderOptionLabel
                   provider={settings.defaultProvider}
@@ -492,8 +509,9 @@ function SettingsRouteView() {
         />
 
         <SettingsRow
-          title="New threads"
-          description="Pick the default workspace mode for newly created draft threads."
+          title={t("New threads")}
+          anchorTitle="New threads"
+          description={t("Pick the default workspace mode for newly created draft threads.")}
           resetAction={
             settings.defaultThreadEnvMode !== defaults.defaultThreadEnvMode ? (
               <SettingResetButton
@@ -515,37 +533,43 @@ function SettingsRouteView() {
                   defaultThreadEnvMode: value,
                 });
               }}
-              ariaLabel="Default thread mode"
-              valueContent={settings.defaultThreadEnvMode === "worktree" ? "New worktree" : "Local"}
+              ariaLabel={t("Default thread mode")}
+              valueContent={
+                settings.defaultThreadEnvMode === "worktree" ? t("New worktree") : t("Local")
+              }
             >
               <SelectItem hideIndicator value="local">
-                Local
+                {t("Local")}
               </SelectItem>
               <SelectItem hideIndicator value="worktree">
-                New worktree
+                {t("New worktree")}
               </SelectItem>
             </SettingsSelectControl>
           }
         />
 
         <SettingsRow
-          title="Welcome tour"
-          description="Replay the first-run setup: feature tour, provider selection, appearance, and first project."
+          title={t("Welcome tour")}
+          anchorTitle="Welcome tour"
+          description={t(
+            "Replay the first-run setup: feature tour, provider selection, appearance, and first project.",
+          )}
           control={
             <Button
               variant="outline"
               onClick={() => useOnboardingDialogStore.getState().openDialog()}
             >
-              Open welcome tour
+              {t("Open welcome tour")}
             </Button>
           }
         />
       </SettingsSection>
 
-      <SettingsSection title="Sidebar organization">
+      <SettingsSection title={t("Sidebar organization")}>
         <SettingsRow
-          title="Project order"
-          description="Controls how projects are arranged in the main sidebar."
+          title={t("Project order")}
+          anchorTitle="Project order"
+          description={t("Controls how projects are arranged in the main sidebar.")}
           resetAction={
             settings.sidebarProjectSortOrder !== defaults.sidebarProjectSortOrder ? (
               <SettingResetButton
@@ -567,25 +591,28 @@ function SettingsRouteView() {
                 }
                 updateSettings({ sidebarProjectSortOrder: value });
               }}
-              ariaLabel="Project sort order"
-              valueContent={SIDEBAR_PROJECT_SORT_ORDER_LABELS[settings.sidebarProjectSortOrder]}
+              ariaLabel={t("Project sort order")}
+              valueContent={t(SIDEBAR_PROJECT_SORT_ORDER_LABELS[settings.sidebarProjectSortOrder])}
             >
               <SelectItem hideIndicator value="updated_at">
-                {SIDEBAR_PROJECT_SORT_ORDER_LABELS.updated_at}
+                {t(SIDEBAR_PROJECT_SORT_ORDER_LABELS.updated_at)}
               </SelectItem>
               <SelectItem hideIndicator value="created_at">
-                {SIDEBAR_PROJECT_SORT_ORDER_LABELS.created_at}
+                {t(SIDEBAR_PROJECT_SORT_ORDER_LABELS.created_at)}
               </SelectItem>
               <SelectItem hideIndicator value="manual">
-                {SIDEBAR_PROJECT_SORT_ORDER_LABELS.manual}
+                {t(SIDEBAR_PROJECT_SORT_ORDER_LABELS.manual)}
               </SelectItem>
             </SettingsSelectControl>
           }
         />
 
         <SettingsRow
-          title="Thread order"
-          description="Controls how threads are arranged inside each project in the main sidebar."
+          title={t("Thread order")}
+          anchorTitle="Thread order"
+          description={t(
+            "Controls how threads are arranged inside each project in the main sidebar.",
+          )}
           resetAction={
             settings.sidebarThreadSortOrder !== defaults.sidebarThreadSortOrder ? (
               <SettingResetButton
@@ -607,21 +634,21 @@ function SettingsRouteView() {
                 }
                 updateSettings({ sidebarThreadSortOrder: value });
               }}
-              ariaLabel="Thread sort order"
-              valueContent={SIDEBAR_THREAD_SORT_ORDER_LABELS[settings.sidebarThreadSortOrder]}
+              ariaLabel={t("Thread sort order")}
+              valueContent={t(SIDEBAR_THREAD_SORT_ORDER_LABELS[settings.sidebarThreadSortOrder])}
             >
               <SelectItem hideIndicator value="updated_at">
-                {SIDEBAR_THREAD_SORT_ORDER_LABELS.updated_at}
+                {t(SIDEBAR_THREAD_SORT_ORDER_LABELS.updated_at)}
               </SelectItem>
               <SelectItem hideIndicator value="created_at">
-                {SIDEBAR_THREAD_SORT_ORDER_LABELS.created_at}
+                {t(SIDEBAR_THREAD_SORT_ORDER_LABELS.created_at)}
               </SelectItem>
             </SettingsSelectControl>
           }
         />
       </SettingsSection>
 
-      <SettingsSection title="Sidebar sections">
+      <SettingsSection title={t("Sidebar sections")}>
         {renderBooleanSettingRow({
           settingKey: "showChatsSection",
           title: "Chats",
@@ -650,7 +677,7 @@ function SettingsRouteView() {
       </SettingsSection>
 
       <div id={SETTINGS_TARGETS.environmentPanel} className="space-y-6">
-        <SettingsSection title="Environment panel">
+        <SettingsSection title={t("Environment panel")}>
           {renderBooleanSettingRow({
             settingKey: "environmentPanelDefaultOpen",
             title: "Open by default",
@@ -661,7 +688,7 @@ function SettingsRouteView() {
           })}
         </SettingsSection>
 
-        <SettingsSection title="Code and status">
+        <SettingsSection title={t("Code and status")}>
           {renderBooleanSettingRow({
             settingKey: "showEnvironmentUsage",
             title: "Usage",
@@ -698,7 +725,7 @@ function SettingsRouteView() {
           })}
         </SettingsSection>
 
-        <SettingsSection title="Context and notes">
+        <SettingsSection title={t("Context and notes")}>
           {renderBooleanSettingRow({
             settingKey: "showEnvironmentRecap",
             title: "Recap",
@@ -738,7 +765,7 @@ function SettingsRouteView() {
   const renderAppearancePanel = () => (
     <div className="space-y-6">
       <SettingsSectionShell
-        title="Theme"
+        title={t("Theme")}
         action={
           theme !== "system" ? (
             <SettingResetButton label="theme" onClick={() => setTheme("system")} />
@@ -750,29 +777,25 @@ function SettingsRouteView() {
             a card reads as chrome around chrome. The anchor keeps search deep-links
             (`?target=setting-theme`) working without the SettingsRow. */}
         <div id={settingRowAnchorId("Theme")} className="scroll-mt-24 pb-1.5">
-          <ThemeModePicker value={theme} onValueChange={setTheme} ariaLabel="Theme preference" />
+          <ThemeModePicker
+            value={theme}
+            onValueChange={setTheme}
+            ariaLabel={t("Theme preference")}
+          />
         </div>
 
         <div className="space-y-3">
-          {(resolvedTheme === "dark"
-            ? (["dark", "light"] as const)
-            : (["light", "dark"] as const)
-          ).map((variant) => (
-            <ThemePackEditor
-              key={variant}
-              variant={variant}
-              isActive={resolvedTheme === variant}
-              mode={theme}
-            />
-          ))}
+          <ThemeLivePreview />
+          <ThemePackEditor key={resolvedTheme} variant={resolvedTheme} isActive mode={theme} />
         </div>
       </SettingsSectionShell>
 
-      {isElectron ? (
-        <SettingsSection title="App">
+      <SettingsSection title={t("Preferences")}>
+        {isElectron ? (
           <SettingsRow
-            title="App icon"
-            description="Choose the icon Synara uses in the dock or taskbar."
+            title={t("App icon")}
+            anchorTitle="App icon"
+            description={t("Choose the icon Synara uses in the dock or taskbar.")}
             resetAction={
               settings.desktopAppIcon !== defaults.desktopAppIcon ? (
                 <SettingResetButton
@@ -794,138 +817,72 @@ function SettingsRouteView() {
               />
             }
           />
-          {supportsCustomTitleBarSetting ? (
-            <SettingsRow
-              title="Use custom title bar"
-              description={
-                customTitleBarRestartRequired
-                  ? "Restart Synara to apply. Some Linux window managers work better with the system title bar."
-                  : "Replace the system title bar with Synara's frameless chrome and window controls. Restart required to apply."
-              }
-              status={customTitleBarRestartRequired ? "Restart required" : undefined}
-              resetAction={
-                settings.useCustomTitleBar !== defaults.useCustomTitleBar ? (
-                  <SettingResetButton
-                    label="custom title bar"
+        ) : null}
+        {supportsCustomTitleBarSetting ? (
+          <SettingsRow
+            title={t("Use custom title bar")}
+            anchorTitle="Use custom title bar"
+            description={
+              customTitleBarRestartRequired
+                ? t(
+                    "Restart Synara to apply. Some Linux window managers work better with the system title bar.",
+                  )
+                : t(
+                    "Replace the system title bar with Synara's frameless chrome and window controls. Restart required to apply.",
+                  )
+            }
+            status={customTitleBarRestartRequired ? t("Restart required") : undefined}
+            resetAction={
+              settings.useCustomTitleBar !== defaults.useCustomTitleBar ? (
+                <SettingResetButton
+                  label="custom title bar"
+                  onClick={() => {
+                    void applyCustomTitleBarPreference(defaults.useCustomTitleBar);
+                  }}
+                />
+              ) : null
+            }
+            control={
+              <div className="flex items-center gap-2">
+                {customTitleBarRestartRequired ? (
+                  <Button
+                    type="button"
+                    size="xs"
+                    variant="outline"
                     onClick={() => {
-                      void applyCustomTitleBarPreference(defaults.useCustomTitleBar);
+                      void window.desktopBridge?.customTitleBar?.relaunch();
                     }}
-                  />
-                ) : null
-              }
-              control={
-                <div className="flex items-center gap-2">
-                  {customTitleBarRestartRequired ? (
-                    <Button
-                      type="button"
-                      size="xs"
-                      variant="outline"
-                      onClick={() => {
-                        void window.desktopBridge?.customTitleBar?.relaunch();
-                      }}
-                    >
-                      Restart
-                    </Button>
-                  ) : null}
-                  <Switch
-                    checked={settings.useCustomTitleBar}
-                    onCheckedChange={(checked) => {
-                      void applyCustomTitleBarPreference(Boolean(checked));
-                    }}
-                    aria-label="Use custom title bar"
-                  />
-                </div>
-              }
-            />
-          ) : null}
-        </SettingsSection>
-      ) : null}
-
-      <SettingsSection title="Typography and spacing">
+                  >
+                    {t("Restart")}
+                  </Button>
+                ) : null}
+                <Switch
+                  checked={settings.useCustomTitleBar}
+                  onCheckedChange={(checked) => {
+                    void applyCustomTitleBarPreference(Boolean(checked));
+                  }}
+                  aria-label={t("Use custom title bar")}
+                />
+              </div>
+            }
+          />
+        ) : null}
+        {renderBooleanSettingRow({
+          settingKey: "reduceMotion",
+          title: t("Reduce motion"),
+          anchorTitle: "Reduce motion",
+          description: t("Use fewer animations and transitions throughout Synara."),
+          resetLabel: "reduce motion",
+          ariaLabel: "Reduce motion",
+        })}
         <SettingsRow
-          title="Use system UI font"
-          description="Ignore the theme's custom UI font and render the interface with the native system font (SF Pro on macOS)."
-          resetAction={
-            !systemUiFont ? (
-              <SettingResetButton label="system UI font" onClick={() => setSystemUiFont(true)} />
-            ) : null
-          }
-          control={
-            <Switch
-              checked={systemUiFont}
-              onCheckedChange={(checked) => setSystemUiFont(Boolean(checked))}
-              aria-label="Use system UI font"
-            />
-          }
-        />
-
-        <SettingsRow
-          title="UI density"
-          description="Control spacing in the sidebar, composer, chat gutters, and settings rows without changing font size."
-          resetAction={
-            settings.uiDensity !== defaults.uiDensity ? (
-              <SettingResetButton
-                label="UI density"
-                onClick={() =>
-                  updateSettings({
-                    uiDensity: DEFAULT_UI_DENSITY,
-                  })
-                }
-              />
-            ) : null
-          }
-          control={
-            <SettingsSegmentedControl
-              value={settings.uiDensity}
-              onValueChange={(value) => {
-                if (!isUiDensity(value)) {
-                  return;
-                }
-                updateSettings({ uiDensity: value });
-              }}
-              ariaLabel="UI density"
-              options={UI_DENSITY_OPTIONS}
-            />
-          }
-        />
-
-        <SettingsRow
-          title="Chat width"
-          description="Control how wide the chat column grows. Wide and Full give tables and wide content more room."
-          resetAction={
-            settings.chatWidth !== defaults.chatWidth ? (
-              <SettingResetButton
-                label="chat width"
-                onClick={() =>
-                  updateSettings({
-                    chatWidth: DEFAULT_CHAT_WIDTH,
-                  })
-                }
-              />
-            ) : null
-          }
-          control={
-            <SettingsSegmentedControl
-              value={settings.chatWidth}
-              onValueChange={(value) => {
-                if (!isChatWidthMode(value)) {
-                  return;
-                }
-                updateSettings({ chatWidth: value });
-              }}
-              ariaLabel="Chat width"
-              options={CHAT_WIDTH_OPTIONS}
-            />
-          }
-        />
-
-        <SettingsRow
-          title="Base font size"
-          description="Adjust the app text base in pixels. Chat and UI typography scale proportionally from this value."
+          title={t("Interface and chat font size")}
+          anchorTitle="Interface and chat font size"
+          description={t("Adjust interface and chat text together in pixels.")}
           resetAction={
             settings.chatFontSizePx !== defaults.chatFontSizePx ? (
               <SettingResetButton
-                label="base font size"
+                label="interface and chat font size"
                 onClick={() =>
                   updateSettings({
                     chatFontSizePx: defaults.chatFontSizePx,
@@ -953,16 +910,87 @@ function SettingsRouteView() {
                     chatFontSizePx: normalizeChatFontSizePx(Number(nextValue)),
                   });
                 }}
-                aria-label="Base font size in pixels"
+                aria-label={t("Interface and chat font size in pixels")}
               />
               <span className="text-xs text-muted-foreground">px</span>
             </div>
           }
         />
+      </SettingsSection>
+
+      <SettingsSection title={t("Layout")}>
+        <SettingsRow
+          title={t("UI density")}
+          anchorTitle="UI density"
+          description={t(
+            "Control spacing in the sidebar, composer, chat gutters, and settings rows without changing font size.",
+          )}
+          resetAction={
+            settings.uiDensity !== defaults.uiDensity ? (
+              <SettingResetButton
+                label="UI density"
+                onClick={() =>
+                  updateSettings({
+                    uiDensity: DEFAULT_UI_DENSITY,
+                  })
+                }
+              />
+            ) : null
+          }
+          control={
+            <SettingsSegmentedControl
+              value={settings.uiDensity}
+              onValueChange={(value) => {
+                if (!isUiDensity(value)) {
+                  return;
+                }
+                updateSettings({ uiDensity: value });
+              }}
+              ariaLabel={t("UI density")}
+              options={UI_DENSITY_OPTIONS.map((option) => ({ ...option, label: t(option.label) }))}
+            />
+          }
+        />
 
         <SettingsRow
-          title="Terminal font size"
-          description="Adjust terminal text independently from the app and chat font size."
+          title={t("Chat width")}
+          anchorTitle="Chat width"
+          description={t(
+            "Control how wide the chat column grows. Wide and Full give tables and wide content more room.",
+          )}
+          resetAction={
+            settings.chatWidth !== defaults.chatWidth ? (
+              <SettingResetButton
+                label="chat width"
+                onClick={() =>
+                  updateSettings({
+                    chatWidth: DEFAULT_CHAT_WIDTH,
+                  })
+                }
+              />
+            ) : null
+          }
+          control={
+            <SettingsSegmentedControl
+              value={settings.chatWidth}
+              onValueChange={(value) => {
+                if (!isChatWidthMode(value)) {
+                  return;
+                }
+                updateSettings({ chatWidth: value });
+              }}
+              ariaLabel={t("Chat width")}
+              options={CHAT_WIDTH_OPTIONS.map((option) => ({ ...option, label: t(option.label) }))}
+            />
+          }
+        />
+      </SettingsSection>
+
+      <SettingsSection title={t("Terminal")}>
+        <SettingsRow
+          title={t("Terminal font size")}
+          anchorTitle="Terminal font size"
+          description={t("Adjust terminal text independently from the app and chat font size.")}
           resetAction={
             settings.terminalFontSizePx !== defaults.terminalFontSizePx ? (
               <SettingResetButton
@@ -994,7 +1022,7 @@ function SettingsRouteView() {
                     terminalFontSizePx: normalizeTerminalFontSizePx(Number(nextValue)),
                   });
                 }}
-                aria-label="Terminal font size in pixels"
+                aria-label={t("Terminal font size in pixels")}
               />
               <span className="text-xs text-muted-foreground">px</span>
             </div>
@@ -1002,84 +1030,107 @@ function SettingsRouteView() {
         />
 
         <SettingsRow
-          title="Terminal font"
-          description="Type any monospace font installed on this device (e.g. Fira Code). Leave empty for the default. Fonts that aren't installed fall back to the system monospace."
+          title={t("Terminal font")}
+          anchorTitle="Terminal font"
+          description={t(
+            "Choose an installed font and optional font face for the terminal. Leave it on the default to use JetBrains Mono.",
+          )}
           resetAction={
-            settings.terminalFontFamily !== defaults.terminalFontFamily ? (
+            settings.terminalFontFamily !== defaults.terminalFontFamily ||
+            settings.terminalFontFace?.postscriptName !==
+              defaults.terminalFontFace?.postscriptName ? (
               <SettingResetButton
                 label="terminal font"
                 onClick={() =>
                   updateSettings({
                     terminalFontFamily: defaults.terminalFontFamily,
+                    terminalFontFace: defaults.terminalFontFace,
                   })
                 }
               />
             ) : null
           }
           control={
-            <div className="flex w-full items-center justify-end sm:w-auto">
-              <Autocomplete
-                items={visibleTerminalFontFamilySuggestions}
-                mode="none"
-                openOnInputClick
-                value={settings.terminalFontFamily}
-                onValueChange={(value) => {
-                  updateSettings({
-                    terminalFontFamily: normalizeTerminalFontFamily(value),
-                  });
-                }}
-              >
-                <AutocompleteInput
-                  size="sm"
-                  variant="soft"
-                  showTrigger
-                  showClear={settings.terminalFontFamily.length > 0}
-                  spellCheck={false}
-                  autoComplete="off"
-                  placeholder="Default (JetBrains Mono)"
-                  className="w-full sm:w-56"
-                  aria-label="Terminal font family"
-                />
-                <AutocompletePopup className="w-56 min-w-56 font-system-ui">
-                  <AutocompleteList>
-                    {visibleTerminalFontFamilySuggestions.map((suggestion, index) => (
-                      <AutocompleteItem
-                        key={suggestion}
-                        index={index}
-                        value={suggestion}
-                        className="font-normal text-[var(--color-text-foreground)]"
-                        onClick={() => {
-                          updateSettings({
-                            terminalFontFamily: normalizeTerminalFontFamily(suggestion),
-                          });
-                        }}
-                      >
-                        {suggestion}
-                      </AutocompleteItem>
-                    ))}
-                    <AutocompleteEmpty>No matching suggested fonts.</AutocompleteEmpty>
-                  </AutocompleteList>
-                </AutocompletePopup>
-              </Autocomplete>
-            </div>
+            <LocalFontControl
+              family={settings.terminalFontFamily || null}
+              face={settings.terminalFontFace}
+              families={terminalFontFamilies ?? []}
+              catalogLoaded={terminalFontFamilies !== null}
+              loading={terminalFontsLoading}
+              specialLabel={t("Default (JetBrains Mono)")}
+              specialSelected={!settings.terminalFontFamily}
+              ariaLabel={t("Terminal font family")}
+              mono
+              onRequestFonts={requestTerminalFonts}
+              onSelectSpecial={() =>
+                updateSettings({
+                  terminalFontFamily: defaults.terminalFontFamily,
+                  terminalFontFace: defaults.terminalFontFace,
+                })
+              }
+              onChange={(family, face) =>
+                updateSettings({
+                  terminalFontFamily: normalizeTerminalFontFamily(family),
+                  terminalFontFace: face,
+                })
+              }
+            />
           }
         />
 
         {shouldShowFontSmoothing
           ? renderBooleanSettingRow({
               settingKey: "enableNativeFontSmoothing",
-              title: "Font smoothing",
-              description: "Use macOS-style antialiasing for lighter, crisper text rendering.",
+              title: t("Font smoothing"),
+              anchorTitle: "Font smoothing",
+              description: t("Use macOS-style antialiasing for lighter, crisper text rendering."),
               resetLabel: "font smoothing",
               ariaLabel: "Enable font smoothing",
             })
           : null}
       </SettingsSection>
 
-      <SettingsSection title="Time and reading">
+      <SettingsSection title={t("Language and time")}>
         <SettingsRow
-          title="Time format"
-          description="System default follows your browser or OS clock preference."
+          title={t("Language")}
+          anchorTitle="Language"
+          description={t("Use the system language or choose a language for Synara.")}
+          resetAction={
+            settings.uiLanguage !== defaults.uiLanguage ? (
+              <SettingResetButton
+                label="language"
+                onClick={() => updateSettings({ uiLanguage: defaults.uiLanguage })}
+              />
+            ) : null
+          }
+          control={
+            <SettingsSelectControl
+              value={settings.uiLanguage}
+              onValueChange={(value) => {
+                if (value !== "system" && value !== "en" && value !== "zh-CN") return;
+                updateSettings({ uiLanguage: value });
+              }}
+              ariaLabel={t("Language")}
+              triggerClassName="w-full sm:w-44"
+              valueContent={t(UI_LANGUAGE_LABELS[settings.uiLanguage])}
+            >
+              <SelectItem hideIndicator value="system">
+                {t(UI_LANGUAGE_LABELS.system)}
+              </SelectItem>
+              <SelectItem hideIndicator value="en">
+                {UI_LANGUAGE_LABELS.en}
+              </SelectItem>
+              <SelectItem hideIndicator value="zh-CN">
+                简体中文
+              </SelectItem>
+            </SettingsSelectControl>
+          }
+        />
+
+        <SettingsRow
+          title={t("Time format")}
+          anchorTitle="Time format"
+          description={t("System default follows your browser or OS clock preference.")}
           resetAction={
             settings.timestampFormat !== defaults.timestampFormat ? (
               <SettingResetButton
@@ -1103,12 +1154,12 @@ function SettingsRouteView() {
                   timestampFormat: value,
                 });
               }}
-              ariaLabel="Timestamp format"
+              ariaLabel={t("Timestamp format")}
               triggerClassName="w-full sm:w-40"
-              valueContent={TIMESTAMP_FORMAT_LABELS[settings.timestampFormat]}
+              valueContent={t(TIMESTAMP_FORMAT_LABELS[settings.timestampFormat])}
             >
               <SelectItem hideIndicator value="locale">
-                {TIMESTAMP_FORMAT_LABELS.locale}
+                {t(TIMESTAMP_FORMAT_LABELS.locale)}
               </SelectItem>
               <SelectItem hideIndicator value="12-hour">
                 {TIMESTAMP_FORMAT_LABELS["12-hour"]}
@@ -1125,10 +1176,13 @@ function SettingsRouteView() {
 
   const renderBehaviorPanel = () => (
     <div className="space-y-6">
-      <SettingsSection title="Conversation">
+      <SettingsSection title={t("Conversation")}>
         <SettingsRow
-          title="Follow-up behavior"
-          description="Choose whether messages sent during an active turn wait in the queue or steer the current run. Ctrl/Cmd+Enter uses the opposite behavior for one message."
+          title={t("Follow-up behavior")}
+          anchorTitle="Follow-up behavior"
+          description={t(
+            "Choose whether messages sent during an active turn wait in the queue or steer the current run. Ctrl/Cmd+Enter uses the opposite behavior for one message.",
+          )}
           resetAction={
             settings.followUpBehavior !== defaults.followUpBehavior ? (
               <SettingResetButton
@@ -1145,8 +1199,11 @@ function SettingsRouteView() {
             <SettingsSegmentedControl
               value={settings.followUpBehavior}
               onValueChange={(value) => updateSettings({ followUpBehavior: value })}
-              ariaLabel="Follow-up behavior"
-              options={FOLLOW_UP_BEHAVIOR_OPTIONS}
+              ariaLabel={t("Follow-up behavior")}
+              options={FOLLOW_UP_BEHAVIOR_OPTIONS.map((option) => ({
+                ...option,
+                label: t(option.label),
+              }))}
             />
           }
         />
@@ -1178,7 +1235,7 @@ function SettingsRouteView() {
         })}
       </SettingsSection>
 
-      <SettingsSection title="Review">
+      <SettingsSection title={t("Review")}>
         {renderBooleanSettingRow({
           settingKey: "showPullRequestDiffColors",
           title: "Pull request diff colors",
@@ -1197,7 +1254,7 @@ function SettingsRouteView() {
         })}
       </SettingsSection>
 
-      <SettingsSection title="Safety confirmations">
+      <SettingsSection title={t("Safety confirmations")}>
         {renderBooleanSettingRow({
           settingKey: "confirmThreadDelete",
           title: "Delete confirmation",
@@ -1289,10 +1346,10 @@ function SettingsRouteView() {
                 <div className="mb-8 flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <h1 className="text-xl font-medium tracking-tight text-foreground">
-                      {activeSectionItem.label}
+                      {t(activeSectionItem.label)}
                     </h1>
                     <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                      {activeSectionItem.description}
+                      {t(activeSectionItem.description)}
                     </p>
                   </div>
                   <Button
@@ -1303,7 +1360,7 @@ function SettingsRouteView() {
                     onClick={() => void restoreDefaults()}
                   >
                     <ResetIcon className="size-3.5" />
-                    Restore defaults
+                    {t("Restore defaults")}
                   </Button>
                 </div>
               ) : null}

@@ -5,17 +5,30 @@
 
 import { THEME_SEED_CATALOG } from "./theme.seed.generated";
 import {
-  normalizeFontFamilyCssValue,
+  normalizeContentFontFamilyCssValue,
   normalizeMonospaceFontFamilyCssValue,
+  normalizeUiFontFamilyCssValue,
 } from "../lib/fontFamily";
 
 export type ThemeMode = "light" | "dark" | "system";
 export type ThemeVariant = "light" | "dark";
 export type WindowMaterial = "opaque" | "translucent";
+export type ThemeFontSlot = "ui" | "content" | "code";
+
+export interface ThemeFontFaceSelection {
+  family: string;
+  fullName: string;
+  postscriptName: string;
+  style: string;
+}
 
 export interface ThemeFonts {
   ui: string | null;
   code: string | null;
+  content?: string | null;
+  uiFace?: ThemeFontFaceSelection | null;
+  contentFace?: ThemeFontFaceSelection | null;
+  codeFace?: ThemeFontFaceSelection | null;
 }
 
 export interface ThemeSemanticColors {
@@ -313,10 +326,21 @@ export function normalizeCodeThemeId(
 
 export function normalizeThemeFonts(value: unknown): ThemeFonts {
   const fonts = isRecord(value) ? value : {};
-  return {
-    code: normalizeFontSelection(fonts.code),
-    ui: normalizeFontSelection(fonts.ui),
-  };
+  const code = normalizeFontSelection(fonts.code);
+  const ui = normalizeFontSelection(fonts.ui);
+  const content = normalizeFontSelection(fonts.content);
+  const normalized: ThemeFonts = { code, ui };
+
+  if (content) normalized.content = content;
+
+  const uiFace = normalizeThemeFontFaceSelection(fonts.uiFace, ui);
+  const contentFace = normalizeThemeFontFaceSelection(fonts.contentFace, content);
+  const codeFace = normalizeThemeFontFaceSelection(fonts.codeFace, code);
+  if (uiFace) normalized.uiFace = uiFace;
+  if (contentFace) normalized.contentFace = contentFace;
+  if (codeFace) normalized.codeFace = codeFace;
+
+  return normalized;
 }
 
 export function normalizeSemanticColors(
@@ -375,6 +399,7 @@ function hasStoredCustomUiFont(state: Record<string, unknown>): boolean {
 
 export function normalizeThemeState(value: unknown): ThemeState {
   const state = isRecord(value) ? value : {};
+  const hasCustomUiFont = hasStoredCustomUiFont(state);
   const codeThemeIds = isRecord(state.codeThemeIds) ? state.codeThemeIds : {};
   const chromeThemes = isRecord(state.chromeThemes) ? state.chromeThemes : {};
   const packs = isRecord(state.packs) ? state.packs : {};
@@ -401,7 +426,9 @@ export function normalizeThemeState(value: unknown): ThemeState {
     // Preserve the UI font older theme states already rendered. New/default states use the
     // native stack, while an explicit preference always wins after the first save.
     systemUiFont:
-      typeof state.systemUiFont === "boolean" ? state.systemUiFont : !hasStoredCustomUiFont(state),
+      typeof state.systemUiFont === "boolean"
+        ? state.systemUiFont || !hasCustomUiFont
+        : !hasCustomUiFont,
   };
 }
 
@@ -638,9 +665,49 @@ export function setThemeFonts(
   };
 }
 
-export function resetThemeVariant(state: ThemeState, variant: ThemeVariant): ThemeState {
+export function setThemeFontSelection(
+  state: ThemeState,
+  variant: ThemeVariant,
+  slot: ThemeFontSlot,
+  family: string | null,
+  face: ThemeFontFaceSelection | null,
+): ThemeState {
+  const previousTheme = state.chromeThemes[variant];
+  const nextFonts: ThemeFonts = { ...previousTheme.fonts };
+
+  if (slot === "ui") {
+    nextFonts.ui = family;
+    nextFonts.uiFace = face;
+  } else if (slot === "content") {
+    nextFonts.content = family;
+    nextFonts.contentFace = face;
+  } else {
+    nextFonts.code = family;
+    nextFonts.codeFace = face;
+  }
+
   return {
     ...state,
+    chromeThemes: {
+      ...state.chromeThemes,
+      [variant]: normalizeChromeTheme(
+        {
+          ...previousTheme,
+          fonts: nextFonts,
+        },
+        variant,
+      ),
+    },
+  };
+}
+
+export function resetThemeVariant(state: ThemeState, variant: ThemeVariant): ThemeState {
+  const otherVariant: ThemeVariant = variant === "dark" ? "light" : "dark";
+  const otherThemeHasCustomUiFont =
+    normalizeChromeTheme(state.chromeThemes[otherVariant], otherVariant).fonts.ui !== null;
+  return {
+    ...state,
+    systemUiFont: otherThemeHasCustomUiFont ? state.systemUiFont : true,
     chromeThemes: {
       ...state.chromeThemes,
       [variant]: DEFAULT_THEME_STATE.chromeThemes[variant],
@@ -665,13 +732,30 @@ export function areThemePacksEqual(left: ThemePack, right: ThemePack): boolean {
     left.theme.accent === right.theme.accent &&
     left.theme.contrast === right.theme.contrast &&
     left.theme.fonts.code === right.theme.fonts.code &&
+    left.theme.fonts.content === right.theme.fonts.content &&
     left.theme.fonts.ui === right.theme.fonts.ui &&
+    areThemeFontFacesEqual(left.theme.fonts.codeFace, right.theme.fonts.codeFace) &&
+    areThemeFontFacesEqual(left.theme.fonts.contentFace, right.theme.fonts.contentFace) &&
+    areThemeFontFacesEqual(left.theme.fonts.uiFace, right.theme.fonts.uiFace) &&
     left.theme.ink === right.theme.ink &&
     left.theme.opaqueWindows === right.theme.opaqueWindows &&
     left.theme.semanticColors.diffAdded === right.theme.semanticColors.diffAdded &&
     left.theme.semanticColors.diffRemoved === right.theme.semanticColors.diffRemoved &&
     left.theme.semanticColors.skill === right.theme.semanticColors.skill &&
     left.theme.surface === right.theme.surface
+  );
+}
+
+function areThemeFontFacesEqual(
+  left: ThemeFontFaceSelection | null | undefined,
+  right: ThemeFontFaceSelection | null | undefined,
+): boolean {
+  if (!left || !right) return !left && !right;
+  return (
+    left.family === right.family &&
+    left.fullName === right.fullName &&
+    left.postscriptName === right.postscriptName &&
+    left.style === right.style
   );
 }
 
@@ -796,11 +880,13 @@ export function buildThemeCssVariables(
     "--success": pack.theme.semanticColors.diffAdded,
     "--success-foreground": pack.theme.surface,
     "--theme-font-code-family": normalizeMonospaceFontFamilyCssValue(pack.theme.fonts.code) ?? "",
+    "--theme-font-content-family":
+      normalizeContentFontFamilyCssValue(pack.theme.fonts.content) ?? "",
     // Empty string → the applier removes the property, so the base -apple-system stack
     // (SF Pro on macOS) takes over when the user prefers the native font.
     "--theme-font-ui-family": options?.systemUiFont
       ? ""
-      : (normalizeFontFamilyCssValue(pack.theme.fonts.ui) ?? ""),
+      : (normalizeUiFontFamilyCssValue(pack.theme.fonts.ui) ?? ""),
     "--warning": warningColor,
     "--warning-foreground": pack.theme.surface,
   };
@@ -1266,10 +1352,39 @@ function parseStrictThemeFonts(value: unknown): ThemeFonts {
     throw new Error("Theme fonts must be an object.");
   }
 
-  return {
+  const fonts: ThemeFonts = {
     code: parseNullableString(value.code, "Theme code font"),
     ui: parseNullableString(value.ui, "Theme UI font"),
   };
+
+  if (value.content !== undefined) {
+    const content = parseNullableString(value.content, "Theme content font");
+    if (content) fonts.content = content;
+  }
+
+  for (const [faceKey, family] of [
+    ["uiFace", fonts.ui],
+    ["contentFace", fonts.content ?? null],
+    ["codeFace", fonts.code],
+  ] as const) {
+    if (value[faceKey] === undefined || value[faceKey] === null) continue;
+    const face = parseStrictThemeFontFace(value[faceKey], family, `Theme ${faceKey}`);
+    fonts[faceKey] = face;
+  }
+
+  return fonts;
+}
+
+function parseStrictThemeFontFace(
+  value: unknown,
+  selectedFamily: string | null,
+  label: string,
+): ThemeFontFaceSelection {
+  const normalized = normalizeThemeFontFaceSelection(value, selectedFamily);
+  if (!normalized) {
+    throw new Error(`${label} must match its selected font family.`);
+  }
+  return normalized;
 }
 
 function parseStrictSemanticColors(value: unknown): ThemeSemanticColors {
@@ -1347,6 +1462,26 @@ function normalizeFontSelection(value: unknown): string | null {
   }
   const trimmedValue = value.trim();
   return trimmedValue.length > 0 ? trimmedValue : null;
+}
+
+function normalizeThemeFontFaceSelection(
+  value: unknown,
+  selectedFamily: string | null,
+): ThemeFontFaceSelection | null {
+  if (!selectedFamily || !isRecord(value)) {
+    return null;
+  }
+  const family = normalizeFontSelection(value.family);
+  const fullName = normalizeFontSelection(value.fullName);
+  const postscriptName = normalizeFontSelection(value.postscriptName);
+  const style = normalizeFontSelection(value.style);
+  if (!family || !fullName || !postscriptName || !style) {
+    return null;
+  }
+  if (family.toLocaleLowerCase() !== selectedFamily.toLocaleLowerCase()) {
+    return null;
+  }
+  return { family, fullName, postscriptName, style };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

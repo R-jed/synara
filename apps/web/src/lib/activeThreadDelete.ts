@@ -14,6 +14,7 @@ import type { Thread } from "../types";
 import { formatWorktreePathForDisplay, getOrphanedWorktreePathForThread } from "../worktreeCleanup";
 import { reconcileDeletedThreadFromClient } from "./deletedThreadClientReconciliation";
 import { newCommandId } from "./utils";
+import { getActiveUiLanguage, translateUiErrorText, translateUiText } from "../uiLanguage";
 
 // The terminal runtime pulls in xterm and its addons (~223 KB gzip). Importing it
 // statically here anchored the whole terminal stack into the eager sidebar/router
@@ -52,6 +53,8 @@ export async function deleteActiveThreadFromClient<TPrepared = undefined>(input:
   }) => Promise<unknown>;
   readonly unknownWorktreeErrorMessage?: string;
 }): Promise<void> {
+  const language = getActiveUiLanguage();
+  const t = (text: string) => translateUiText(language, text);
   const api = readNativeApi();
   if (!api) return;
   const state = useStore.getState();
@@ -76,10 +79,10 @@ export async function deleteActiveThreadFromClient<TPrepared = undefined>(input:
     project !== null &&
     (await api.dialogs.confirm(
       [
-        "This thread is the only one linked to this worktree:",
+        t("This thread is the only one linked to this worktree:"),
         displayWorktreePath ?? orphanedWorktreePath,
         "",
-        "Delete the worktree too?",
+        t("Delete the worktree too?"),
       ].join("\n"),
     ));
 
@@ -111,8 +114,12 @@ export async function deleteActiveThreadFromClient<TPrepared = undefined>(input:
   } catch (error) {
     const message =
       error instanceof Error
-        ? error.message
-        : (input.unknownWorktreeErrorMessage ?? "Unknown error removing worktree.");
+        ? translateUiErrorText(
+            language,
+            error,
+            input.unknownWorktreeErrorMessage ?? "Unknown error removing worktree.",
+          )
+        : t(input.unknownWorktreeErrorMessage ?? "Unknown error removing worktree.");
     console.error("Failed to remove orphaned worktree after thread deletion", {
       threadId: input.threadId,
       projectCwd: project.cwd,
@@ -121,8 +128,11 @@ export async function deleteActiveThreadFromClient<TPrepared = undefined>(input:
     });
     toastManager.add({
       type: "error",
-      title: "Thread deleted, but worktree removal failed",
-      description: `Could not remove ${displayWorktreePath ?? orphanedWorktreePath}. ${message}`,
+      title: t("Thread deleted, but worktree removal failed"),
+      description:
+        language === "zh-CN"
+          ? `无法删除 ${displayWorktreePath ?? orphanedWorktreePath}。${message}`
+          : `Could not remove ${displayWorktreePath ?? orphanedWorktreePath}. ${message}`,
     });
   }
 }

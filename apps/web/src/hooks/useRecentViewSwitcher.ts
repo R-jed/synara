@@ -28,6 +28,7 @@ import { useSplitViewStore } from "../splitViewStore";
 import { useStore } from "../store";
 import { useThreadDetailPrewarm } from "../threadDetailPrewarm";
 import { selectThreadTerminalState, useTerminalStateStore } from "../terminalStateStore";
+import { useUiLanguage } from "../uiLanguage";
 import {
   resolveTerminalVisualIdentityMap,
   selectRepresentativeTerminalVisualIdentity,
@@ -51,6 +52,7 @@ interface UseRecentViewSwitcherInput {
 
 // Encapsulates recent-view persistence, pruning, prewarm, and activation.
 export function useRecentViewSwitcher(input: UseRecentViewSwitcherInput) {
+  const { t } = useUiLanguage();
   const navigate = useNavigate();
   const pathname = useLocation({ select: (location) => location.pathname });
   const routeThreadId = useParams({
@@ -133,6 +135,7 @@ export function useRecentViewSwitcher(input: UseRecentViewSwitcherInput) {
       projects: input.projects,
       pinnedThreadIds: persistedPinnedThreadIds,
       terminalVisualIdentityByThreadId,
+      translate: t,
     });
   }
   const currentRecentViewRef = useRef<RecentView | null>(currentRecentView);

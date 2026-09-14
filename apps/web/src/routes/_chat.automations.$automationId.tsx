@@ -69,6 +69,7 @@ import {
 } from "~/hooks/useDesktopTopBarGutter";
 import { CentralIcon } from "~/lib/central-icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   buildModelSelection,
   buildNextProviderOptions,
@@ -136,15 +137,15 @@ const RUN_DATE_TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
 });
 
 // Reference-style absolute timestamp: "Today at 09:00", "Tomorrow at 12:30", "5 May 2026, 09:05".
-function formatRunTimestamp(value: string | null): string {
+function formatRunTimestamp(value: string | null, t: (text: string) => string): string {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   const time = RUN_TIME_FORMATTER.format(date);
   const dayDelta = Math.round((startOfDay(date) - startOfDay(new Date())) / 86_400_000);
-  if (dayDelta === 0) return `Today at ${time}`;
-  if (dayDelta === 1) return `Tomorrow at ${time}`;
-  if (dayDelta === -1) return `Yesterday at ${time}`;
+  if (dayDelta === 0) return `${t("Today at")} ${time}`;
+  if (dayDelta === 1) return `${t("Tomorrow at")} ${time}`;
+  if (dayDelta === -1) return `${t("Yesterday at")} ${time}`;
   return RUN_DATE_TIME_FORMATTER.format(date);
 }
 
@@ -168,17 +169,20 @@ function automationStatusDisplay(definition: AutomationDefinition): {
 
 // Explanation for an automation the server stopped on its own. "user" and "schedule"
 // return null — the status pill already reads "Paused" / "Done" for those.
-function automationStoppedExplanation(definition: AutomationDefinition): string | null {
+function automationStoppedExplanation(
+  definition: AutomationDefinition,
+  t: (text: string) => string,
+): string | null {
   if (definition.enabled || definition.disabledReason == null) return null;
   switch (definition.disabledReason) {
     case "failures":
       return definition.consecutiveFailureCount === 1
-        ? "Stopped after a failed run."
-        : `Stopped after ${definition.consecutiveFailureCount} consecutive failed runs.`;
+        ? t("Stopped after a failed run.")
+        : `${t("Stopped after")} ${definition.consecutiveFailureCount} ${t("consecutive failed runs.")}`;
     case "max-iterations":
-      return "Stopped at its run limit.";
+      return t("Stopped at its run limit.");
     case "completion":
-      return "Stopped because its stop condition was met.";
+      return t("Stopped because its stop condition was met.");
     case "schedule":
     case "user":
       return null;
@@ -186,6 +190,7 @@ function automationStoppedExplanation(definition: AutomationDefinition): string 
 }
 
 function AutomationDetailView() {
+  const { t } = useUiLanguage();
   const { automationId } = Route.useParams();
   const navigate = useNavigate();
   const { settings } = useAppSettings();
@@ -256,18 +261,18 @@ function AutomationDetailView() {
               className={cn("flex items-center gap-2 sm:gap-3", CHAT_SURFACE_HEADER_HEIGHT_CLASS)}
             >
               <SidebarHeaderNavigationControls />
-              <h1 className="truncate font-heading text-sm font-medium">Automations</h1>
+              <h1 className="truncate font-heading text-sm font-medium">{t("Automations")}</h1>
             </div>
           </header>
           <main className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
-            Automation not found.
+            {t("Automation not found.")}
             <Button
               type="button"
               size="sm"
               variant="outline"
               onClick={() => void navigate({ to: "/automations" })}
             >
-              Back to automations
+              {t("Back to automations")}
             </Button>
           </main>
         </div>
@@ -289,14 +294,14 @@ function AutomationDetailView() {
   const lastRun = lastFinishedRun(runs);
   const schedule = definition.schedule;
   const status = automationStatusDisplay(definition);
-  const stoppedExplanation = automationStoppedExplanation(definition);
+  const stoppedExplanation = automationStoppedExplanation(definition, t);
   const stopWhen = stopWhenFromCompletionPolicy(definition.completionPolicy ?? { type: "none" });
   const pendingProposal = definition.proposalState === "pending";
   const stoppedAfterFailures = !definition.enabled && definition.disabledReason === "failures";
   // A pending proposal must be accepted before the server allows any update, so every
   // inline control is read-only until then instead of erroring on each interaction.
   const editable = !pendingProposal;
-  const editDisabledTitle = editable ? undefined : "Accept the automation proposal first";
+  const editDisabledTitle = editable ? undefined : t("Accept the automation proposal first");
 
   const patch = (input: Omit<AutomationUpdateInput, "id">) =>
     updateMutation.mutate({ id: definition.id, ...input });
@@ -417,7 +422,9 @@ function AutomationDetailView() {
   };
 
   const deleteDefinition = async () => {
-    const confirmed = await ensureNativeApi().dialogs.confirm(`Delete "${definition.name}"?`);
+    const confirmed = await ensureNativeApi().dialogs.confirm(
+      `${t("Delete")} "${definition.name}"?`,
+    );
     if (!confirmed) return;
     deleteMutation.mutate(definition, {
       onSuccess: () => void navigate({ to: "/automations" }),
@@ -452,7 +459,7 @@ function AutomationDetailView() {
                   onClick={() => void navigate({ to: "/automations" })}
                   className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  Automations
+                  {t("Automations")}
                 </button>
                 <CentralIcon
                   name="chevron-right-small"
@@ -484,9 +491,11 @@ function AutomationDetailView() {
               {pendingProposal ? (
                 <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-[var(--color-background-elevated-primary)] p-4">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground">Suggested automation</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {t("Suggested automation")}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      Accept it before it can run, or dismiss it to archive the suggestion.
+                      {t("Accept it before it can run, or dismiss it to archive the suggestion.")}
                     </p>
                   </div>
                   <AutomationProposalActions
@@ -528,8 +537,8 @@ function AutomationDetailView() {
                     type="button"
                     size="icon-sm"
                     variant="ghost"
-                    aria-label={definition.enabled ? "Pause" : "Resume"}
-                    title={definition.enabled ? "Pause" : "Resume"}
+                    aria-label={definition.enabled ? t("Pause") : t("Resume")}
+                    title={definition.enabled ? t("Pause") : t("Resume")}
                     onClick={togglePause}
                   >
                     <CentralIcon name={definition.enabled ? "pause" : "play"} className="size-4" />
@@ -539,8 +548,8 @@ function AutomationDetailView() {
                   type="button"
                   size="icon-sm"
                   variant="ghost"
-                  aria-label="Delete"
-                  title="Delete"
+                  aria-label={t("Delete")}
+                  title={t("Delete")}
                   onClick={() => void deleteDefinition()}
                 >
                   <CentralIcon name="trash-can-simple" className="size-4" />
@@ -561,17 +570,17 @@ function AutomationDetailView() {
                   }
                   title={
                     pendingProposal
-                      ? "Accept the automation proposal first"
+                      ? t("Accept the automation proposal first")
                       : stoppedAfterFailures
-                        ? "Re-enable the automation first"
+                        ? t("Re-enable the automation first")
                         : approvalGaps.runBlockingWarnings.length > 0
-                          ? "Approve the automation first"
+                          ? t("Approve the automation first")
                           : undefined
                   }
                   onClick={() => runNowMutation.mutate(definition)}
                 >
                   <CentralIcon name="play" className="size-4" />
-                  Run now
+                  {t("Run now")}
                 </Button>
               </div>
             </div>
@@ -587,26 +596,26 @@ function AutomationDetailView() {
                 onApprove={() => void approveAutomationRisks().catch(() => undefined)}
                 onApproveAndRun={() => void handleApproveAndRunNow()}
               />
-              <DetailGroup title="Status">
-                <DetailRow label="Status">
+              <DetailGroup title={t("Status")}>
+                <DetailRow label={t("Status")}>
                   <StatusValue>
                     <span className={cn("size-1.5 rounded-full", status.dotClassName)} />
-                    {status.label}
+                    {t(status.label)}
                   </StatusValue>
                 </DetailRow>
-                <DetailRow label="Next run">
+                <DetailRow label={t("Next run")}>
                   {definition.enabled && definition.nextRunAt ? (
                     <StatusValue tone="muted">
-                      {formatRunTimestamp(definition.nextRunAt)}
+                      {formatRunTimestamp(definition.nextRunAt, t)}
                     </StatusValue>
                   ) : (
                     "—"
                   )}
                 </DetailRow>
-                <DetailRow label="Last ran">
+                <DetailRow label={t("Last ran")}>
                   {lastRun ? (
                     <StatusValue tone="muted">
-                      {formatRunTimestamp(lastRun.finishedAt ?? lastRun.startedAt)}
+                      {formatRunTimestamp(lastRun.finishedAt ?? lastRun.startedAt, t)}
                     </StatusValue>
                   ) : (
                     "—"
@@ -618,7 +627,7 @@ function AutomationDetailView() {
                       <p className="text-xs text-foreground">{stoppedExplanation}</p>
                       {definition.disabledAt ? (
                         <p className="text-[0.6875rem] text-muted-foreground">
-                          {formatRunTimestamp(definition.disabledAt)}
+                          {formatRunTimestamp(definition.disabledAt, t)}
                         </p>
                       ) : null}
                     </div>
@@ -634,7 +643,7 @@ function AutomationDetailView() {
                       // click fully recovers the automation.
                       onClick={() => patch({ enabled: true })}
                     >
-                      Re-enable
+                      {t("Re-enable")}
                     </Button>
                   </div>
                 ) : null}
@@ -644,22 +653,24 @@ function AutomationDetailView() {
                   proposal is pending. A wrapping <fieldset disabled> would be terser, but it
                   also killed the read-only navigation buttons (Created from, Open thread) —
                   exactly the context needed to judge the proposal. */}
-              <DetailGroup title="Details">
+              <DetailGroup title={t("Details")}>
                 {!ownsItsEnvironment ? (
-                  <DetailRow label="Runs in">Thread</DetailRow>
+                  <DetailRow label={t("Runs in")}>{t("Thread")}</DetailRow>
                 ) : !canChooseEnvironment ? (
-                  <DetailRow label="Runs in">
-                    {worktreeModeLabel(definition.worktreeMode)}
+                  <DetailRow label={t("Runs in")}>
+                    {t(worktreeModeLabel(definition.worktreeMode))}
                   </DetailRow>
                 ) : (
                   <EditRow
                     label={
                       <>
-                        Runs in
+                        {t("Runs in")}
                         <CentralIcon
                           name="info-simple"
                           className="size-3 text-muted-foreground/60"
-                          aria-label="Where the automation runs: a worktree, a local checkout, or auto"
+                          aria-label={t(
+                            "Where the automation runs: a worktree, a local checkout, or auto",
+                          )}
                         />
                       </>
                     }
@@ -667,7 +678,10 @@ function AutomationDetailView() {
                     <span ref={worktreeAnchorRef} className="flex min-w-0 items-center">
                       <InlineSelect
                         value={definition.worktreeMode}
-                        options={WORKTREE_OPTIONS}
+                        options={WORKTREE_OPTIONS.map((option) => ({
+                          ...option,
+                          label: t(option.label),
+                        }))}
                         disabled={!editable}
                         title={editDisabledTitle}
                         onChange={(value) => requestWorktreeChange(value as AutomationWorktreeMode)}
@@ -676,9 +690,11 @@ function AutomationDetailView() {
                   </EditRow>
                 )}
                 {!canChooseEnvironment ? (
-                  <DetailRow label="Project">{project?.name ?? "Unknown project"}</DetailRow>
+                  <DetailRow label={t("Project")}>
+                    {project?.name ?? t("Unknown project")}
+                  </DetailRow>
                 ) : (
-                  <EditRow label="Project">
+                  <EditRow label={t("Project")}>
                     <InlineSelect
                       value={definition.projectId}
                       options={projects.map((entry) => ({ value: entry.id, label: entry.name }))}
@@ -691,7 +707,7 @@ function AutomationDetailView() {
                   </EditRow>
                 )}
                 {definition.sourceThreadId ? (
-                  <DetailRow label="Created from">
+                  <DetailRow label={t("Created from")}>
                     {sourceThread ? (
                       <button
                         type="button"
@@ -706,14 +722,17 @@ function AutomationDetailView() {
                         {resolveThreadPickerTitle(sourceThread.title)}
                       </button>
                     ) : (
-                      "Thread unavailable"
+                      t("Thread unavailable")
                     )}
                   </DetailRow>
                 ) : null}
-                <EditRow label="Repeats">
+                <EditRow label={t("Repeats")}>
                   <InlineSelect
                     value={scheduleKindFromSchedule(schedule)}
-                    options={SCHEDULE_KIND_OPTIONS}
+                    options={SCHEDULE_KIND_OPTIONS.map((option) => ({
+                      ...option,
+                      label: t(option.label),
+                    }))}
                     disabled={!editable}
                     title={editDisabledTitle}
                     onChange={(value) =>
@@ -727,13 +746,13 @@ function AutomationDetailView() {
                   />
                 </EditRow>
                 {schedule.type === "interval" && schedule.everySeconds !== 3600 ? (
-                  <EditRow label="Every">
+                  <EditRow label={t("Every")}>
                     <InlineSelect
                       value={String(schedule.everySeconds)}
                       options={automationIntervalPresetOptions({
                         currentSeconds: schedule.everySeconds,
                         includeHourly: true,
-                      })}
+                      }).map((option) => ({ ...option, label: t(option.label) }))}
                       disabled={!editable}
                       title={editDisabledTitle}
                       onChange={(value) =>
@@ -748,7 +767,7 @@ function AutomationDetailView() {
                   </EditRow>
                 ) : null}
                 {schedule.type === "once" ? (
-                  <EditRow label="Run at">
+                  <EditRow label={t("Run at")}>
                     <input
                       type="datetime-local"
                       value={datetimeLocalFromIso(schedule.runAt)}
@@ -769,7 +788,7 @@ function AutomationDetailView() {
                   </EditRow>
                 ) : null}
                 {schedule.type === "cron" ? (
-                  <EditRow label="Cron">
+                  <EditRow label={t("Cron")}>
                     <InlineCommitTextInput
                       value={schedule.expression}
                       validate={automationCronExpressionError}
@@ -793,7 +812,7 @@ function AutomationDetailView() {
                   </EditRow>
                 ) : null}
                 {schedule.type === "daily" || schedule.type === "weekdays" ? (
-                  <EditRow label="Time">
+                  <EditRow label={t("Time")}>
                     <InlineTime
                       value={schedule.timeOfDay}
                       disabled={!editable}
@@ -806,12 +825,12 @@ function AutomationDetailView() {
                 ) : null}
                 {schedule.type === "weekly" ? (
                   <>
-                    <EditRow label="Day">
+                    <EditRow label={t("Day")}>
                       <InlineSelect
                         value={String(schedule.dayOfWeek)}
                         options={[0, 1, 2, 3, 4, 5, 6].map((day) => ({
                           value: String(day),
-                          label: weekdayLabel(day),
+                          label: t(weekdayLabel(day)),
                         }))}
                         disabled={!editable}
                         title={editDisabledTitle}
@@ -822,7 +841,7 @@ function AutomationDetailView() {
                         }
                       />
                     </EditRow>
-                    <EditRow label="Time">
+                    <EditRow label={t("Time")}>
                       <InlineTime
                         value={schedule.timeOfDay}
                         disabled={!editable}
@@ -843,7 +862,7 @@ function AutomationDetailView() {
                   schedule.type === "weekly" ||
                   schedule.type === "cron") &&
                 schedule.timezone ? (
-                  <EditRow label="Timezone">
+                  <EditRow label={t("Timezone")}>
                     <InlineCommitTextInput
                       value={schedule.timezone}
                       // Non-empty + real IANA zone: committing "" would unrender this row
@@ -857,7 +876,7 @@ function AutomationDetailView() {
                     />
                   </EditRow>
                 ) : null}
-                <EditRow label="Model">
+                <EditRow label={t("Model")}>
                   <AutomationModelPicker
                     value={definition.modelSelection}
                     projectCwd={project?.cwd ?? null}
@@ -871,19 +890,21 @@ function AutomationDetailView() {
                   disabledTitle={editDisabledTitle}
                   onChange={applyModelSelection}
                 />
-                <EditRow label="Mode">
+                <EditRow label={t("Mode")}>
                   <span ref={modeAnchorRef} className="flex min-w-0 items-center">
                     <InlineSelect
                       value={definition.mode}
                       options={[
-                        { value: "standalone", label: MODE_LABELS.standalone },
-                        { value: "dedicated", label: MODE_LABELS.dedicated },
+                        { value: "standalone", label: t(MODE_LABELS.standalone) },
+                        { value: "dedicated", label: t(MODE_LABELS.dedicated) },
                         {
                           value: "heartbeat",
-                          label: MODE_LABELS.heartbeat,
+                          label: t(MODE_LABELS.heartbeat),
                           disabled: projectThreads.length === 0,
                           title:
-                            projectThreads.length === 0 ? "No threads in this project" : undefined,
+                            projectThreads.length === 0
+                              ? t("No threads in this project")
+                              : undefined,
                         },
                       ]}
                       disabled={!editable}
@@ -892,12 +913,12 @@ function AutomationDetailView() {
                     />
                   </span>
                 </EditRow>
-                <EditRow label="Notify">
+                <EditRow label={t("Notify")}>
                   <InlineSelect
                     value={definition.notificationPolicy ?? "all"}
                     options={[
-                      { value: "all", label: "All runs" },
-                      { value: "failed-runs-only", label: "Failed runs only" },
+                      { value: "all", label: t("All runs") },
+                      { value: "failed-runs-only", label: t("Failed runs only") },
                     ]}
                     disabled={!editable}
                     title={editDisabledTitle}
@@ -909,10 +930,10 @@ function AutomationDetailView() {
                     }
                   />
                 </EditRow>
-                <EditRow label="Stop when">
+                <EditRow label={t("Stop when")}>
                   <InlineCommitTextInput
                     value={stopWhen}
-                    placeholder="Never"
+                    placeholder={t("Never")}
                     disabled={!editable}
                     title={editDisabledTitle}
                     onCommit={(value) =>
@@ -922,12 +943,12 @@ function AutomationDetailView() {
                     }
                   />
                 </EditRow>
-                <EditRow label="On failure">
+                <EditRow label={t("On failure")}>
                   <InlineSelect
                     value={automationFailurePolicyValue(definition.stopAfterConsecutiveFailures)}
                     options={automationFailurePolicyOptions(
                       automationFailurePolicyValue(definition.stopAfterConsecutiveFailures),
-                    )}
+                    ).map((option) => ({ ...option, label: t(option.label) }))}
                     disabled={!editable}
                     title={editDisabledTitle}
                     onChange={(value) =>
@@ -938,10 +959,13 @@ function AutomationDetailView() {
                     }
                   />
                 </EditRow>
-                <EditRow label="Max iterations">
+                <EditRow label={t("Max iterations")}>
                   <InlineSelect
                     value={definition.maxIterations == null ? "" : String(definition.maxIterations)}
-                    options={maxIterationOptions(definition.maxIterations)}
+                    options={maxIterationOptions(definition.maxIterations).map((option) => ({
+                      ...option,
+                      label: t(option.label),
+                    }))}
                     disabled={!editable}
                     title={editDisabledTitle}
                     onChange={(value) =>
@@ -952,7 +976,7 @@ function AutomationDetailView() {
                 {definition.mode === "heartbeat" ? (
                   // Heartbeat targets are the user's choice, so the thread stays editable.
                   // Dedicated threads are server-owned and keep the read-only row below.
-                  <EditRow label="Thread">
+                  <EditRow label={t("Thread")}>
                     <div className="flex min-w-0 items-center">
                       {continuedThread ? (
                         <Button
@@ -967,7 +991,7 @@ function AutomationDetailView() {
                             })
                           }
                         >
-                          Open
+                          {t("Open")}
                         </Button>
                       ) : null}
                       <InlineSelect
@@ -983,7 +1007,7 @@ function AutomationDetailView() {
                     </div>
                   </EditRow>
                 ) : continuationThreadId !== null ? (
-                  <DetailRow label="Thread">
+                  <DetailRow label={t("Thread")}>
                     {continuedThread ? (
                       <button
                         type="button"
@@ -998,21 +1022,23 @@ function AutomationDetailView() {
                         {resolveThreadPickerTitle(continuedThread.title)}
                       </button>
                     ) : (
-                      "Thread unavailable"
+                      t("Thread unavailable")
                     )}
                   </DetailRow>
                 ) : null}
               </DetailGroup>
 
-              <DetailGroup title="Memory">
+              <DetailGroup title={t("Memory")}>
                 <div className="max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-md bg-foreground/[0.035] px-2.5 py-2 font-mono text-[0.6875rem] leading-relaxed text-muted-foreground">
-                  {memory?.content || "No persistent memory yet."}
+                  {memory?.content || t("No persistent memory yet.")}
                 </div>
               </DetailGroup>
 
-              <DetailGroup title="Previous runs">
+              <DetailGroup title={t("Previous runs")}>
                 {runs.length === 0 ? (
-                  <div className="px-1.5 py-1 text-xs text-muted-foreground">No runs yet.</div>
+                  <div className="px-1.5 py-1 text-xs text-muted-foreground">
+                    {t("No runs yet.")}
+                  </div>
                 ) : (
                   <div className="flex flex-col gap-0.5">
                     {runs.map((run) => (
@@ -1041,12 +1067,14 @@ function AutomationDetailView() {
           if (!open) setPendingWorktreeChange(null);
         }}
         anchor={worktreeAnchorRef}
-        title={pendingWorktreeWarning?.title ?? "Local checkout"}
-        detail={
-          pendingWorktreeWarning?.detail ?? "Runs may edit files in the active project checkout."
-        }
+        title={t(pendingWorktreeWarning?.title ?? "Local checkout")}
+        detail={t(
+          pendingWorktreeWarning?.detail ?? "Runs may edit files in the active project checkout.",
+        )}
         confirmLabel={
-          pendingWorktreeChange ? `Switch to ${worktreeModeLabel(pendingWorktreeChange)}` : "Switch"
+          pendingWorktreeChange
+            ? `${t("Switch to")} ${t(worktreeModeLabel(pendingWorktreeChange))}`
+            : t("Switch")
         }
         onConfirm={confirmWorktreeChange}
       />
@@ -1058,18 +1086,20 @@ function AutomationDetailView() {
         anchor={modeAnchorRef}
         title={
           pendingModeChange?.mode === "heartbeat"
-            ? "Continue an existing thread"
-            : "Release the current thread?"
+            ? t("Continue an existing thread")
+            : t("Release the current thread?")
         }
         detail={
           pendingModeChange?.mode === "heartbeat"
-            ? "Each run appends a turn to the thread you pick and waits for it to go idle."
-            : `The automation stops writing to ${
-                continuedThreadTitle ? `“${continuedThreadTitle}”` : "its thread"
-              }; the thread itself is kept.`
+            ? t("Each run appends a turn to the thread you pick and waits for it to go idle.")
+            : `${t("The automation stops writing to")} ${
+                continuedThreadTitle ? `“${continuedThreadTitle}”` : t("its thread")
+              }; ${t("the thread itself is kept.")}`
         }
         confirmLabel={
-          pendingModeChange ? `Switch to ${MODE_LABELS[pendingModeChange.mode]}` : "Switch"
+          pendingModeChange
+            ? `${t("Switch to")} ${t(MODE_LABELS[pendingModeChange.mode])}`
+            : t("Switch")
         }
         confirmDisabled={
           pendingModeChange?.mode === "heartbeat" && pendingModeChange.targetThreadId === ""
@@ -1080,14 +1110,14 @@ function AutomationDetailView() {
           <div className="relative flex items-center">
             <select
               value={pendingModeChange.targetThreadId}
-              aria-label="Target thread"
+              aria-label={t("Target thread")}
               onChange={(event) =>
                 setPendingModeChange({ mode: "heartbeat", targetThreadId: event.target.value })
               }
               className="w-full appearance-none rounded-md border border-border bg-transparent px-2 py-1.5 pr-6 text-xs outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
               {pendingModeChange.targetThreadId === "" ? (
-                <option value="">Pick a thread…</option>
+                <option value="">{t("Pick a thread…")}</option>
               ) : null}
               {projectThreads.map((thread) => (
                 <option key={thread.id} value={thread.id}>
@@ -1200,6 +1230,7 @@ function RunRow({
   readonly onMarkRead: (unread: boolean) => void;
   readonly onArchive: (archived: boolean) => void;
 }) {
+  const { language, t } = useUiLanguage();
   const active = canCancelAutomationRun(run);
   const archived = run.result?.archivedAt !== null && run.result?.archivedAt !== undefined;
   const triageActionable = run.result !== null || isTriageRun(run);
@@ -1238,9 +1269,9 @@ function RunRow({
     >
       <RunStatusIndicator status={run.status} />
       <div className="min-w-0 flex-1 truncate">
-        <span className="text-foreground/90">{runStatusLabel(run.status)}</span>
-        {resultTitle ? <span className="text-foreground/90"> · {resultTitle}</span> : null}
-        <span className="text-muted-foreground"> · {runResultSummary(run)}</span>
+        <span className="text-foreground/90">{t(runStatusLabel(run.status))}</span>
+        {resultTitle ? <span className="text-foreground/90"> · {t(resultTitle)}</span> : null}
+        <span className="text-muted-foreground"> · {t(runResultSummary(run))}</span>
       </div>
       {triageActionable ? (
         <div className="flex shrink-0 items-center gap-1.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
@@ -1252,7 +1283,7 @@ function RunRow({
             }}
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
-            {unread ? "Read" : "Unread"}
+            {unread ? t("Read") : t("Unread")}
           </button>
           <button
             type="button"
@@ -1263,11 +1294,11 @@ function RunRow({
             title={
               run.permissionSnapshot.worktreeMode === "local"
                 ? undefined
-                : "Archiving does not remove generated worktrees or branches."
+                : t("Archiving does not remove generated worktrees or branches.")
             }
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
-            {archived ? "Unarchive" : "Archive"}
+            {archived ? t("Unarchive") : t("Archive")}
           </button>
         </div>
       ) : null}
@@ -1276,7 +1307,7 @@ function RunRow({
           type="button"
           size="icon-chip"
           variant="ghost"
-          aria-label="Cancel run"
+          aria-label={t("Cancel run")}
           onClick={(event) => {
             event.stopPropagation();
             onCancel();
@@ -1286,7 +1317,7 @@ function RunRow({
         </Button>
       ) : null}
       <span className="shrink-0 tabular-nums text-muted-foreground">
-        {formatRelativeTime(run.finishedAt ?? run.startedAt ?? run.scheduledFor)}
+        {formatRelativeTime(run.finishedAt ?? run.startedAt ?? run.scheduledFor, language)}
       </span>
     </div>
   );

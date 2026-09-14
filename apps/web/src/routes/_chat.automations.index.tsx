@@ -29,6 +29,7 @@ import { ELEVATED_HOVER_SURFACE_CLASS_NAME } from "~/surfaceStyles";
 import { ensureNativeApi } from "~/nativeApi";
 import { useStore } from "~/store";
 import { createAllThreadsSelector } from "~/storeSelectors";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   type AutomationFormState,
   AutomationDialog,
@@ -37,8 +38,8 @@ import {
   automationListRowIcon,
   buildAutomationFormWarnings,
   createInputFromForm,
-  formatCadenceLong,
-  formatNextRun,
+  formatCadenceLongForLanguage,
+  formatNextRunForLanguage,
   formFromDefinition,
   isFormSubmittable,
   isLiveRun,
@@ -82,6 +83,7 @@ function AutomationListRow({
   readonly onDelete?: () => void;
   readonly dimmed?: boolean;
 }) {
+  const { t } = useUiLanguage();
   const dimmed = dimmedProp ?? false;
   return (
     // A div with role="button" (not a real <button>) so inline controls like the hover delete
@@ -130,8 +132,8 @@ function AutomationListRow({
       {onDelete ? (
         <button
           type="button"
-          aria-label="Delete automation"
-          title="Delete"
+          aria-label={t("Delete automation")}
+          title={t("Delete")}
           onClick={(event) => {
             event.stopPropagation();
             onDelete();
@@ -159,48 +161,54 @@ function rowSubtitle(
   definition: AutomationDefinition,
   latestRun: AutomationRun | null,
   now: number,
+  language: "en" | "zh-CN",
+  translate: (text: string) => string,
 ): string {
-  const segments = [formatCadenceLong(definition.schedule)];
+  const segments = [formatCadenceLongForLanguage(definition.schedule, language)];
   if (isLiveRun(latestRun)) {
-    segments.push(runStatusLabel(latestRun.status));
+    segments.push(translate(runStatusLabel(latestRun.status)));
     return segments.join(" · ");
   }
   const attention = latestRun === null ? null : automationAttentionLabel(latestRun);
   if (definition.enabled) {
-    const nextRun = formatNextRun(definition.nextRunAt, now);
-    if (nextRun) segments.push(`Next run ${nextRun}`);
+    const nextRun = formatNextRunForLanguage(definition.nextRunAt, language, now);
+    if (nextRun) segments.push(`${translate("Next run")} ${nextRun}`);
   } else {
-    const stopped = stoppedReasonLabel(definition);
+    const stopped = stoppedReasonLabel(definition, translate);
     if (stopped) {
       segments.push(stopped);
       return segments.join(" · ");
     }
     if (attention === null && automationLifecycleState(definition) === "done") {
-      segments.push("Done");
+      segments.push(translate("Done"));
     }
   }
-  if (attention) segments.push(attention);
+  if (attention) segments.push(translate(attention));
   return segments.join(" · ");
 }
 
 // Why the server stopped an automation on its own. "schedule" and "user" return null:
 // the row already reads "Done" / renders dimmed as paused for those.
-function stoppedReasonLabel(definition: AutomationDefinition): string | null {
+function stoppedReasonLabel(
+  definition: AutomationDefinition,
+  translate: (text: string) => string,
+): string | null {
   switch (definition.disabledReason) {
     case "failures":
       return definition.consecutiveFailureCount === 1
-        ? "Stopped after a failed run"
-        : `Stopped after ${definition.consecutiveFailureCount} failed runs`;
+        ? translate("Stopped after a failed run")
+        : `${translate("Stopped after")} ${definition.consecutiveFailureCount} ${translate("failed runs")}`;
     case "max-iterations":
-      return "Stopped at run limit";
+      return translate("Stopped at run limit");
     case "completion":
-      return "Stop condition met";
+      return translate("Stop condition met");
     default:
       return null;
   }
 }
 
 function AutomationsRouteView() {
+  const { language, t } = useUiLanguage();
   const navigate = useNavigate();
   const { settings } = useAppSettings();
   const desktopTopBarTrafficLightGutterClassName = useDesktopTopBarTrafficLightGutterClassName();
@@ -268,7 +276,9 @@ function AutomationsRouteView() {
   };
 
   const deleteDefinition = async (definition: AutomationDefinition) => {
-    const confirmed = await ensureNativeApi().dialogs.confirm(`Delete "${definition.name}"?`);
+    const confirmed = await ensureNativeApi().dialogs.confirm(
+      `${t("Delete")} “${definition.name}”?`,
+    );
     if (!confirmed) return;
     deleteMutation.mutate(definition);
   };
@@ -299,8 +309,8 @@ function AutomationsRouteView() {
           return <CentralIcon name={icon.name} className={icon.className} />;
         })()}
         title={definition.name}
-        detail={rowSubtitle(definition, latestRun, now)}
-        meta={hasUnreadResult(latestRun) ? "New result" : undefined}
+        detail={rowSubtitle(definition, latestRun, now, language, t)}
+        meta={hasUnreadResult(latestRun) ? t("New result") : undefined}
         onDelete={() => void deleteDefinition(definition)}
       />
     );
@@ -320,7 +330,7 @@ function AutomationsRouteView() {
               : "text-muted-foreground hover:text-foreground",
           )}
         >
-          {value}
+          {t(value === "all" ? "All" : value === "active" ? "Active" : "Paused")}
         </button>
       ))}
     </div>
@@ -331,7 +341,7 @@ function AutomationsRouteView() {
       {renderStatusFilter()}
       {filteredDefinitions.length === 0 ? (
         <div className="px-2 py-4 text-xs text-muted-foreground">
-          {statusFilter === "paused" ? "No paused automations." : "No active automations."}
+          {statusFilter === "paused" ? t("No paused automations.") : t("No active automations.")}
         </div>
       ) : (
         <div className="flex flex-col">{filteredDefinitions.map(renderRow)}</div>
@@ -364,8 +374,8 @@ function AutomationsRouteView() {
                 type="button"
                 size="icon-sm"
                 variant="ghost"
-                aria-label="Refresh"
-                title="Refresh"
+                aria-label={t("Refresh")}
+                title={t("Refresh")}
                 onClick={() => void refetch()}
               >
                 <CentralIcon name="arrow-rotate-clockwise" className="size-4" />
@@ -377,7 +387,7 @@ function AutomationsRouteView() {
                 disabled={projects.length === 0}
               >
                 <CentralIcon name="plus-small" className="size-4" />
-                New automation
+                {t("New automation")}
               </Button>
             </div>
           </div>
@@ -386,17 +396,17 @@ function AutomationsRouteView() {
         <main className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 pb-12 pt-8">
             <h1 className="px-2 font-heading text-2xl font-semibold tracking-tight text-foreground">
-              Automations
+              {t("Automations")}
             </h1>
             {isLoading ? (
               <div className="py-16 text-center text-sm text-muted-foreground">
-                Loading automations...
+                {t("Loading automations...")}
               </div>
             ) : data.definitions.length === 0 ? (
               <div className="flex flex-col items-center gap-1 py-16 text-center">
-                <p className="text-sm font-medium text-foreground">No automations yet</p>
+                <p className="text-sm font-medium text-foreground">{t("No automations yet")}</p>
                 <p className="max-w-xs text-xs text-muted-foreground">
-                  Schedule a prompt to run on its own, or wake an existing thread on a loop.
+                  {t("Schedule a prompt to run on its own, or wake an existing thread on a loop.")}
                 </p>
               </div>
             ) : (

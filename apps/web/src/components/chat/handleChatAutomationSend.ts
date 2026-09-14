@@ -15,6 +15,7 @@ import { useChatTranscriptScroll } from "./useChatTranscriptScroll";
 import { toastManager } from "../ui/toast";
 import { makeAutomationSetupBubble } from "./automationSetupBubble";
 interface ChatAutomationSendInput {
+  translate: (text: string) => string;
   threadId: ThreadId;
   pendingAutomationConversation: ReturnType<
     typeof useChatAutomationSetup
@@ -61,6 +62,7 @@ interface ChatAutomationSendInput {
 }
 
 export async function handleChatAutomationSend({
+  translate,
   threadId,
   pendingAutomationConversation,
   trimmedPromptForSend,
@@ -118,10 +120,12 @@ export async function handleChatAutomationSend({
       if (!hasPromptOnlySendableContent || hasLiveTurn) {
         toastManager.add({
           type: "warning",
-          title: "Automation needs a bit more detail",
+          title: translate("Automation needs a bit more detail"),
           description:
             automationRequest.reason ??
-            'Add what it should do and how often, e.g. "every weekday at 9am, summarize my PRs".',
+            translate(
+              'Add what it should do and how often, e.g. "every weekday at 9am, summarize my PRs".',
+            ),
         });
         return true;
       }

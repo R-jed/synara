@@ -6,8 +6,11 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_MONOSPACE_FONT_FAMILY_STACK,
+  DEFAULT_UI_FONT_FAMILY_STACK,
+  normalizeContentFontFamilyCssValue,
   normalizeFontFamilyCssValue,
   normalizeMonospaceFontFamilyCssValue,
+  normalizeUiFontFamilyCssValue,
 } from "./fontFamily";
 
 describe("normalizeFontFamilyCssValue", () => {
@@ -31,5 +34,16 @@ describe("normalizeMonospaceFontFamilyCssValue", () => {
 
   it("preserves CSS-wide keywords as single values", () => {
     expect(normalizeMonospaceFontFamilyCssValue("inherit")).toBe("inherit");
+  });
+});
+
+describe("UI/content fallback stacks", () => {
+  it("keeps missing custom UI/content fonts from falling through to browser defaults", () => {
+    expect(normalizeUiFontFamilyCssValue("Avenir Next")).toBe(
+      `"Avenir Next", ${DEFAULT_UI_FONT_FAMILY_STACK}`,
+    );
+    expect(normalizeContentFontFamilyCssValue("Avenir Next")).toBe(
+      '"Avenir Next", var(--font-ui-family)',
+    );
   });
 });

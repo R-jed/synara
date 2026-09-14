@@ -78,6 +78,7 @@ import {
 import { useStore } from "~/store";
 import { PR_FINE_TEXT_CLASS_NAME } from "~/components/pullRequest/pullRequestText";
 import { useAppSettings } from "~/appSettings";
+import { useUiLanguage } from "~/uiLanguage";
 
 export interface PullRequestsSearch {
   involvement: PullRequestInvolvement;
@@ -147,6 +148,7 @@ const STATE_TABS: ReadonlyArray<{ value: PullRequestState; label: string }> = [
 ];
 
 function PullRequestsRouteView() {
+  const { t } = useUiLanguage();
   const { settings } = useAppSettings();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
@@ -349,32 +351,29 @@ function PullRequestsRouteView() {
     (entry: PullRequestListEntry) => {
       for (const input of pullRequestPinToggleInputs(entry, search.projectId === undefined)) {
         mutatePin(input, {
-          onError: (error) =>
+          onError: () =>
             toastManager.add({
               type: "error",
-              title: "Could not update pull request pin",
-              description: error instanceof Error ? error.message : "The pin could not be saved.",
+              title: t("Could not update pull request pin"),
+              description: t("The pin could not be saved."),
             }),
         });
       }
     },
-    [mutatePin, search.projectId],
+    [mutatePin, search.projectId, t],
   );
   const refreshBlocked = refreshMutation.isPending || activeActionCount > 0;
   const handleManualRefresh = useCallback(() => {
     if (activeActionCount > 0) return;
     mutateRefresh(listInput, {
-      onError: (error) =>
+      onError: () =>
         toastManager.add({
           type: "error",
-          title: "Could not refresh pull requests",
-          description:
-            error instanceof Error
-              ? error.message
-              : "The pull request list could not be refreshed.",
+          title: t("Could not refresh pull requests"),
+          description: t("The pull request list could not be refreshed."),
         }),
     });
-  }, [activeActionCount, listInput, mutateRefresh]);
+  }, [activeActionCount, listInput, mutateRefresh, t]);
 
   const truncatedRepositoryCount =
     activeListData?.repositoryBatches.filter((batch) => batch.truncated).length ?? 0;
@@ -396,7 +395,7 @@ function PullRequestsRouteView() {
               <SidebarHeaderNavigationControls />
               {/* The title rides the surface header like the automations detail route, so the
                   scroll area opens straight onto the filters and the list. */}
-              <h1 className="truncate font-heading text-sm font-medium">Pull requests</h1>
+              <h1 className="truncate font-heading text-sm font-medium">{t("Pull requests")}</h1>
               {scopedProjectName ? (
                 <>
                   <span aria-hidden className="text-muted-foreground/50">
@@ -411,9 +410,11 @@ function PullRequestsRouteView() {
               <Button
                 size="icon-sm"
                 variant="ghost"
-                aria-label="Refresh pull requests"
+                aria-label={t("Refresh pull requests")}
                 title={
-                  activeActionCount > 0 ? "Wait for the pull request action to finish" : "Refresh"
+                  activeActionCount > 0
+                    ? t("Wait for the pull request action to finish")
+                    : t("Refresh")
                 }
                 disabled={refreshBlocked}
                 onClick={handleManualRefresh}
@@ -449,7 +450,7 @@ function PullRequestsRouteView() {
                   <div className="min-w-0 flex-1">
                     {/* The long field list belonged in a spec, not a placeholder. */}
                     <SearchInput
-                      placeholder="Search pull requests"
+                      placeholder={t("Search pull requests")}
                       value={search.q ?? ""}
                       onChange={(event) => updateSearch({ q: event.target.value || undefined })}
                     />
@@ -484,13 +485,13 @@ function PullRequestsRouteView() {
                   <EmptyHeader>
                     <EmptyTitle>
                       {search.involvement === "reviewing" && search.state !== "open"
-                        ? "Review requests only apply to open pull requests"
-                        : "No pull requests found"}
+                        ? t("Review requests only apply to open pull requests")
+                        : t("No pull requests found")}
                     </EmptyTitle>
                     <EmptyDescription>
                       {search.involvement === "reviewing" && search.state !== "open"
-                        ? "Select Open to see pull requests currently awaiting your review."
-                        : "Try another involvement, state, project, or search filter."}
+                        ? t("Select Open to see pull requests currently awaiting your review.")
+                        : t("Try another involvement, state, project, or search filter.")}
                     </EmptyDescription>
                   </EmptyHeader>
                 </Empty>
@@ -511,22 +512,25 @@ function PullRequestsRouteView() {
               !initialExactInvolvementError &&
               truncatedRepositoryCount > 0 ? (
                 <p className={cn(PR_FINE_TEXT_CLASS_NAME, "px-1 text-muted-foreground")}>
-                  Showing the first 50 matching pull requests for {truncatedRepositoryCount}{" "}
-                  {truncatedRepositoryCount === 1 ? "repository" : "repositories"}.
+                  {t("Showing the first 50 matching pull requests across")}{" "}
+                  {truncatedRepositoryCount} {t("repositories.")}
                 </p>
               ) : null}
               {!exactInvolvementPending &&
               !initialExactInvolvementError &&
               activeListData?.errors.length ? (
                 <PullRequestWarningNote shape="callout">
-                  {activeListData.errors.length} project{" "}
-                  {activeListData.errors.length === 1 ? "repository was" : "repositories were"}{" "}
-                  unavailable. Healthy repositories are still shown.
+                  {activeListData.errors.length}{" "}
+                  {t(
+                    "project repositories were unavailable. Healthy repositories are still shown.",
+                  )}
                 </PullRequestWarningNote>
               ) : null}
               {backgroundListError ? (
                 <PullRequestWarningNote shape="callout" role="status">
-                  The latest background refresh failed. Showing the last available pull requests.
+                  {t(
+                    "The latest background refresh failed. Showing the last available pull requests.",
+                  )}
                 </PullRequestWarningNote>
               ) : null}
             </div>
@@ -550,7 +554,9 @@ function PullRequestsRouteView() {
         }}
         onAddPane={() => {}}
         renderPane={(pane, context) => (
-          <Suspense fallback={<PanelStateMessage>Loading pull request...</PanelStateMessage>}>
+          <Suspense
+            fallback={<PanelStateMessage>{t("Loading pull request...")}</PanelStateMessage>}
+          >
             <PullRequestDockPane
               pane={pane}
               pollingEnabled={context.isVisible}

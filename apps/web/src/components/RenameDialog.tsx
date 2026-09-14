@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Input } from "./ui/input";
+import { useUiLanguage } from "~/uiLanguage";
 
 export interface RenameDialogProps {
   open: boolean;
@@ -45,14 +46,15 @@ export function RenameDialog({
   onOpenChange,
   onSave,
 }: RenameDialogProps) {
+  const { t } = useUiLanguage();
   const allowEmpty = allowEmptyProp ?? false;
   const saveLabel = saveLabelProp ?? "Save";
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPopup className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {description ? <DialogDescription>{description}</DialogDescription> : null}
+          <DialogTitle>{t(title)}</DialogTitle>
+          {description ? <DialogDescription>{t(description)}</DialogDescription> : null}
         </DialogHeader>
         {/* Field state lives below DialogPopup, which unmounts its children
             after the close transition — each open seeds a fresh value from
@@ -60,8 +62,8 @@ export function RenameDialog({
         <RenameDialogForm
           initialValue={initialValue}
           allowEmpty={allowEmpty}
-          placeholder={placeholder}
-          saveLabel={saveLabel}
+          placeholder={placeholder ? t(placeholder) : undefined}
+          saveLabel={t(saveLabel)}
           onOpenChange={onOpenChange}
           onSave={onSave}
         />
@@ -85,6 +87,7 @@ function RenameDialogForm({
   onOpenChange: (open: boolean) => void;
   onSave: (value: string) => Promise<void> | void;
 }) {
+  const { t } = useUiLanguage();
   const [value, setValue] = useState(initialValue);
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -140,10 +143,10 @@ function RenameDialogForm({
       </DialogPanel>
       <DialogFooter>
         <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={isSaving}>
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button size="sm" onClick={() => void handleSubmit()} disabled={!canSave}>
-          {isSaving ? "Saving..." : saveLabel}
+          {isSaving ? t("Saving...") : saveLabel}
         </Button>
       </DialogFooter>
     </>

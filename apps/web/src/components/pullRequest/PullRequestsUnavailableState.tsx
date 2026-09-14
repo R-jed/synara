@@ -22,6 +22,7 @@ import { CheckIcon, CopyIcon, GitPullRequestIcon, TriangleAlertIcon } from "~/li
 import { cn } from "~/lib/utils";
 import { ensureNativeApi } from "~/nativeApi";
 import { PR_FINE_TEXT_CLASS_NAME, PR_META_TEXT_CLASS_NAME } from "./pullRequestText";
+import { useUiLanguage } from "~/uiLanguage";
 
 export function isPullRequestsUnavailableError(
   error: unknown,
@@ -42,6 +43,7 @@ function githubCliInstallCommand(platform: string): string | null {
 
 /** A single copyable terminal command — the `brew install gh` / `gh auth login` affordances. */
 function CommandLine({ command }: { command: string }) {
+  const { t, tError } = useUiLanguage();
   const [copied, setCopied] = useState(false);
   const mountedRef = useRef(true);
   const resetTimerRef = useRef<number | null>(null);
@@ -72,13 +74,13 @@ function CommandLine({ command }: { command: string }) {
             if (!mountedRef.current) return;
             toastManager.add({
               type: "error",
-              title: "Could not copy command",
-              description: error instanceof Error ? error.message : "Clipboard access failed.",
+              title: t("Could not copy command"),
+              description: tError(error, "Clipboard access failed."),
             });
           },
         );
       }}
-      title="Copy to clipboard"
+      title={t("Copy to clipboard")}
       className="group flex w-full items-center gap-2 rounded-lg border border-border/60 bg-[var(--color-background-elevated-secondary)] px-3 py-2 text-left transition-colors hover:border-border"
     >
       <code
@@ -95,11 +97,11 @@ function CommandLine({ command }: { command: string }) {
       >
         {copied ? (
           <>
-            <CheckIcon className="size-3" /> Copied
+            <CheckIcon className="size-3" /> {t("Copied")}
           </>
         ) : (
           <>
-            <CopyIcon className="size-3" /> Copy
+            <CopyIcon className="size-3" /> {t("Copy")}
           </>
         )}
       </span>
@@ -115,6 +117,7 @@ export function PullRequestsUnavailableState({
   /** Optional refetch hook so "Retry" re-runs the failed query instead of reloading the app. */
   onRetry?: () => void;
 }) {
+  const { t } = useUiLanguage();
   const unavailable = isPullRequestsUnavailableError(error) ? error : null;
   const notInstalled = unavailable?.reason === "gh-not-installed";
   const notAuthenticated = unavailable?.reason === "gh-not-authenticated";
@@ -131,19 +134,19 @@ export function PullRequestsUnavailableState({
         </EmptyMedia>
         <EmptyTitle>
           {notInstalled
-            ? "GitHub CLI is required"
+            ? t("GitHub CLI is required")
             : notAuthenticated
-              ? "Sign in to GitHub CLI"
-              : "Pull requests are unavailable"}
+              ? t("Sign in to GitHub CLI")
+              : t("Pull requests are unavailable")}
         </EmptyTitle>
         <EmptyDescription>
           {notInstalled
-            ? "Synara reads GitHub data only through the gh CLI. Install it, then reopen this view."
+            ? t(
+                "Synara reads GitHub data only through the gh CLI. Install it, then reopen this view.",
+              )
             : notAuthenticated
-              ? "Authenticate the GitHub CLI in a terminal, then retry."
-              : error instanceof Error
-                ? error.message
-                : "The pull request request failed."}
+              ? t("Authenticate the GitHub CLI in a terminal, then retry.")
+              : t("The pull request request failed.")}
         </EmptyDescription>
       </EmptyHeader>
       {notInstalled || notAuthenticated ? (
@@ -158,7 +161,7 @@ export function PullRequestsUnavailableState({
                 className="flex-1"
                 onClick={() => void ensureNativeApi().shell.openExternal("https://cli.github.com/")}
               >
-                Install instructions
+                {t("Install instructions")}
               </Button>
             ) : null}
             {onRetry ? (
@@ -168,7 +171,7 @@ export function PullRequestsUnavailableState({
                 className="flex-1"
                 onClick={onRetry}
               >
-                Retry
+                {t("Retry")}
               </Button>
             ) : null}
           </div>
@@ -182,11 +185,11 @@ export function PullRequestsUnavailableState({
             )}
           >
             <TriangleAlertIcon className="size-3.5" />
-            <span>Check your connection and try again.</span>
+            <span>{t("Check your connection and try again.")}</span>
           </div>
           {onRetry ? (
             <Button variant="outline" size="sm" onClick={onRetry}>
-              Retry
+              {t("Retry")}
             </Button>
           ) : null}
         </div>

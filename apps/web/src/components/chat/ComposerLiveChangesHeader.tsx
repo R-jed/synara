@@ -9,6 +9,7 @@
 import { pluralize } from "@synara/shared/text";
 
 import { ChangesIcon } from "~/lib/icons";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   ComposerStackedPanelRow,
   ComposerStackedPanelRowLabel,
@@ -36,12 +37,15 @@ export function ComposerLiveChangesHeader({
   onReview,
   attachedToPrevious: attachedToPreviousProp,
 }: ComposerLiveChangesHeaderProps) {
+  const { t } = useUiLanguage();
   const attachedToPrevious = attachedToPreviousProp ?? false;
   if (fileCount === 0) {
     return null;
   }
   const label =
-    fileCount === null ? "Files changed" : `${fileCount} ${pluralize(fileCount, "file")} changed`;
+    fileCount === null
+      ? t("Files changed")
+      : `${fileCount} ${t(pluralize(fileCount, "file changed", "files changed"))}`;
 
   return (
     <ComposerStackedPanel attachedToPrevious={attachedToPrevious}>

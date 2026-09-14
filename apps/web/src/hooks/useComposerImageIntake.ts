@@ -10,6 +10,7 @@ import {
   prepareComposerImageAttachmentsFromFiles,
   type ComposerImageBuildResult,
 } from "../lib/composerSend";
+import { useUiLanguage } from "../uiLanguage";
 
 const ATTACHMENT_LIMIT_ERROR = `You can attach up to ${PROVIDER_SEND_TURN_MAX_ATTACHMENTS} references per message.`;
 
@@ -112,6 +113,7 @@ export function useComposerImageIntake(input: {
   readonly commitImages: (images: ComposerImageAttachment[]) => number;
   readonly onError: (error: string | null) => void;
 }) {
+  const { tError } = useUiLanguage();
   const queue = useMemo(() => new ComposerImageIntakeQueue(), [input.threadId]);
   useEffect(() => () => queue.dispose(), [queue]);
   const pendingCount = useSyncExternalStore(
@@ -126,10 +128,11 @@ export function useComposerImageIntake(input: {
         files,
         existingAttachmentCount: input.existingAttachmentCount,
         commitImages: input.commitImages,
-        onError: input.onError,
+        onError: (error) =>
+          input.onError(error === null ? null : tError(error, "Could not process that image.")),
       });
     },
-    [input.commitImages, input.existingAttachmentCount, input.onError, queue],
+    [input.commitImages, input.existingAttachmentCount, input.onError, queue, tError],
   );
 
   const waitForPending = useCallback(() => queue.waitForPending(), [queue]);

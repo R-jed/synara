@@ -34,6 +34,7 @@ import {
   resolveEnvironmentPanelPreferenceAfterFirstSend,
 } from "../ChatView.logic";
 import { toastManager } from "../ui/toast";
+import { useUiLanguage } from "~/uiLanguage";
 import type { ChatTurnSubmissionInput } from "./chatSendTypes";
 import { handleChatAutomationSend } from "./handleChatAutomationSend";
 import { prepareChatSendWorkspace } from "./prepareChatSendWorkspace";
@@ -178,6 +179,7 @@ export function useChatTurnSubmission({
   runProjectScript,
   persistThreadSettingsForNextTurn,
 }: ChatTurnSubmissionInput) {
+  const { language, t, tError } = useUiLanguage();
   const executePreparedTurn = useChatTurnExecution({
     isServerThread,
     setStoreThreadWorkspace,
@@ -469,6 +471,7 @@ export function useChatTurnSubmission({
           const toastCopy = buildExpiredTerminalContextToastCopy(
             expiredTerminalContextCount,
             "empty",
+            language,
           );
           toastManager.add({
             type: "warning",
@@ -481,6 +484,7 @@ export function useChatTurnSubmission({
       if (!activeProject) return false;
       if (queuedChatTurn === null && !isLivePlanFollowUpSubmission) {
         const handled = await handleChatAutomationSend({
+          translate: t,
           threadId,
           pendingAutomationConversation,
           trimmedPromptForSend,
@@ -522,12 +526,13 @@ export function useChatTurnSubmission({
       if (!sendProviderAvailability.usable) {
         toastManager.add({
           type: "error",
-          title: sendProviderAvailability.unavailableReason,
+          title: tError(sendProviderAvailability.unavailableReason, "Failed to send message."),
         });
         return false;
       }
 
       const captures = await resolveChatPromptCaptures({
+        translate: t,
         api,
         activeThread,
         promptForSend,
@@ -593,6 +598,7 @@ export function useChatTurnSubmission({
         return true;
       }
       const workspace = await prepareChatSendWorkspace({
+        translate: t,
         activeThread,
         isServerThread,
         hasNativeUserMessages,
@@ -790,6 +796,7 @@ export function useChatTurnSubmission({
         const toastCopy = buildExpiredTerminalContextToastCopy(
           expiredTerminalContextCount,
           "omitted",
+          language,
         );
         toastManager.add({
           type: "warning",
@@ -963,6 +970,9 @@ export function useChatTurnSubmission({
       providerStatuses,
       setOptimisticUserMessages,
       executePreparedTurn,
+      language,
+      t,
+      tError,
     ],
   );
   return { onSend };

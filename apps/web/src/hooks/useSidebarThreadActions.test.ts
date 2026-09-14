@@ -169,6 +169,13 @@ vi.mock("../lib/deletedThreadClientReconciliation", () => ({
   reconcileDeletedThreadsFromClient: harness.reconcileDeletedThreads,
 }));
 vi.mock("../components/ui/toast", () => ({ toastManager: { add: harness.toast } }));
+vi.mock("../uiLanguage", () => ({
+  useUiLanguage: () => ({
+    t: (text: string) => text,
+    tError: (error: unknown, fallback = "An unexpected error occurred.") =>
+      String((error as { message?: unknown })?.message ?? fallback),
+  }),
+}));
 vi.mock("../store", () => {
   const useStore = (selector: (state: unknown) => unknown) =>
     selector({ shellSnapshotSequence: harness.shellSnapshotSequence });

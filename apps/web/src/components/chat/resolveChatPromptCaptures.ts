@@ -16,6 +16,7 @@ import {
 import { type Thread } from "../../types";
 import { toastManager } from "../ui/toast";
 interface Input {
+  translate: (text: string) => string;
   api: NonNullable<ReturnType<typeof readNativeApi>>;
   activeThread: Thread;
   promptForSend: string;
@@ -25,6 +26,7 @@ interface Input {
 }
 
 export async function resolveChatPromptCaptures({
+  translate,
   api,
   activeThread,
   promptForSend,
@@ -54,23 +56,24 @@ export async function resolveChatPromptCaptures({
     } else {
       toastManager.add({
         type: "warning",
-        title: `You can attach up to ${PROVIDER_SEND_TURN_MAX_ATTACHMENTS} references per message.`,
-        description:
+        title: `${translate("You can attach up to")} ${PROVIDER_SEND_TURN_MAX_ATTACHMENTS} ${translate("references per message.")}`,
+        description: translate(
           "The current browser screenshot was skipped because this message is already at the attachment limit.",
+        ),
       });
     }
   } else if (browserPromptAttachment.requested) {
     const description =
       browserPromptAttachment.reason === "no-open-browser"
-        ? "Open the in-app browser first, then try again."
+        ? translate("Open the in-app browser first, then try again.")
         : browserPromptAttachment.reason === "no-active-tab"
-          ? "The in-app browser has no active tab to capture yet."
+          ? translate("The in-app browser has no active tab to capture yet.")
           : browserPromptAttachment.reason === "attachment-processing-failed"
-            ? "The browser screenshot could not be optimized for attachment."
-            : "The current browser context could not be attached.";
+            ? translate("The browser screenshot could not be optimized for attachment.")
+            : translate("The current browser context could not be attached.");
     toastManager.add({
       type: "warning",
-      title: "Couldn’t attach the in-app browser context",
+      title: translate("Couldn’t attach the in-app browser context"),
       description,
     });
   }
@@ -97,23 +100,24 @@ export async function resolveChatPromptCaptures({
     } else {
       toastManager.add({
         type: "warning",
-        title: `You can attach up to ${PROVIDER_SEND_TURN_MAX_ATTACHMENTS} references per message.`,
-        description:
+        title: `${translate("You can attach up to")} ${PROVIDER_SEND_TURN_MAX_ATTACHMENTS} ${translate("references per message.")}`,
+        description: translate(
           "The simulator screenshot was skipped because this message is already at the attachment limit.",
+        ),
       });
     }
   } else if (devicePromptAttachment.requested) {
     const description =
       devicePromptAttachment.reason === "no-attached-device"
-        ? "Open the iOS Simulator panel and choose a device first, then try again."
+        ? translate("Open the iOS Simulator panel and choose a device first, then try again.")
         : devicePromptAttachment.reason === "device-not-booted"
-          ? "The selected simulator is still starting up."
+          ? translate("The selected simulator is still starting up.")
           : devicePromptAttachment.reason === "attachment-processing-failed"
-            ? "The simulator screenshot could not be optimized for attachment."
-            : "The current simulator context could not be attached.";
+            ? translate("The simulator screenshot could not be optimized for attachment.")
+            : translate("The current simulator context could not be attached.");
     toastManager.add({
       type: "warning",
-      title: "Couldn’t attach the simulator screen",
+      title: translate("Couldn’t attach the simulator screen"),
       description,
     });
   }

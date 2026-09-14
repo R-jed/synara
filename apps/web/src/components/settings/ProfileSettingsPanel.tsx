@@ -29,6 +29,7 @@ import { useProfileName } from "../profile/useProfileName";
 import { useProfileAvatarColor } from "../profile/useProfileAvatarColor";
 import { useProfileAvatarImage } from "../profile/useProfileAvatarImage";
 import { ProfileAvatar } from "../profile/ProfileAvatar";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   formatCompact,
   formatDays,
@@ -37,6 +38,7 @@ import {
 } from "../profile/profileFormatting";
 
 export function ProfileSettingsPanel() {
+  const { t } = useUiLanguage();
   const coreQuery = useQuery(serverProfileStatsQueryOptions());
   const tokenQuery = useQuery(serverProfileTokenStatsQueryOptions());
 
@@ -46,9 +48,9 @@ export function ProfileSettingsPanel() {
   if (coreQuery.isError || !coreQuery.data) {
     return (
       <div className="flex flex-col items-center gap-3 py-24 text-center">
-        <p className="text-sm text-muted-foreground">Couldn’t load your local stats.</p>
+        <p className="text-sm text-muted-foreground">{t("Couldn’t load your local stats.")}</p>
         <Button variant="outline" size="sm" onClick={() => void coreQuery.refetch()}>
-          Try again
+          {t("Try again")}
         </Button>
       </div>
     );
@@ -72,6 +74,7 @@ function ProfileContent({
   tokenStats: ProfileTokenStats | null;
   tokensPending: boolean;
 }) {
+  const { language, t } = useUiLanguage();
   const [shareOpen, setShareOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
@@ -85,8 +88,8 @@ function ProfileContent({
   const heatmap = selectProfileHeatmap(stats, tokenStats);
   const topProvider = selectProfileTopProvider(stats, tokenStats);
   const modelUsage = selectProfileModelUsage(stats, tokenStats);
-  const peakHourLabel = formatPeakHourLabel(stats.activeHours.startHour);
-  const mostWorkedProjectLabel = formatMostWorkedProjectLabel(stats.mostWorkedProject);
+  const peakHourLabel = formatPeakHourLabel(stats.activeHours.startHour, language);
+  const mostWorkedProjectLabel = formatMostWorkedProjectLabel(stats.mostWorkedProject, language, t);
 
   return (
     <div className="flex min-w-0 flex-col gap-7">
@@ -94,11 +97,11 @@ function ProfileContent({
       <div className="flex items-center justify-end gap-2">
         <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}>
           <CentralIcon name="share-os" />
-          Share
+          {t("Share")}
         </Button>
         <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
           <CentralIcon name="pencil" />
-          Edit
+          {t("Edit")}
         </Button>
       </div>
 
@@ -126,28 +129,46 @@ function ProfileContent({
       {/* Stat tiles */}
       <div className="grid grid-cols-2 divide-x divide-y divide-border/50 overflow-hidden rounded-2xl border border-border/60 sm:grid-cols-3 lg:grid-cols-5 lg:divide-y-0">
         <StatTile
-          label="Lifetime tokens"
+          label={t("Lifetime tokens")}
           value={tokensPending ? null : formatCompact(tokenStats?.lifetimeTotalTokens ?? null)}
         />
         <StatTile
-          label="Peak day"
+          label={t("Peak day")}
           value={tokensPending ? null : formatCompact(tokenStats?.peakDayTokens ?? null)}
         />
-        <StatTile label="Total prompts" value={formatNumber(stats.activity.totalPromptsSent)} />
-        <StatTile label="Current streak" value={formatDays(stats.activity.currentStreakDays)} />
-        <StatTile label="Longest streak" value={formatDays(stats.activity.longestStreakDays)} />
+        <StatTile
+          label={t("Total prompts")}
+          value={formatNumber(stats.activity.totalPromptsSent)}
+        />
+        <StatTile
+          label={t("Current streak")}
+          value={
+            language === "zh-CN"
+              ? `${formatNumber(stats.activity.currentStreakDays)} ${t("days")}`
+              : formatDays(stats.activity.currentStreakDays)
+          }
+        />
+        <StatTile
+          label={t("Longest streak")}
+          value={
+            language === "zh-CN"
+              ? `${formatNumber(stats.activity.longestStreakDays)} ${t("days")}`
+              : formatDays(stats.activity.longestStreakDays)
+          }
+        />
       </div>
 
       {/* Heatmap */}
       {stats.providerModels.some((entry) => entry.provider === "claudeAgent") ||
       tokenStats?.providers.includes("claudeAgent") ? (
         <p className="text-xs text-muted-foreground">
-          Claude token totals use verifiable records. Older history and unfinished turns may be
-          incomplete.
+          {t(
+            "Claude token totals use verifiable records. Older history and unfinished turns may be incomplete.",
+          )}
         </p>
       ) : null}
       <section className="flex min-w-0 flex-col gap-3">
-        <h3 className="text-sm font-medium">Activity</h3>
+        <h3 className="text-sm font-medium">{t("Activity")}</h3>
         {tokensPending ? (
           <Skeleton className="h-28 w-full rounded-lg" />
         ) : (
@@ -167,10 +188,10 @@ function ProfileContent({
       {/* Insights + plugins */}
       <div className="grid gap-x-12 gap-y-7 md:grid-cols-2">
         <section className="flex flex-col gap-3">
-          <h3 className="text-sm font-medium">Activity insights</h3>
+          <h3 className="text-sm font-medium">{t("Activity insights")}</h3>
           <dl className="flex flex-col gap-2.5">
             <InsightRow
-              label="Most used provider"
+              label={t("Most used provider")}
               value={
                 topProvider.provider
                   ? `${formatProviderLabel(topProvider.provider)}${
@@ -180,7 +201,7 @@ function ProfileContent({
               }
             />
             <InsightRow
-              label="Most used reasoning"
+              label={t("Most used reasoning")}
               value={
                 stats.insights.topReasoning
                   ? `${capitalize(stats.insights.topReasoning)}${
@@ -191,22 +212,25 @@ function ProfileContent({
                   : "—"
               }
             />
-            <InsightRow label="Most active hour" value={peakHourLabel} />
-            <InsightRow label="Most worked project" value={mostWorkedProjectLabel} />
+            <InsightRow label={t("Most active hour")} value={peakHourLabel} />
+            <InsightRow label={t("Most worked project")} value={mostWorkedProjectLabel} />
             <InsightRow
-              label="Skills explored"
+              label={t("Skills explored")}
               value={formatNumber(stats.insights.skillsExplored)}
             />
             <InsightRow
-              label="Total skills used"
+              label={t("Total skills used")}
               value={formatNumber(stats.insights.totalSkillsUsed)}
             />
-            <InsightRow label="Total threads" value={formatNumber(stats.activity.totalThreads)} />
+            <InsightRow
+              label={t("Total threads")}
+              value={formatNumber(stats.activity.totalThreads)}
+            />
           </dl>
         </section>
 
         <section className="flex flex-col gap-3">
-          <h3 className="text-sm font-medium">Most used plugins</h3>
+          <h3 className="text-sm font-medium">{t("Most used plugins")}</h3>
           {stats.skills.length > 0 ? (
             <ul className="flex flex-col gap-2.5">
               {stats.skills.slice(0, 6).map((skill) => (
@@ -224,20 +248,20 @@ function ProfileContent({
                     <span className="truncate text-sm">{skill.displayName}</span>
                   </span>
                   <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
-                    {formatNumber(skill.runCount)} runs
+                    {formatNumber(skill.runCount)} {t("runs")}
                   </span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">No skills or agents used yet.</p>
+            <p className="text-sm text-muted-foreground">{t("No skills or agents used yet.")}</p>
           )}
         </section>
       </div>
 
       {/* Model usage */}
       <section className="flex flex-col gap-3">
-        <h3 className="text-sm font-medium">Model usage</h3>
+        <h3 className="text-sm font-medium">{t("Model usage")}</h3>
         {modelUsage.entries.length > 0 ? (
           <ul className="grid grid-cols-1 gap-x-12 gap-y-3 sm:grid-cols-2">
             {modelUsage.entries.slice(0, 6).map((entry) => (
@@ -250,7 +274,7 @@ function ProfileContent({
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">No model activity yet.</p>
+          <p className="text-sm text-muted-foreground">{t("No model activity yet.")}</p>
         )}
       </section>
 
@@ -315,20 +339,28 @@ function InsightRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function formatHour(hour: number): string {
+function formatHour(hour: number, language: "en" | "zh-CN"): string {
   const normalized = ((hour % 24) + 24) % 24;
+  if (language === "zh-CN") return `${normalized.toString().padStart(2, "0")}:00`;
   if (normalized === 0) return "12 AM";
   if (normalized === 12) return "12 PM";
   return normalized < 12 ? `${normalized} AM` : `${normalized - 12} PM`;
 }
 
-function formatPeakHourLabel(startHour: number | null): string {
-  return startHour === null ? "—" : formatHour(startHour);
+function formatPeakHourLabel(startHour: number | null, language: "en" | "zh-CN"): string {
+  return startHour === null ? "—" : formatHour(startHour, language);
 }
 
-function formatMostWorkedProjectLabel(project: ProfileStats["mostWorkedProject"]): string {
+function formatMostWorkedProjectLabel(
+  project: ProfileStats["mostWorkedProject"],
+  language: "en" | "zh-CN",
+  t: (text: string) => string,
+): string {
   if (!project) {
     return "—";
+  }
+  if (language === "zh-CN") {
+    return `${project.title} · ${formatNumber(project.promptCount)} ${t("prompts")}`;
   }
   const promptLabel = project.promptCount === 1 ? "prompt" : "prompts";
   return `${project.title} · ${formatNumber(project.promptCount)} ${promptLabel}`;

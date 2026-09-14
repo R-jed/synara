@@ -24,6 +24,7 @@ import { type MessageId } from "@synara/contracts";
 import { type LegendListRef } from "@legendapp/list/react";
 import { useLayoutEffect, useRef, type RefObject } from "react";
 
+import { useReducedMotion } from "~/hooks/useReducedMotion";
 import { ANCHOR_SLIDE_DURATION_MS, anchorSlideOffsetPx } from "./transcriptScroll";
 
 // Absolute bound on the slide plus its hold, so a transcript that never stops
@@ -112,13 +113,6 @@ function anchoredScrollTargetPx(
   };
 }
 
-function prefersReducedMotion(): boolean {
-  return (
-    typeof window.matchMedia === "function" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-}
-
 export function useTailAnchorScroll({
   listRef,
   timelineRootRef,
@@ -128,6 +122,7 @@ export function useTailAnchorScroll({
   contentChangeSignal,
   animateAnchorSlide = true,
 }: UseTailAnchorScrollOptions): void {
+  const reduceMotion = useReducedMotion();
   const anchorSlideCorrectionRef = useRef<(() => void) | null>(null);
   const lastContentChangeAtRef = useRef(0);
   const animateAnchorSlideRef = useRef(animateAnchorSlide);
@@ -149,7 +144,7 @@ export function useTailAnchorScroll({
     const anchorId = anchorMessageId;
     // Steering (and reduced motion) skips the eased approach: the coordinate is
     // taken immediately and then held.
-    const easeToAnchor = animateAnchorSlideRef.current && !prefersReducedMotion();
+    const easeToAnchor = animateAnchorSlideRef.current && !reduceMotion;
     if (anchorScrollInFlightRef) {
       anchorScrollInFlightRef.current = true;
     }
@@ -416,7 +411,14 @@ export function useTailAnchorScroll({
         anchorScrollInFlightRef.current = false;
       }
     };
-  }, [anchorMessageId, anchorScrollInFlightRef, listRef, onAnchorSlideFinished, timelineRootRef]);
+  }, [
+    anchorMessageId,
+    anchorScrollInFlightRef,
+    listRef,
+    onAnchorSlideFinished,
+    reduceMotion,
+    timelineRootRef,
+  ]);
 
   // Receiving content is activity even before deferred Markdown changes row height.
   // Keep the hold alive until both content arrival and geometry have settled.

@@ -132,6 +132,13 @@ vi.mock("../nativeApi", () => ({
 }));
 
 vi.mock("../components/ui/toast", () => ({ toastManager: { add: harness.toast } }));
+vi.mock("../uiLanguage", () => ({
+  useUiLanguage: () => ({
+    t: (text: string) => text,
+    tError: (error: unknown, fallback = "An unexpected error occurred.") =>
+      String((error as { message?: unknown })?.message ?? fallback),
+  }),
+}));
 vi.mock("../lib/chatProjects", () => ({ isHomeChatContainerProject: () => false }));
 vi.mock("../lib/projectReactQuery", () => ({
   projectDiscoverScriptsQueryOptions: (input: unknown) => input,
@@ -268,7 +275,7 @@ describe("useSidebarProjectRunController", () => {
     expect(harness.toast).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "error",
-        title: 'Failed to run "Project Run"',
+        title: "Failed to run “Project Run”",
         description: "port busy",
       }),
     );

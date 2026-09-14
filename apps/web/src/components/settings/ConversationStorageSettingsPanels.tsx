@@ -21,6 +21,7 @@ import { ensureNativeApi, readNativeApi } from "~/nativeApi";
 import { SETTINGS_CARD_ROW_DESCRIPTION_CLASS_NAME } from "~/settingsPanelStyles";
 import { useStore } from "~/store";
 import { createThreadShellsSelector } from "~/storeSelectors";
+import { useUiLanguage } from "~/uiLanguage";
 import { formatWorktreePathForDisplay } from "~/worktreeCleanup";
 import { toastManager } from "../ui/toast";
 import { SettingsEmptyState, SettingsListRow, SettingsSection } from "./SettingsPanelPrimitives";
@@ -53,6 +54,18 @@ function compareArchivedThreads(left: ArchivedSortableThread, right: ArchivedSor
   return rightKey.localeCompare(leftKey) || right.id.localeCompare(left.id);
 }
 
+function localizedRelativeTime(
+  value: string,
+  language: "en" | "zh-CN",
+  t: (text: string) => string,
+): string {
+  const relative = formatRelativeTime(value);
+  if (language !== "zh-CN") return relative;
+  if (relative === "now") return t("now");
+  const match = /^(\d+)(mo|m|h|d|w|y)$/.exec(relative);
+  return match ? `${match[1]}${t(match[2]!)}` : relative;
+}
+
 function WorktreesStatus(props: { children: string; error?: boolean }) {
   return (
     <SettingsEmptyState layout="status" tone={props.error ? "destructive" : "muted"}>
@@ -62,6 +75,7 @@ function WorktreesStatus(props: { children: string; error?: boolean }) {
 }
 
 export function WorktreesSettingsPanel({ active }: { readonly active: boolean }) {
+  const { language, t, tError } = useUiLanguage();
   const queryClient = useQueryClient();
   const worktreesQuery = useQuery(serverWorktreesQueryOptions());
   const removeWorktreeMutation = useMutation(gitRemoveWorktreeMutationOptions({ queryClient }));
@@ -111,8 +125,8 @@ export function WorktreesSettingsPanel({ active }: { readonly active: boolean })
       if (snapshot === null) {
         toastManager.add({
           type: "error",
-          title: "Could not verify linked conversations",
-          description: "Retry once the app reconnects to the server.",
+          title: t("Could not verify linked conversations"),
+          description: t("Retry once the app reconnects to the server."),
         });
         return;
       }
@@ -126,20 +140,37 @@ export function WorktreesSettingsPanel({ active }: { readonly active: boolean })
       const linkedActiveThreadCount = linkedThreads.length - linkedArchivedThreadIds.length;
       const linkedConversationCount = linkedThreads.length;
       const confirmed = await api.dialogs.confirm(
-        linkedConversationCount > 0
-          ? [
-              `Delete worktree "${displayName}"?`,
-              "",
-              `${linkedActiveThreadCount} active and ${linkedArchivedThreadIds.length} archived ${pluralize(linkedConversationCount, "conversation is", "conversations are")} linked to this worktree.`,
-              linkedArchivedThreadIds.length > 0
-                ? "Archived conversations will be deleted first."
-                : "Deleting it can break reopening those chats in the same workspace.",
-              "",
-              "Delete the worktree anyway?",
-            ].join("\n")
-          : [`Delete worktree "${displayName}"?`, "This removes the Git worktree from disk."].join(
-              "\n",
-            ),
+        language === "zh-CN"
+          ? linkedConversationCount > 0
+            ? [
+                `${t("Delete worktree")} “${displayName}”？`,
+                "",
+                `${t("This worktree is linked to")} ${linkedActiveThreadCount} ${t("active conversations and")} ${linkedArchivedThreadIds.length} ${t("archived conversations.")}`,
+                linkedArchivedThreadIds.length > 0
+                  ? t("Archived conversations will be deleted first.")
+                  : t("Deleting it can break reopening those chats in the same workspace."),
+                "",
+                t("Delete the worktree anyway?"),
+              ].join("\n")
+            : [
+                `${t("Delete worktree")} “${displayName}”？`,
+                t("This removes the Git worktree from disk."),
+              ].join("\n")
+          : linkedConversationCount > 0
+            ? [
+                `Delete worktree "${displayName}"?`,
+                "",
+                `${linkedActiveThreadCount} active and ${linkedArchivedThreadIds.length} archived ${pluralize(linkedConversationCount, "conversation is", "conversations are")} linked to this worktree.`,
+                linkedArchivedThreadIds.length > 0
+                  ? "Archived conversations will be deleted first."
+                  : "Deleting it can break reopening those chats in the same workspace.",
+                "",
+                "Delete the worktree anyway?",
+              ].join("\n")
+            : [
+                `Delete worktree "${displayName}"?`,
+                "This removes the Git worktree from disk.",
+              ].join("\n"),
       );
       if (!confirmed) return;
 
@@ -157,39 +188,41 @@ export function WorktreesSettingsPanel({ active }: { readonly active: boolean })
         await queryClient.invalidateQueries({ queryKey: serverQueryKeys.worktrees() });
         toastManager.add({
           type: "success",
-          title: "Worktree deleted",
+          title: t("Worktree deleted"),
           description:
-            linkedArchivedThreadIds.length > 0
-              ? `${displayName} was removed and ${linkedArchivedThreadIds.length} archived ${pluralize(linkedArchivedThreadIds.length, "conversation")} were deleted.`
-              : `${displayName} was removed.`,
+            language === "zh-CN"
+              ? linkedArchivedThreadIds.length > 0
+                ? `${t("Removed")} ${displayName}，${t("and deleted")} ${linkedArchivedThreadIds.length} ${t("archived conversations.")}`
+                : `${t("Removed")} ${displayName}。`
+              : linkedArchivedThreadIds.length > 0
+                ? `${displayName} was removed and ${linkedArchivedThreadIds.length} archived ${pluralize(linkedArchivedThreadIds.length, "conversation")} were deleted.`
+                : `${displayName} was removed.`,
         });
       } catch (error) {
         toastManager.add({
           type: "error",
-          title: "Could not delete worktree",
-          description: error instanceof Error ? error.message : "Unable to delete the worktree.",
+          title: t("Could not delete worktree"),
+          description: tError(error, "Unable to delete the worktree."),
         });
       }
     },
-    [queryClient, removeDeletedThreadFromClientState, removeWorktreeMutation],
+    [language, queryClient, removeDeletedThreadFromClientState, removeWorktreeMutation, t, tError],
   );
 
   if (!active) return null;
 
   if (worktreesQuery.isLoading) {
-    return <WorktreesStatus>Loading managed worktrees...</WorktreesStatus>;
+    return <WorktreesStatus>{t("Loading managed worktrees...")}</WorktreesStatus>;
   }
   if (worktreesQuery.isError) {
     return (
       <WorktreesStatus error>
-        {worktreesQuery.error instanceof Error
-          ? worktreesQuery.error.message
-          : "Unable to load worktrees."}
+        {tError(worktreesQuery.error, "Unable to load worktrees.")}
       </WorktreesStatus>
     );
   }
   if (worktreesByWorkspaceRoot.length === 0) {
-    return <WorktreesStatus>No app-managed worktrees found yet.</WorktreesStatus>;
+    return <WorktreesStatus>{t("No app-managed worktrees found yet.")}</WorktreesStatus>;
   }
 
   return (
@@ -200,7 +233,7 @@ export function WorktreesSettingsPanel({ active }: { readonly active: boolean })
             <SettingsListRow
               key={worktree.path}
               align="start"
-              title="Worktree"
+              title={t("Worktree")}
               description={
                 <div className="space-y-2">
                   <div
@@ -210,7 +243,7 @@ export function WorktreesSettingsPanel({ active }: { readonly active: boolean })
                   </div>
                   <div className="space-y-1">
                     <div className="text-[11px] font-medium text-muted-foreground">
-                      Conversations
+                      {t("Conversations")}
                     </div>
                     {worktree.linkedThreads.length > 0 ? (
                       <div className="space-y-1">
@@ -228,7 +261,7 @@ export function WorktreesSettingsPanel({ active }: { readonly active: boolean })
                       </div>
                     ) : (
                       <div className={SETTINGS_CARD_ROW_DESCRIPTION_CLASS_NAME}>
-                        No conversations linked to this worktree.
+                        {t("No conversations linked to this worktree.")}
                       </div>
                     )}
                   </div>
@@ -247,7 +280,7 @@ export function WorktreesSettingsPanel({ active }: { readonly active: boolean })
                       })
                     }
                   >
-                    Delete
+                    {t("Delete")}
                   </Button>
                   {worktree.linkedThreads.length > 0 ? (
                     <p
@@ -256,7 +289,7 @@ export function WorktreesSettingsPanel({ active }: { readonly active: boolean })
                         "max-w-40 text-right",
                       )}
                     >
-                      Linked conversations exist. Deleting will ask for confirmation.
+                      {t("Linked conversations exist. Deleting will ask for confirmation.")}
                     </p>
                   ) : null}
                 </div>
@@ -270,6 +303,7 @@ export function WorktreesSettingsPanel({ active }: { readonly active: boolean })
 }
 
 export function ArchivedSettingsPanel({ active }: { readonly active: boolean }) {
+  const { language, t, tError } = useUiLanguage();
   const removeDeletedThreadFromClientState = useStore(
     (store) => store.removeDeletedThreadFromClientState,
   );
@@ -306,31 +340,36 @@ export function ArchivedSettingsPanel({ active }: { readonly active: boolean }) 
     return groups.filter((group) => group.threads.length > 0);
   }, [projects, threadShells]);
 
-  const unarchiveThread = useCallback(async (threadId: ThreadId) => {
-    const api = readNativeApi();
-    if (!api) return;
-    try {
-      await unarchiveThreadFromClient(api.orchestration, threadId);
-      toastManager.add({
-        type: "success",
-        title: "Thread restored",
-        description: "The thread has been moved back to the sidebar.",
-      });
-    } catch (error) {
-      toastManager.add({
-        type: "error",
-        title: "Could not restore thread",
-        description: error instanceof Error ? error.message : "Unable to restore the thread.",
-      });
-    }
-  }, []);
+  const unarchiveThread = useCallback(
+    async (threadId: ThreadId) => {
+      const api = readNativeApi();
+      if (!api) return;
+      try {
+        await unarchiveThreadFromClient(api.orchestration, threadId);
+        toastManager.add({
+          type: "success",
+          title: t("Thread restored"),
+          description: t("The thread has been moved back to the sidebar."),
+        });
+      } catch (error) {
+        toastManager.add({
+          type: "error",
+          title: t("Could not restore thread"),
+          description: tError(error, "Unable to restore the thread."),
+        });
+      }
+    },
+    [t, tError],
+  );
 
   const deleteArchivedThread = useCallback(
     async (threadId: ThreadId, threadTitle: string) => {
       const api = readNativeApi();
       if (!api) return;
       const confirmed = await api.dialogs.confirm(
-        `Permanently delete "${threadTitle}"?\n\nThis will remove the thread and its conversation history forever.`,
+        language === "zh-CN"
+          ? `${t("Permanently delete")} “${threadTitle}”？\n\n${t("This will remove the thread and its conversation history forever.")}`
+          : `Permanently delete "${threadTitle}"?\n\nThis will remove the thread and its conversation history forever.`,
       );
       if (!confirmed) return;
       try {
@@ -347,18 +386,18 @@ export function ArchivedSettingsPanel({ active }: { readonly active: boolean }) 
         });
         toastManager.add({
           type: "success",
-          title: "Thread deleted",
-          description: "The archived thread has been permanently removed.",
+          title: t("Thread deleted"),
+          description: t("The archived thread has been permanently removed."),
         });
       } catch (error) {
         toastManager.add({
           type: "error",
-          title: "Could not delete thread",
-          description: error instanceof Error ? error.message : "Unable to delete the thread.",
+          title: t("Could not delete thread"),
+          description: tError(error, "Unable to delete the thread."),
         });
       }
     },
-    [removeDeletedThreadFromClientState, threadShells],
+    [language, removeDeletedThreadFromClientState, t, tError, threadShells],
   );
 
   const handleContextMenu = useCallback(
@@ -367,8 +406,8 @@ export function ArchivedSettingsPanel({ active }: { readonly active: boolean }) 
       if (!api) return;
       const clicked = await api.contextMenu.show(
         [
-          { id: "restore", label: "Restore" },
-          { id: "delete", label: "Delete", destructive: true },
+          { id: "restore", label: t("Restore") },
+          { id: "delete", label: t("Delete"), destructive: true },
         ],
         position,
       );
@@ -378,7 +417,7 @@ export function ArchivedSettingsPanel({ active }: { readonly active: boolean }) 
         await deleteArchivedThread(threadId, threadTitle);
       }
     },
-    [deleteArchivedThread, unarchiveThread],
+    [deleteArchivedThread, t, unarchiveThread],
   );
 
   if (!active) return null;
@@ -389,9 +428,9 @@ export function ArchivedSettingsPanel({ active }: { readonly active: boolean }) 
         <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-full border border-border/70 bg-background/70 text-muted-foreground">
           <ArchiveIcon className="size-5" />
         </div>
-        <div className="text-sm font-medium text-foreground">No archived threads</div>
+        <div className="text-sm font-medium text-foreground">{t("No archived threads")}</div>
         <div className="mt-1 text-sm text-muted-foreground">
-          Archived threads will appear here and can be restored to the sidebar.
+          {t("Archived threads will appear here and can be restored to the sidebar.")}
         </div>
       </SettingsEmptyState>
     );
@@ -402,13 +441,17 @@ export function ArchivedSettingsPanel({ active }: { readonly active: boolean }) 
       {archivedGroups.map(({ project, threads }) => (
         <SettingsSection
           key={project?.id ?? "unknown-project"}
-          title={project?.name ?? "Unknown project"}
+          title={project?.name ?? t("Unknown project")}
         >
           {threads.map((thread) => (
             <SettingsListRow
               key={thread.id}
               title={thread.title}
-              description={`Archived ${formatRelativeTime(thread.archivedAt ?? thread.createdAt)}`}
+              description={`${t("Archived")} ${localizedRelativeTime(
+                thread.archivedAt ?? thread.createdAt,
+                language,
+                t,
+              )}`}
               onContextMenu={(event) => {
                 event.preventDefault();
                 void handleContextMenu(thread.id, thread.title, {
@@ -423,14 +466,14 @@ export function ArchivedSettingsPanel({ active }: { readonly active: boolean }) 
                     variant="outline"
                     onClick={() => void unarchiveThread(thread.id)}
                   >
-                    Restore
+                    {t("Restore")}
                   </Button>
                   <Button
                     size="xs"
                     variant="destructive"
                     onClick={() => void deleteArchivedThread(thread.id, thread.title)}
                   >
-                    Delete
+                    {t("Delete")}
                   </Button>
                 </>
               }

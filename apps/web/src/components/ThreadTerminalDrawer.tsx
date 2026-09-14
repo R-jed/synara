@@ -24,6 +24,7 @@ import {
   type ThreadTerminalPresentationMode,
 } from "../types";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   type TerminalChromeActionItem,
   TerminalSidebar,
@@ -92,6 +93,7 @@ function getTerminalSelectionRect(mountElement: HTMLElement): DOMRect | null {
 }
 
 function TerminalRuntimeStatusOverlay({ status }: { status: TerminalRuntimeStatus }) {
+  const { language, t } = useUiLanguage();
   if (status !== "error") return null;
 
   return (
@@ -102,7 +104,7 @@ function TerminalRuntimeStatusOverlay({ status }: { status: TerminalRuntimeStatu
       )}
     >
       <TriangleAlertIcon className="size-3" />
-      <span className="truncate">Error</span>
+      <span className="truncate">{t("Error")}</span>
     </div>
   );
 }
@@ -546,6 +548,7 @@ export default function ThreadTerminalDrawer({
   onTogglePanel,
   isPanelOpen,
 }: ThreadTerminalDrawerProps) {
+  const { language, t } = useUiLanguage();
   const isVisible = isVisibleProp ?? true;
   const isWorkspaceMode = presentationMode === "workspace";
   const previousRuntimeKeysRef = useRef<Set<string>>(new Set());
@@ -606,24 +609,28 @@ export default function ThreadTerminalDrawer({
   }, [normalizedTerminalIds, threadId]);
 
   const splitTerminalActionLabel = hasReachedSplitLimit
-    ? `Split Terminal (max ${MAX_TERMINALS_PER_GROUP} per group)`
+    ? language === "zh-CN"
+      ? `${t("Split Terminal")}（每组最多 ${MAX_TERMINALS_PER_GROUP} 个）`
+      : `Split Terminal (max ${MAX_TERMINALS_PER_GROUP} per group)`
     : splitShortcutLabel
-      ? `Split Right (${splitShortcutLabel})`
-      : "Split Right";
+      ? `${t("Split Right")} (${splitShortcutLabel})`
+      : t("Split Right");
   const splitTerminalDownActionLabel = hasReachedSplitLimit
-    ? `Split Down (max ${MAX_TERMINALS_PER_GROUP} per group)`
+    ? language === "zh-CN"
+      ? `${t("Split Down")}（每组最多 ${MAX_TERMINALS_PER_GROUP} 个）`
+      : `Split Down (max ${MAX_TERMINALS_PER_GROUP} per group)`
     : splitDownShortcutLabel
-      ? `Split Down (${splitDownShortcutLabel})`
-      : "Split Down";
+      ? `${t("Split Down")} (${splitDownShortcutLabel})`
+      : t("Split Down");
   const newTerminalActionLabel = newShortcutLabel
-    ? `New Terminal (${newShortcutLabel})`
-    : "New Terminal";
+    ? `${t("New Terminal")} (${newShortcutLabel})`
+    : t("New Terminal");
   const resolvedCloseShortcutLabel = isWorkspaceMode
     ? (workspaceCloseShortcutLabel ?? closeShortcutLabel)
     : closeShortcutLabel;
   const closeTerminalActionLabel = resolvedCloseShortcutLabel
-    ? `Close Terminal (${resolvedCloseShortcutLabel})`
-    : "Close Terminal";
+    ? `${t("Close Terminal")} (${resolvedCloseShortcutLabel})`
+    : t("Close Terminal");
   const onSplitTerminalAction = useCallback(() => {
     if (hasReachedSplitLimit) return;
     onSplitTerminal();

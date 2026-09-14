@@ -807,53 +807,76 @@ export function collectTerminalAttentionCandidates(
 export function buildTaskCompletionCopy(candidate: CompletedThreadCandidate): {
   title: string;
   body: string;
-} {
-  const normalizedTitle = candidate.title.trim();
-  const threadLabel = normalizedTitle.length > 0 ? normalizedTitle : "Untitled thread";
-
-  return {
-    title: threadLabel,
-    body: candidate.assistantSummary || "Finished working.",
-  };
-}
-
-export function buildThreadAttentionCopy(candidate: ThreadAttentionCandidate): {
+};
+export function buildTaskCompletionCopy(
+  candidate: CompletedThreadCandidate,
+  translate?: (text: string) => string,
+): {
+  title: string;
+  body: string;
+};
+export function buildTaskCompletionCopy(
+  candidate: CompletedThreadCandidate,
+  translate: (text: string) => string = (text) => text,
+): {
   title: string;
   body: string;
 } {
   const normalizedTitle = candidate.title.trim();
-  const threadLabel = normalizedTitle.length > 0 ? normalizedTitle : "Untitled thread";
+  const threadLabel = normalizedTitle.length > 0 ? normalizedTitle : translate("Untitled thread");
+
+  return {
+    title: threadLabel,
+    body: candidate.assistantSummary || translate("Finished working."),
+  };
+}
+
+export function buildThreadAttentionCopy(
+  candidate: ThreadAttentionCandidate,
+  translate: (text: string) => string = (text) => text,
+): {
+  title: string;
+  body: string;
+} {
+  const normalizedTitle = candidate.title.trim();
+  const threadLabel = normalizedTitle.length > 0 ? normalizedTitle : translate("Untitled thread");
   const summary =
     candidate.summary ??
     (candidate.kind === "approval"
-      ? approvalSummary(candidate.requestKind ?? "command")
-      : "User input requested.");
+      ? translate(approvalSummary(candidate.requestKind ?? "command"))
+      : translate("User input requested."));
 
   return {
-    title: "Input needed",
+    title: translate("Input needed"),
     body: `${threadLabel}: ${summary}`,
   };
 }
 
-export function buildTerminalCompletionCopy(candidate: CompletedTerminalCandidate): {
+export function buildTerminalCompletionCopy(
+  candidate: CompletedTerminalCandidate,
+  translate: (text: string) => string = (text) => text,
+): {
   title: string;
   body: string;
 } {
-  const terminalLabel = candidate.title.trim() || "Terminal";
+  const terminalLabel = candidate.title.trim() || translate("Terminal");
   return {
-    title: "Terminal task completed",
-    body: `${terminalLabel} finished working.`,
+    title: translate("Terminal task completed"),
+    body: translate("{terminal} finished working.").replace("{terminal}", terminalLabel),
   };
 }
 
-export function buildTerminalAttentionCopy(candidate: TerminalAttentionCandidate): {
+export function buildTerminalAttentionCopy(
+  candidate: TerminalAttentionCandidate,
+  translate: (text: string) => string = (text) => text,
+): {
   title: string;
   body: string;
 } {
-  const terminalLabel = candidate.title.trim() || "Terminal";
+  const terminalLabel = candidate.title.trim() || translate("Terminal");
   return {
-    title: "Terminal input needed",
-    body: `${terminalLabel} needs your attention.`,
+    title: translate("Terminal input needed"),
+    body: translate("{terminal} needs your attention.").replace("{terminal}", terminalLabel),
   };
 }
 

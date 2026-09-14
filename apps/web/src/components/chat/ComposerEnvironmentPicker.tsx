@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { CheckIcon, ChevronDownIcon, HandoffIcon, WorktreeIcon } from "~/lib/icons";
 import { CentralIcon } from "~/lib/central-icons";
 import type { ThreadEnvironmentPresentation } from "~/lib/threadEnvironment";
+import { useUiLanguage } from "~/uiLanguage";
 import { COMPOSER_TOOLBAR_PICKER_TRIGGER_CLASS_NAME } from "./composerPickerStyles";
 import { ComposerPickerMenuPopup } from "./ComposerPickerMenuPopup";
 import {
@@ -77,6 +78,7 @@ export function ComposerEnvironmentPicker({
   onOpenChange,
   children,
 }: ComposerEnvironmentPickerProps) {
+  const { t } = useUiLanguage();
   const envGlyph = (className: string) =>
     environmentPresentation.mode === "local" ? (
       <CentralIcon name="macbook-air" className={className} />
@@ -99,13 +101,13 @@ export function ComposerEnvironmentPicker({
         {isPanel ? (
           <EnvironmentRowBody
             icon={envGlyph(ENVIRONMENT_ROW_ICON_CLASS_NAME)}
-            label={environmentPresentation.shortLabel}
+            label={t(environmentPresentation.shortLabel)}
             trailing={<EnvironmentRowChevron />}
           />
         ) : (
           <>
             {envGlyph("size-3.5")}
-            {environmentPresentation.shortLabel}
+            {t(environmentPresentation.shortLabel)}
             <ChevronDownIcon className="size-3 opacity-60" />
           </>
         )}
@@ -118,38 +120,38 @@ export function ComposerEnvironmentPicker({
         className="w-60 min-w-60"
       >
         <MenuGroup>
-          <MenuGroupLabel>Work in</MenuGroupLabel>
+          <MenuGroupLabel>{t("Work in")}</MenuGroupLabel>
           {environmentPresentation.mode === "local" ? (
             <WorkInMenuItem
               icon={<CentralIcon name="macbook-air" className={ENV_MENU_ICON_CLASS_NAME} />}
-              label={environmentPresentation.localOptionLabel}
+              label={t(environmentPresentation.localOptionLabel)}
               selected
             />
           ) : (
             <WorkInMenuItem
               icon={<CentralIcon name="macbook-air" className={ENV_MENU_ICON_CLASS_NAME} />}
-              label={environmentPresentation.localOptionLabel}
+              label={t(environmentPresentation.localOptionLabel)}
               onSelect={() => onEnvModeChange("local")}
             />
           )}
           {canSwitchToWorktree ? (
             <WorkInMenuItem
               icon={<WorktreeIcon className={ENV_MENU_ICON_CLASS_NAME} />}
-              label="New worktree"
+              label={t("New worktree")}
               onSelect={() => onEnvModeChange("worktree")}
             />
           ) : null}
           {environmentPresentation.mode === "worktree" && !canHandoffToLocal ? (
             <WorkInMenuItem
               icon={<WorktreeIcon className={ENV_MENU_ICON_CLASS_NAME} />}
-              label={environmentPresentation.worktreeOptionLabel}
+              label={t(environmentPresentation.worktreeOptionLabel)}
               selected
             />
           ) : null}
           {canHandoffToWorktree && onHandoffToWorktree ? (
             <WorkInMenuItem
               icon={<WorktreeIcon className={ENV_MENU_ICON_CLASS_NAME} />}
-              label="Hand off to new worktree"
+              label={t("Hand off to new worktree")}
               disabled={handoffBusy}
               onSelect={() => onHandoffToWorktree()}
             />
@@ -157,7 +159,7 @@ export function ComposerEnvironmentPicker({
           {canHandoffToLocal && onHandoffToLocal ? (
             <WorkInMenuItem
               icon={<HandoffIcon className={ENV_MENU_ICON_CLASS_NAME} />}
-              label="Hand off to local"
+              label={t("Hand off to local")}
               disabled={handoffBusy}
               onSelect={() => onHandoffToLocal()}
             />

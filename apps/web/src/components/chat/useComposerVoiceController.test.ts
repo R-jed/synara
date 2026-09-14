@@ -55,6 +55,12 @@ const reactHarness = vi.hoisted(() => {
     },
     useEffect: runEffect,
     useLayoutEffect: runEffect,
+    useSyncExternalStore<T>(
+      _subscribe: (listener: () => void) => () => void,
+      getSnapshot: () => T,
+    ) {
+      return getSnapshot();
+    },
     useRef<T>(initialValue: T) {
       const slot = nextSlot();
       slot.value ??= { current: initialValue };
@@ -98,6 +104,7 @@ vi.mock("react", () => ({
   useLayoutEffect: reactHarness.useLayoutEffect,
   useRef: reactHarness.useRef,
   useState: reactHarness.useState,
+  useSyncExternalStore: reactHarness.useSyncExternalStore,
 }));
 
 vi.mock("../../lib/voiceRecorder", () => ({

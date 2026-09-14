@@ -30,7 +30,7 @@ import {
   TerminalIcon,
   XIcon,
 } from "~/lib/icons";
-import { formatRelativeTime } from "~/lib/relativeTime";
+import { formatRelativeTimeForLanguage } from "~/lib/relativeTime";
 import {
   CHAT_HEADER_TOGGLE_CLASS_NAME,
   ChatHeaderButton,
@@ -61,6 +61,7 @@ import {
 import { cn } from "~/lib/utils";
 import { useOpenFavoriteEditorShortcut } from "~/hooks/useOpenFavoriteEditorShortcut";
 import type { RepoDiffTotals } from "~/hooks/useRepoDiffTotals";
+import { useUiLanguage } from "~/uiLanguage";
 import { ProviderIcon } from "../ProviderIcon";
 import { ProviderUsageMenuControl } from "../ProviderUsageMenuControl";
 import { EnvironmentToggle, type EnvironmentToggleState } from "./environment/EnvironmentToggle";
@@ -174,6 +175,7 @@ function EditorChatHistoryMenu(props: {
   activeThreadId: ThreadId;
   onNavigateToThread: (threadId: ThreadId) => void;
 }) {
+  const { language, t } = useUiLanguage();
   const { settings } = useAppSettings();
   const selectDisplayThreads = createSidebarDisplayThreadsSelector({
     hideAutomationRunThreads: !settings.showAutomationRunThreads,
@@ -191,8 +193,8 @@ function EditorChatHistoryMenu(props: {
           <IconButton
             variant="ghost"
             size="icon-xs"
-            label="Chat history"
-            title="Chat history"
+            label={t("Chat history")}
+            title={t("Chat history")}
             className="size-5 shrink-0 text-muted-foreground hover:text-foreground"
           >
             <HistoryIcon className="size-3.5" />
@@ -201,7 +203,7 @@ function EditorChatHistoryMenu(props: {
       />
       <ComposerPickerMenuPopup align="start" side="bottom" sideOffset={6} className="w-72 min-w-72">
         {historyThreads.length === 0 ? (
-          <MenuItem disabled>No chats in this project yet</MenuItem>
+          <MenuItem disabled>{t("No chats in this project yet")}</MenuItem>
         ) : (
           historyThreads.map((thread) => (
             <MenuItem
@@ -222,7 +224,7 @@ function EditorChatHistoryMenu(props: {
                 <CheckIcon className="size-3.5 shrink-0 text-muted-foreground" />
               ) : (
                 <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
-                  {formatRelativeTime(thread.updatedAt ?? thread.createdAt)}
+                  {formatRelativeTimeForLanguage(thread.updatedAt ?? thread.createdAt, language)}
                 </span>
               )}
             </MenuItem>
@@ -248,6 +250,7 @@ function EditorRailTabs(props: {
   onCloseTerminal: () => void;
   onNavigateToThread: (threadId: ThreadId) => void;
 }) {
+  const { t } = useUiLanguage();
   const { settings } = useAppSettings();
   const [openChatTabs, setOpenChatTabs] = useState<ReadonlyArray<EditorRailChatTab>>(() => {
     const storedTabs = readEditorRailChatTabs(props.projectId);
@@ -412,8 +415,8 @@ function EditorRailTabs(props: {
               <IconButton
                 variant="ghost"
                 size="icon-xs"
-                label="New editor rail item"
-                title="New"
+                label={t("New editor rail item")}
+                title={t("New")}
                 className="size-5 shrink-0 text-muted-foreground hover:text-foreground"
               >
                 <PlusIcon className="size-3.5" />
@@ -428,11 +431,11 @@ function EditorRailTabs(props: {
           >
             <MenuItem onClick={props.onNewChat}>
               <MessageCircleIcon className="size-3.5 shrink-0 text-muted-foreground" />
-              <span>New chat</span>
+              <span>{t("New chat")}</span>
             </MenuItem>
             <MenuItem onClick={newTerminalTab}>
               <TerminalIcon className="size-3.5 shrink-0 text-muted-foreground" />
-              <span>New terminal</span>
+              <span>{t("New terminal")}</span>
             </MenuItem>
           </ComposerPickerMenuPopup>
         </Menu>
@@ -452,7 +455,7 @@ function EditorRailTabs(props: {
               key={thread.id}
               active={props.activeSurface === "chat" && thread.id === props.activeThreadId}
               title={thread.title}
-              label={`Chat ${index + 1}`}
+              label={`${t("Chat")} ${index + 1}`}
               labelClassName="max-w-24"
               icon={
                 <ProviderIcon
@@ -461,7 +464,7 @@ function EditorRailTabs(props: {
                   className="size-3 shrink-0"
                 />
               }
-              closeLabel={`Close ${thread.title}`}
+              closeLabel={`${t("Close")} ${thread.title}`}
               onSelect={() => openChatTab(thread.id)}
               onClose={() => closeChatTab(thread.id)}
             />
@@ -469,8 +472,8 @@ function EditorRailTabs(props: {
           {terminalTabVisible ? (
             <SurfaceTabChip
               active={props.activeSurface === "terminal"}
-              title="Terminal"
-              label="Terminal"
+              title={t("Terminal")}
+              label={t("Terminal")}
               labelClassName="max-w-24"
               icon={<TerminalIcon className="size-3 shrink-0 text-[var(--color-text-accent)]" />}
               trailing={
@@ -479,7 +482,7 @@ function EditorRailTabs(props: {
                 ) : null
               }
               onSelect={openTerminalTab}
-              closeLabel="Close Terminal"
+              closeLabel={t("Close Terminal")}
               onClose={closeTerminalTab}
             />
           ) : null}
@@ -550,6 +553,7 @@ export function ChatHeader({
   onRenameThread,
   onCloseThreadPane,
 }: ChatHeaderProps) {
+  const { t } = useUiLanguage();
   const hideSidebarControls = hideSidebarControlsProp ?? false;
   const hideHandoffControls = hideHandoffControlsProp ?? false;
   const minimalChrome = minimalChromeProp ?? false;
@@ -627,7 +631,7 @@ export function ChatHeader({
             )}
             pressed={togglesRightDock ? rightDockOpen : diffOpen}
             onPressedChange={togglesRightDock ? onToggleRightDock : onToggleDiff}
-            aria-label={togglesRightDock ? "Toggle right sidebar" : "Toggle diff panel"}
+            aria-label={togglesRightDock ? t("Toggle right sidebar") : t("Toggle diff panel")}
             variant="default"
             size="xs"
             disabled={
@@ -648,15 +652,15 @@ export function ChatHeader({
       <TooltipPopup side="bottom">
         {togglesRightDock
           ? rightDockOpen
-            ? "Close right sidebar"
-            : "Open right sidebar"
+            ? t("Close right sidebar")
+            : t("Open right sidebar")
           : !isGitRepo
-            ? "Diff panel is unavailable because this project is not a git repository."
+            ? t("Diff panel is unavailable because this project is not a git repository.")
             : diffDisabledReason && !diffOpen
               ? diffDisabledReason
               : diffToggleShortcutLabel
-                ? `Toggle diff panel (${diffToggleShortcutLabel})`
-                : "Toggle diff panel"}
+                ? `${t("Toggle diff panel")} (${diffToggleShortcutLabel})`
+                : t("Toggle diff panel")}
       </TooltipPopup>
     </Tooltip>
   ) : null;
@@ -716,7 +720,7 @@ export function ChatHeader({
                     className="inline-flex size-3.5 shrink-0 items-center justify-center"
                     title={
                       threadIconKind === "terminal"
-                        ? "Terminal"
+                        ? t("Terminal")
                         : PROVIDER_DISPLAY_NAMES[activeProvider]
                     }
                   >
@@ -738,8 +742,8 @@ export function ChatHeader({
                   <IconButton
                     variant="chrome"
                     size="icon-xs"
-                    label="Close selected Side"
-                    tooltip="Close selected Side"
+                    label={t("Close selected Side")}
+                    tooltip={t("Close selected Side")}
                     tooltipSide="bottom"
                     className="size-5 rounded-lg [-webkit-app-region:no-drag] [&_svg]:size-3"
                     onClick={(event) => {
@@ -814,7 +818,9 @@ export function ChatHeader({
                     }
                   >
                     <HandoffIcon className="size-[1em] shrink-0 opacity-80" />
-                    {!compact ? <span className="truncate font-normal">Hand off</span> : null}
+                    {!compact ? (
+                      <span className="truncate font-normal">{t("Hand off")}</span>
+                    ) : null}
                   </MenuTrigger>
                 }
               />
@@ -825,7 +831,9 @@ export function ChatHeader({
                 <MenuItem key={provider} onClick={() => onCreateHandoff(provider)}>
                   {/* opacity-100 opts brand icons out of the option row's 80% icon dim. */}
                   {renderProviderIcon(provider, "size-3.5 shrink-0 opacity-100")}
-                  <span>Handoff to {PROVIDER_DISPLAY_NAMES[provider]}</span>
+                  <span>
+                    {t("Handoff to")} {PROVIDER_DISPLAY_NAMES[provider]}
+                  </span>
                 </MenuItem>
               ))}
             </ComposerPickerMenuPopup>
@@ -859,14 +867,14 @@ export function ChatHeader({
               render={
                 <ChatHeaderIconButton
                   type="button"
-                  label={inlineChatLayoutAction.label}
+                  label={t(inlineChatLayoutAction.label)}
                   onClick={inlineChatLayoutAction.onClick}
                 >
                   <HiMiniArrowsPointingOut className="size-3.5" />
                 </ChatHeaderIconButton>
               }
             />
-            <TooltipPopup side="bottom">{inlineChatLayoutAction.label}</TooltipPopup>
+            <TooltipPopup side="bottom">{t(inlineChatLayoutAction.label)}</TooltipPopup>
           </Tooltip>
         ) : null}
 
@@ -877,14 +885,14 @@ export function ChatHeader({
               render={
                 <ChatHeaderIconButton
                   type="button"
-                  label={changeThreadAction.label}
+                  label={t(changeThreadAction.label)}
                   onClick={changeThreadAction.onClick}
                 >
                   <TbExchange className="size-3.5" />
                 </ChatHeaderIconButton>
               }
             />
-            <TooltipPopup side="bottom">{changeThreadAction.label}</TooltipPopup>
+            <TooltipPopup side="bottom">{t(changeThreadAction.label)}</TooltipPopup>
           </Tooltip>
         ) : null}
 

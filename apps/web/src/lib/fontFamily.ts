@@ -8,6 +8,9 @@ const CSS_WIDE_KEYWORDS = new Set(["inherit", "initial", "revert", "revert-layer
 export const DEFAULT_MONOSPACE_FONT_FAMILY_STACK =
   '"JetBrains Mono Variable", "JetBrains Mono", "SF Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace';
 
+export const DEFAULT_UI_FONT_FAMILY_STACK =
+  '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif';
+
 const GENERIC_FONT_FAMILIES = new Set([
   "cursive",
   "emoji",
@@ -114,6 +117,30 @@ export function normalizeFontFamilyCssValue(value: string | null | undefined): s
   }
 
   return splitFontFamilyList(trimmedValue).map(normalizeSingleFontFamily).join(", ");
+}
+
+export function normalizeUiFontFamilyCssValue(value: string | null | undefined): string | null {
+  const normalizedValue = normalizeFontFamilyCssValue(value);
+  if (normalizedValue === null || CSS_WIDE_KEYWORDS.has(normalizedValue.toLowerCase())) {
+    return normalizedValue;
+  }
+
+  return hasGenericFontFamily(normalizedValue)
+    ? normalizedValue
+    : `${normalizedValue}, ${DEFAULT_UI_FONT_FAMILY_STACK}`;
+}
+
+export function normalizeContentFontFamilyCssValue(
+  value: string | null | undefined,
+): string | null {
+  const normalizedValue = normalizeFontFamilyCssValue(value);
+  if (normalizedValue === null || CSS_WIDE_KEYWORDS.has(normalizedValue.toLowerCase())) {
+    return normalizedValue;
+  }
+
+  return hasGenericFontFamily(normalizedValue)
+    ? normalizedValue
+    : `${normalizedValue}, var(--font-ui-family)`;
 }
 
 // Keeps theme-provided code fonts from falling through to the browser's serif default.

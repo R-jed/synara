@@ -7,6 +7,7 @@ import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { toastManager } from "../ui/toast";
+import { useUiLanguage } from "~/uiLanguage";
 import type { TranscriptAssistantSelection } from "./chatSelectionActions";
 import { SelectionNewChatComposer } from "./SelectionNewChatComposer";
 
@@ -30,6 +31,7 @@ interface TranscriptSelectionActionLayerProps {
 }
 
 export function TranscriptSelectionActionLayer(props: TranscriptSelectionActionLayerProps) {
+  const { t, tError } = useUiLanguage();
   const [composerAction, setComposerAction] = useState<PendingTranscriptSelectionAction | null>(
     null,
   );
@@ -77,8 +79,8 @@ export function TranscriptSelectionActionLayer(props: TranscriptSelectionActionL
           .catch((error: unknown) => {
             toastManager.add({
               type: "error",
-              title: "Could not add selection to Side",
-              description: error instanceof Error ? error.message : "Try again.",
+              title: t("Could not add selection to Side"),
+              description: tError(error, "Try again."),
             });
           })
           .finally(() => {

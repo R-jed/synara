@@ -11,6 +11,7 @@ import {
 } from "~/lib/icons";
 import type { CodeEditHistoryState } from "~/components/codeEditor/pierreEdit";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -51,13 +52,14 @@ interface WorkspaceFileEditorHistoryActionsProps {
 }
 
 export function WorkspaceFileEditorHistoryActions(props: WorkspaceFileEditorHistoryActionsProps) {
+  const { t } = useUiLanguage();
   return (
     <>
       <ChatHeaderIconButton
         type="button"
         tone="plain"
-        label="Undo"
-        title="Undo"
+        label={t("Undo")}
+        title={t("Undo")}
         disabled={!props.history.canUndo}
         onClick={props.onUndo}
       >
@@ -66,8 +68,8 @@ export function WorkspaceFileEditorHistoryActions(props: WorkspaceFileEditorHist
       <ChatHeaderIconButton
         type="button"
         tone="plain"
-        label="Redo"
-        title="Redo"
+        label={t("Redo")}
+        title={t("Redo")}
         disabled={!props.history.canRedo}
         onClick={props.onRedo}
       >
@@ -76,8 +78,8 @@ export function WorkspaceFileEditorHistoryActions(props: WorkspaceFileEditorHist
       <ChatHeaderIconButton
         type="button"
         tone="plain"
-        label="Revert all changes"
-        title="Revert all changes"
+        label={t("Revert all changes")}
+        title={t("Revert all changes")}
         disabled={!props.canRevert}
         onClick={props.onRevert}
       >
@@ -100,6 +102,7 @@ interface WorkspaceFileEditorHeaderProps {
 }
 
 export function WorkspaceFileEditorHeader(props: WorkspaceFileEditorHeaderProps) {
+  const { t } = useUiLanguage();
   const { fileSegment, prefixSegments } = workspaceFileEditorBreadcrumbSegments(
     props.workspaceRoot,
     props.filePath,
@@ -113,7 +116,7 @@ export function WorkspaceFileEditorHeader(props: WorkspaceFileEditorHeaderProps)
       )}
     >
       <nav
-        aria-label="File path"
+        aria-label={t("File path")}
         className="flex min-w-0 flex-1 items-center text-[12px] leading-none"
       >
         <span className="flex min-w-0 shrink-[9999] items-center overflow-hidden">
@@ -135,8 +138,8 @@ export function WorkspaceFileEditorHeader(props: WorkspaceFileEditorHeaderProps)
         </span>
         {props.dirty ? (
           <span
-            aria-label="Unsaved changes"
-            title="Unsaved changes"
+            aria-label={t("Unsaved changes")}
+            title={t("Unsaved changes")}
             className="ml-2 size-1.5 shrink-0 rounded-full bg-[var(--color-text-accent)]"
           />
         ) : null}
@@ -154,13 +157,13 @@ export function WorkspaceFileEditorHeader(props: WorkspaceFileEditorHeaderProps)
           disabled={!props.canSave || props.saving}
           onClick={props.onSave}
         >
-          {props.saving ? "Saving..." : "Save"}
+          {props.saving ? t("Saving...") : t("Save")}
         </Button>
         <ChatHeaderIconButton
           type="button"
           tone="plain"
-          label="Close editor"
-          title="Close editor"
+          label={t("Close editor")}
+          title={t("Close editor")}
           onClick={props.onClose}
         >
           <XIcon aria-hidden="true" className="size-3.5" />
@@ -180,6 +183,7 @@ interface WorkspaceFileEditorDiscardDialogProps {
 }
 
 export function WorkspaceFileEditorDiscardDialog(props: WorkspaceFileEditorDiscardDialogProps) {
+  const { t } = useUiLanguage();
   return (
     <AlertDialog open={props.open} onOpenChange={props.onOpenChange}>
       <AlertDialogPopup>
@@ -189,7 +193,7 @@ export function WorkspaceFileEditorDiscardDialog(props: WorkspaceFileEditorDisca
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogClose render={<Button variant="outline" size="sm" />}>
-            Cancel
+            {t("Cancel")}
           </AlertDialogClose>
           <Button variant="destructive" size="sm" onClick={props.onConfirm}>
             {props.confirmLabel}
@@ -209,6 +213,7 @@ interface WorkspaceFileEditorConflictBarProps {
 }
 
 export function WorkspaceFileEditorConflictBar(props: WorkspaceFileEditorConflictBarProps) {
+  const { t } = useUiLanguage();
   return (
     <div className="flex shrink-0 items-center gap-2 border-b border-border bg-[var(--color-background-elevated-secondary)] px-3 py-1.5">
       <TriangleAlertIcon
@@ -227,7 +232,7 @@ export function WorkspaceFileEditorConflictBar(props: WorkspaceFileEditorConflic
             className="!h-6 shrink-0 rounded-md text-[11px]"
             onClick={props.onReload}
           >
-            Reload from disk
+            {t("Reload from disk")}
           </Button>
           <Button
             type="button"
@@ -236,15 +241,15 @@ export function WorkspaceFileEditorConflictBar(props: WorkspaceFileEditorConflic
             className="!h-6 shrink-0 rounded-md text-[11px]"
             onClick={props.onOverwrite}
           >
-            Overwrite
+            {t("Overwrite")}
           </Button>
         </>
       ) : null}
       <ChatHeaderIconButton
         type="button"
         tone="plain"
-        label="Dismiss"
-        title="Dismiss"
+        label={t("Dismiss")}
+        title={t("Dismiss")}
         className="!size-6"
         onClick={props.onDismiss}
       >

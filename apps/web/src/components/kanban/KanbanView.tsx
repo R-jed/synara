@@ -22,6 +22,7 @@ import { useThreadPullRequests } from "~/hooks/useThreadPullRequests";
 import { splitShortcutLabel } from "~/keybindings";
 import { ArrowLeftIcon, PlusIcon } from "~/lib/icons";
 import { cn, isMacNavigatorPlatform } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 
 // Kanban-scoped "Create task" shortcut: ⌘⌥T on macOS, Ctrl+Alt+T elsewhere —
 // matching the app's mod convention (meta on mac, ctrl otherwise) and the ⌘⌥
@@ -53,6 +54,7 @@ import { useKanbanCardContextMenu } from "./useKanbanCardContextMenu";
 import { overviewVisibleKanbanCards, type KanbanCard } from "./kanban.logic";
 
 export default function KanbanView({ projectId }: { projectId: string | null }) {
+  const { t } = useUiLanguage();
   const navigate = useNavigate();
   const board = useKanbanBoard();
   const threadsHydrated = useStore((state) => state.threadsHydrated);
@@ -189,16 +191,16 @@ export default function KanbanView({ projectId }: { projectId: string | null }) 
                   size="icon-xs"
                   variant="ghost"
                   onClick={handleBackToOverview}
-                  aria-label="Back to all projects"
+                  aria-label={t("Back to all projects")}
                 >
                   <ArrowLeftIcon className="size-3.5" />
                 </Button>
               ) : null}
               <h2 className="max-w-[clamp(16rem,50vw,40rem)] truncate text-sm font-medium text-foreground">
-                {projectBoard ? projectBoard.projectName : "Kanban"}
+                {projectBoard ? projectBoard.projectName : t("Kanban")}
               </h2>
               <span className="shrink-0 text-xs text-muted-foreground/70">
-                {projectBoard ? projectBoard.totalCount : board.totalCount} tasks
+                {projectBoard ? projectBoard.totalCount : board.totalCount} {t("tasks")}
               </span>
               <Tooltip>
                 <TooltipTrigger
@@ -211,13 +213,13 @@ export default function KanbanView({ projectId }: { projectId: string | null }) 
                       onClick={handleNewTaskInProjectBoard}
                     >
                       <PlusIcon className="size-3.5" />
-                      New task
+                      {t("New task")}
                     </Button>
                   }
                 />
                 <TooltipPopup side="bottom">
                   <span className="flex items-center gap-2">
-                    New task
+                    {t("New task")}
                     <KbdGroup>
                       {NEW_TASK_SHORTCUT_PARTS.map((part) => (
                         <Kbd key={part}>{part}</Kbd>

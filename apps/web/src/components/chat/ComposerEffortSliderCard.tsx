@@ -10,6 +10,7 @@ import { type ReactNode, useState } from "react";
 
 import { ChevronRightIcon, ResetIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import type { ProviderOptions } from "../../providerModelOptions";
 import { MenuSub, MenuSubTriggerBase } from "../ui/menu";
 import { Slider } from "../ui/slider";
@@ -47,6 +48,7 @@ const CARD_ICON_BUTTON_CLASS_NAME =
 // radio menu exactly; changes (effort and model alike) commit immediately and keep
 // the menu open so the label and thumb update in place.
 export function ComposerEffortSliderCard(props: ComposerEffortSliderCardProps) {
+  const { t } = useUiLanguage();
   const { provider, threadId, model, modelOptions, prompt, onPromptChange } = props;
   // Local so it resets whenever the card unmounts with its popup.
   const [modelListOpen, setModelListOpen] = useState(false);
@@ -112,7 +114,7 @@ export function ComposerEffortSliderCard(props: ComposerEffortSliderCardProps) {
             {/* The chevron hangs off the label's right edge so the effort text itself is
                 centered over the model name instead of being pushed left by the glyph. */}
             <span className="relative inline-block whitespace-nowrap font-medium text-[length:var(--app-font-size-ui,12px)] text-[var(--color-text-accent)]">
-              {statusLabel}
+              {t(statusLabel)}
               <ChevronRightIcon
                 aria-hidden="true"
                 className="absolute top-1/2 left-full ml-0.5 size-3.5 -translate-y-1/2 text-muted-foreground"
@@ -129,7 +131,7 @@ export function ComposerEffortSliderCard(props: ComposerEffortSliderCardProps) {
             render={
               <button
                 type="button"
-                aria-label="Reset effort and speed"
+                aria-label={t("Reset effort and speed")}
                 disabled={!canReset}
                 className={cn(
                   CARD_ICON_BUTTON_CLASS_NAME,
@@ -142,7 +144,7 @@ export function ComposerEffortSliderCard(props: ComposerEffortSliderCardProps) {
             <ResetIcon aria-hidden="true" className="size-3.5" />
           </TooltipTrigger>
           <TooltipPopup side="top" variant="picker">
-            Reset to defaults
+            {t("Reset to defaults")}
           </TooltipPopup>
         </Tooltip>
       </div>
@@ -156,14 +158,16 @@ export function ComposerEffortSliderCard(props: ComposerEffortSliderCardProps) {
           showStepMarks
           magnetic
           disabled={ultrathinkPromptControlled}
-          aria-label="Reasoning effort"
-          getAriaValueText={(index) => effortLevels[index]?.label ?? String(index)}
+          aria-label={t("Reasoning effort")}
+          getAriaValueText={(index) =>
+            effortLevels[index]?.label ? t(effortLevels[index].label) : String(index)
+          }
           onValueChange={handleSliderChange}
         />
       </div>
       {ultrathinkPromptControlled ? (
         <div className="px-1 pt-1 text-muted-foreground/80 text-xs">
-          Remove Ultrathink from the prompt to change effort.
+          {t("Remove Ultrathink from the prompt to change effort.")}
         </div>
       ) : null}
     </div>

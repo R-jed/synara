@@ -3,10 +3,10 @@
 // Layer: Chat presentation component
 // Depends on: agentActivity.logic and ChatMarkdown
 
-import { pluralize } from "@synara/shared/text";
 import { type CSSProperties, type ReactNode } from "react";
 import { BotIcon, ChevronLeftIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import type { WorkLogEntry } from "../../session-logic";
 import { formatShortTimestamp } from "../../timestampFormat";
 import type { TimestampFormat } from "../../appSettings";
@@ -37,6 +37,14 @@ interface AgentActivityDetailViewProps {
   timestampFormat: TimestampFormat;
 }
 
+function localizedAgentActivityEntryTitle(
+  entry: WorkLogEntry,
+  t: (text: string) => string,
+): string {
+  const title = formatAgentActivityEntryTitle(entry);
+  return title === "Reasoning" || title === "Agent task" || title === "Activity" ? t(title) : title;
+}
+
 export function AgentActivityDetailView({
   detail,
   chatFontSizePx,
@@ -46,6 +54,7 @@ export function AgentActivityDetailView({
   onImageExpand,
   timestampFormat,
 }: AgentActivityDetailViewProps) {
+  const { t } = useUiLanguage();
   const chatTypographyStyle = getChatTranscriptTextStyle(chatFontSizePx);
   const footerTextStyle = getChatMessageFooterTextStyle(chatFontSizePx);
   const scrollStyle: CSSProperties = {
@@ -75,7 +84,7 @@ export function AgentActivityDetailView({
           onClick={onBack}
         >
           <ChevronLeftIcon className="size-3.5" />
-          <span>Back</span>
+          <span>{t("Back")}</span>
         </button>
 
         <div className="mt-3 border-b border-border/55 pb-4">
@@ -86,10 +95,10 @@ export function AgentActivityDetailView({
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <h2 className="truncate text-[18px] font-medium leading-6 text-foreground/92">
-                  {detail.title}
+                  {localizedAgentActivityEntryTitle(detail.primaryEntry, t)}
                 </h2>
                 <span className="rounded-full border border-border/45 px-2 py-0.5 text-[10px] font-medium text-muted-foreground/56">
-                  {`${detail.entries.length} ${pluralize(detail.entries.length, "update")}`}
+                  {`${detail.entries.length} ${t("updates")}`}
                 </span>
               </div>
               {detail.summary ? (
@@ -102,7 +111,7 @@ export function AgentActivityDetailView({
         </div>
 
         {prompt ? (
-          <AgentActivitySection title="Prompt">
+          <AgentActivitySection title={t("Prompt")}>
             <ChatMarkdown
               text={prompt}
               cwd={markdownCwd}
@@ -114,7 +123,7 @@ export function AgentActivityDetailView({
         ) : null}
 
         {result ? (
-          <AgentActivitySection title="Result">
+          <AgentActivitySection title={t("Result")}>
             <ChatMarkdown
               text={result}
               cwd={markdownCwd}
@@ -125,7 +134,7 @@ export function AgentActivityDetailView({
           </AgentActivitySection>
         ) : null}
 
-        <AgentActivitySection title="Activity">
+        <AgentActivitySection title={t("Activity")}>
           <div className="divide-y divide-border/45">
             {detail.entries.map((entry) => (
               <AgentActivityEventRow
@@ -162,8 +171,9 @@ function AgentActivityEventRow(props: {
   onImageExpand: (preview: ExpandedImagePreview) => void;
   timestampFormat: TimestampFormat;
 }) {
+  const { t } = useUiLanguage();
   const preview = formatAgentActivityEntryPreview(props.entry);
-  const title = formatAgentActivityEntryTitle(props.entry);
+  const title = localizedAgentActivityEntryTitle(props.entry, t);
   const body = isReasoningUpdateWorkEntry(props.entry) ? preview : (preview ?? props.entry.detail);
 
   return (

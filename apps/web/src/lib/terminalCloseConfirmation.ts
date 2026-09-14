@@ -4,6 +4,7 @@
 // Depends on: Native dialog contract from the app shell.
 
 import type { NativeApi } from "@synara/contracts";
+import { getActiveUiLanguage, type ResolvedUiLanguage } from "../uiLanguage";
 
 function formatTerminalCloseSubject(terminalTitle: string | null | undefined): string {
   const trimmedTitle = terminalTitle?.trim();
@@ -26,7 +27,18 @@ export function resolveTerminalCloseTitle(options: {
 export function buildTerminalCloseConfirmationMessage(options: {
   terminalTitle: string | null | undefined;
   willDeleteThread: boolean;
+  language?: ResolvedUiLanguage;
 }): string {
+  if (options.language === "zh-CN") {
+    const trimmedTitle = options.terminalTitle?.trim();
+    const subject = trimmedTitle && trimmedTitle.length > 0 ? `终端“${trimmedTitle}”` : "此终端";
+    return [
+      `关闭${subject}？`,
+      options.willDeleteThread
+        ? "这会永久清除该标签页的终端历史记录，并删除空的终端对话。"
+        : "这会永久清除该标签页的终端历史记录。",
+    ].join("\n");
+  }
   return [
     `Close ${formatTerminalCloseSubject(options.terminalTitle)}?`,
     options.willDeleteThread
@@ -64,6 +76,7 @@ export async function confirmTerminalTabClose(options: {
     buildTerminalCloseConfirmationMessage({
       terminalTitle: options.terminalTitle,
       willDeleteThread: options.willDeleteThread ?? false,
+      language: getActiveUiLanguage(),
     }),
   );
 }

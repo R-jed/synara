@@ -13,6 +13,7 @@ import { Button } from "~/components/ui/button";
 import { Popover, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";
 import { ArrowUpRightIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 
 import { PullRequestStateGlyph } from "./PullRequestStateGlyph";
 import { PullRequestStackPosition } from "./PullRequestStackPosition";
@@ -35,6 +36,7 @@ export function PullRequestStackPopover({
   currentNumber: number;
   onSelectPullRequest?: ((number: number) => void) | undefined;
 }) {
+  const { language, t } = useUiLanguage();
   const [open, setOpen] = useState(false);
   const assessment = assessPullRequestStack(stack);
   const entriesTopDown = stack.entries.toReversed();
@@ -47,8 +49,12 @@ export function PullRequestStackPopover({
             variant="chrome-outline"
             size="xs"
             className={cn(CHAT_HEADER_CONTROL_CLASS_NAME, "gap-1.5 px-2 font-normal")}
-            aria-label={`View stack ${stack.number}, pull request ${stack.position} of ${stack.size}`}
-            title={`Stack #${stack.number}`}
+            aria-label={
+              language === "zh-CN"
+                ? `查看 PR 栈 ${stack.number}，第 ${stack.position}/${stack.size} 个拉取请求`
+                : `View stack ${stack.number}, pull request ${stack.position} of ${stack.size}`
+            }
+            title={language === "zh-CN" ? `PR 栈 #${stack.number}` : `Stack #${stack.number}`}
           >
             <PullRequestStackPosition stack={stack} appearance="plain" />
           </Button>
@@ -62,10 +68,12 @@ export function PullRequestStackPopover({
       >
         <div className="border-b border-border px-4 py-3">
           <div className={cn("text-sm font-medium", ASSESSMENT_COLOR_CLASS[assessment.tone])}>
-            {assessment.label}
+            {t(assessment.label)}
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">
-            Stack #{stack.number} · targets {stack.baseBranch}
+            {language === "zh-CN"
+              ? `PR 栈 #${stack.number} · 目标分支 ${stack.baseBranch}`
+              : `Stack #${stack.number} · targets ${stack.baseBranch}`}
           </div>
         </div>
 

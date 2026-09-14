@@ -13,6 +13,7 @@ import { HiOutlineHandRaised } from "react-icons/hi2";
 import { CentralIcon } from "~/lib/central-icons";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { useAppSettings } from "~/appSettings";
+import { useUiLanguage } from "~/uiLanguage";
 
 import { newCommandId, cn } from "../lib/utils";
 import { readNativeApi } from "../nativeApi";
@@ -81,6 +82,7 @@ function RuntimeModeMenuItem({
   icon: ReactNode;
   accent?: boolean;
 }) {
+  const { t } = useUiLanguage();
   const presentation = RUNTIME_MODE_PRESENTATION[mode];
   return (
     <MenuRadioItem
@@ -95,14 +97,14 @@ function RuntimeModeMenuItem({
       <span className="grid w-full min-w-0 flex-1 grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-x-3">
         <span className="flex h-5 items-center justify-center">{icon}</span>
         <span className="flex min-w-0 flex-col gap-0.5">
-          <span>{presentation.label}</span>
+          <span>{t(presentation.label)}</span>
           <span
             className={cn(
               "runtime-mode-menu-description text-xs font-normal",
               accent ? "text-current" : "text-muted-foreground",
             )}
           >
-            {presentation.description}
+            {t(presentation.description)}
           </span>
         </span>
       </span>
@@ -157,6 +159,7 @@ export function RuntimeUsageControls({
   className,
   hideLabel: hideLabelProp,
 }: RuntimeUsageControlsProps) {
+  const { t } = useUiLanguage();
   const autoModeAvailable =
     provider !== undefined &&
     providerModelSupportsAutoRuntimeMode(provider, runtimeModel, providerStatus);
@@ -182,7 +185,7 @@ export function RuntimeUsageControls({
                   runtimeMode === "auto" && RUNTIME_AUTO_ACCENT_CLASS_NAME,
                   runtimeMode === "full-access" && RUNTIME_FULL_ACCESS_ACCENT_CLASS_NAME,
                 )}
-                title={`${runtimePresentation.label}: ${runtimePresentation.description}. Click to change permissions.`}
+                title={`${t(runtimePresentation.label)}: ${t(runtimePresentation.description)}. ${t("Click to change permissions.")}`}
               />
             }
           >
@@ -195,7 +198,7 @@ export function RuntimeUsageControls({
                 <HiOutlineHandRaised className="size-3.5 shrink-0" />
               )}
               <span className={cn("truncate", hideLabel ? "sr-only" : "@max-[480px]:sr-only")}>
-                {runtimePresentation.label}
+                {t(runtimePresentation.label)}
               </span>
               <ChevronDownIcon
                 className={cn(
@@ -263,6 +266,7 @@ export default function BranchToolbar({
   showBranchSelector: showBranchSelectorProp,
   fixedLocalWorkspaceCwd,
 }: BranchToolbarProps) {
+  const { t } = useUiLanguage();
   const handoffBusy = handoffBusyProp ?? false;
   const variant = variantProp ?? "toolbar";
   const showBranchSelector = showBranchSelectorProp ?? true;
@@ -491,7 +495,7 @@ export default function BranchToolbar({
                 <Collapsible open={rateLimitsOpen} onOpenChange={setRateLimitsOpen}>
                   <MenuItem closeOnClick={false} onClick={() => setRateLimitsOpen((open) => !open)}>
                     <CentralIcon name="clock" className="size-3.5 text-muted-foreground" />
-                    <span className="min-w-0 flex-1 truncate">Rate limits remaining</span>
+                    <span className="min-w-0 flex-1 truncate">{t("Rate limits remaining")}</span>
                     <DisclosureChevron
                       open={rateLimitsOpen}
                       className="text-[var(--color-text-foreground-secondary)]"

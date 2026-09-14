@@ -15,6 +15,7 @@ import { ProviderIcon } from "~/components/ProviderIcon";
 import { Checkbox } from "~/components/ui/checkbox";
 import { DisclosureRegion } from "~/components/ui/DisclosureRegion";
 import { useRefreshProviderStatusesNow } from "~/hooks/useProviderStatusRefresh";
+import { useReducedMotion } from "~/hooks/useReducedMotion";
 import { RefreshCwIcon, XIcon } from "~/lib/icons";
 import {
   findProviderStatus,
@@ -22,6 +23,7 @@ import {
 } from "~/lib/providerAvailability";
 import { serverConfigQueryOptions } from "~/lib/serverReactQuery";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { useWorkspacePathsStore } from "~/workspacePathsStore";
 import { ONBOARDING_TILE_CLASS_NAME } from "../layout";
 import { classifyProviderSetup, summarizeProviderSetup, type ProviderSetupState } from "../logic";
@@ -111,6 +113,8 @@ function useDisabledProvidersDraft(): {
 }
 
 export function ProvidersStep() {
+  const reduceMotion = useReducedMotion();
+  const { language, t } = useUiLanguage();
   const statuses = useDetectedProviderStatuses();
   const refreshProviderStatuses = useRefreshProviderStatusesNow();
   const homeDir = useWorkspacePathsStore((store) => store.homeDir);
@@ -169,10 +173,13 @@ export function ProvidersStep() {
   useEffect(() => {
     if (!connectingProvider) return;
     const frame = window.requestAnimationFrame(() => {
-      terminalRegionRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      terminalRegionRef.current?.scrollIntoView({
+        block: "nearest",
+        behavior: reduceMotion ? "auto" : "smooth",
+      });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [connectingProvider]);
+  }, [connectingProvider, reduceMotion]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -208,7 +215,7 @@ export function ProvidersStep() {
                     aria-hidden
                     className={cn("size-1.5 shrink-0 rounded-full", presentation.dotClassName)}
                   />
-                  {presentation.label}
+                  {t(presentation.label)}
                   {canConnectInline ? (
                     <button
                       type="button"
@@ -218,7 +225,7 @@ export function ProvidersStep() {
                         toggleConnect(descriptor.kind);
                       }}
                     >
-                      {isConnecting ? "Done" : "Sign in"}
+                      {isConnecting ? t("Done") : t("Sign in")}
                     </button>
                   ) : null}
                   {state === "not-installed" ? (
@@ -229,7 +236,7 @@ export function ProvidersStep() {
                       className={cn("ml-1", INLINE_ACTION_CLASS_NAME)}
                       onClick={(event) => event.stopPropagation()}
                     >
-                      Guide
+                      {t("Guide")}
                     </a>
                   ) : null}
                 </span>
@@ -237,7 +244,11 @@ export function ProvidersStep() {
               <Checkbox
                 id={checkboxId}
                 checked={enabled}
-                aria-label={`${enabled ? "Disable" : "Enable"} ${descriptor.displayName}`}
+                aria-label={
+                  language === "zh-CN"
+                    ? `${enabled ? "停用" : "启用"} ${descriptor.displayName}`
+                    : `${enabled ? "Disable" : "Enable"} ${descriptor.displayName}`
+                }
                 onCheckedChange={(checked) =>
                   setProviderDisabled(descriptor.kind, checked !== true)
                 }
@@ -249,8 +260,9 @@ export function ProvidersStep() {
 
       <div className="flex items-center justify-between gap-3 text-[length:var(--app-font-size-ui,12px)] text-muted-foreground">
         <span>
-          {summary.connected} connected · {summary.needsSignIn} need sign-in ·{" "}
-          {summary.notInstalled} not installed
+          {language === "zh-CN"
+            ? `${summary.connected} 个已连接 · ${summary.needsSignIn} 个需要登录 · ${summary.notInstalled} 个未安装`
+            : `${summary.connected} connected · ${summary.needsSignIn} need sign-in · ${summary.notInstalled} not installed`}
         </span>
         <button
           type="button"
@@ -259,7 +271,7 @@ export function ProvidersStep() {
           onClick={() => void refresh()}
         >
           <RefreshCwIcon className={cn("size-3.5", refreshing && "animate-spin")} aria-hidden />
-          Re-detect
+          {t("Re-detect")}
         </button>
       </div>
 
@@ -270,8 +282,10 @@ export function ProvidersStep() {
                 provider is detected as connected, but the terminal stays mounted. */}
             <div className="flex items-center justify-between text-[length:var(--app-font-size-ui,12px)] text-muted-foreground">
               <span>
-                Signing in to {connecting.descriptor.displayName} ·{" "}
-                <code className="text-foreground/80">{connectingSignInCommand}</code>
+                {language === "zh-CN"
+                  ? `正在登录 ${connecting.descriptor.displayName}`
+                  : `Signing in to ${connecting.descriptor.displayName}`}{" "}
+                · <code className="text-foreground/80">{connectingSignInCommand}</code>
               </span>
               <button
                 type="button"
@@ -279,7 +293,7 @@ export function ProvidersStep() {
                 onClick={finishConnect}
               >
                 <XIcon className="size-3.5" aria-hidden />
-                Done
+                {t("Done")}
               </button>
             </div>
             <ProviderConnectTerminal

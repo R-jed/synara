@@ -7,6 +7,7 @@
 import type { ReactNode } from "react";
 import { createMarkdownCodeFence, formatShellTranscript } from "~/lib/toolCallDetailsFormatting";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import type { TimestampFormat } from "../../appSettings";
 import type { WorkLogToolDetails, WorkLogToolOutputDetails } from "../../lib/toolCallDetails";
 import type { WorkLogLiveActivity } from "../../workLog";
@@ -34,10 +35,11 @@ export function ToolCallDetailsContent({
   activity?: WorkLogLiveActivity | undefined;
   timestampFormat: TimestampFormat;
 }) {
+  const { t } = useUiLanguage();
   if (!details && !activity) {
     return (
       <div className="rounded-lg border border-border/45 bg-background/60 px-3 py-2 text-sm text-muted-foreground">
-        No detailed payload was available for this tool call.
+        {t("No detailed payload was available for this tool call.")}
       </div>
     );
   }
@@ -58,7 +60,7 @@ export function ToolCallDetailsContent({
       ) : null}
 
       {details?.files?.length ? (
-        <ToolDetailSection title="Files">
+        <ToolDetailSection title={t("Files")}>
           <div className="flex flex-wrap gap-1.5">
             {details.files.map((file) => (
               <span
@@ -74,13 +76,13 @@ export function ToolCallDetailsContent({
       ) : null}
 
       {details?.diff ? (
-        <ToolDetailSection title="Diff">
+        <ToolDetailSection title={t("Diff")}>
           <DiffCodeBlock>{details.diff}</DiffCodeBlock>
         </ToolDetailSection>
       ) : null}
 
       {details?.edits?.length ? (
-        <ToolDetailSection title="Edits">
+        <ToolDetailSection title={t("Edits")}>
           <div className="space-y-3">
             {details.edits.map((edit, index) => (
               <div
@@ -94,12 +96,12 @@ export function ToolCallDetailsContent({
                 ) : null}
                 <div className="grid gap-0 md:grid-cols-2">
                   {edit.oldText !== undefined ? (
-                    <TextChangeBlock title="Before" tone="remove">
+                    <TextChangeBlock title={t("Before")} tone="remove">
                       {edit.oldText}
                     </TextChangeBlock>
                   ) : null}
                   {edit.newText !== undefined ? (
-                    <TextChangeBlock title="After" tone="add">
+                    <TextChangeBlock title={t("After")} tone="add">
                       {edit.newText}
                     </TextChangeBlock>
                   ) : null}
@@ -111,7 +113,7 @@ export function ToolCallDetailsContent({
       ) : null}
 
       {details?.content ? (
-        <ToolDetailSection title="Written Content">
+        <ToolDetailSection title={t("Written Content")}>
           <MarkdownToolCodeBlock language="text">{details.content}</MarkdownToolCodeBlock>
         </ToolDetailSection>
       ) : null}
@@ -136,6 +138,7 @@ function LiveActivityMetadata({
   activity: WorkLogLiveActivity;
   timestampFormat: TimestampFormat;
 }) {
+  const { t } = useUiLanguage();
   const stateLabel = formatLiveActivityStateLabel(activity.state);
   const nowMs = useLiveActivityNow(activity);
   const elapsed = formatLiveActivityElapsed(activity, nowMs);
@@ -145,11 +148,11 @@ function LiveActivityMetadata({
   return (
     <ToolDetailSection title="Activity">
       <dl className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3 gap-y-1.5 rounded-lg border border-border/45 bg-background/60 px-3 py-2.5 text-[11px]">
-        <dt className="text-muted-foreground/56">Status</dt>
-        <dd className="text-foreground/84">{stateLabel}</dd>
+        <dt className="text-muted-foreground/56">{t("Status")}</dt>
+        <dd className="text-foreground/84">{t(stateLabel)}</dd>
         {activity.startedAt ? (
           <>
-            <dt className="text-muted-foreground/56">Started</dt>
+            <dt className="text-muted-foreground/56">{t("Started")}</dt>
             <dd className="text-foreground/84">
               <time dateTime={activity.startedAt} title={activity.startedAt}>
                 {formatActivityTimestamp(activity.startedAt, timestampFormat)}
@@ -157,7 +160,7 @@ function LiveActivityMetadata({
             </dd>
           </>
         ) : null}
-        <dt className="text-muted-foreground/56">Last activity</dt>
+        <dt className="text-muted-foreground/56">{t("Last activity")}</dt>
         <dd className="text-foreground/84">
           <time dateTime={activity.lastActivityAt} title={activity.lastActivityAt}>
             {formatActivityTimestamp(activity.lastActivityAt, timestampFormat)}
@@ -165,19 +168,19 @@ function LiveActivityMetadata({
         </dd>
         {elapsed ? (
           <>
-            <dt className="text-muted-foreground/56">Elapsed</dt>
+            <dt className="text-muted-foreground/56">{t("Elapsed")}</dt>
             <dd className="tabular-nums text-foreground/84">{elapsed}</dd>
           </>
         ) : null}
         {progress ? (
           <>
-            <dt className="text-muted-foreground/56">Progress</dt>
+            <dt className="text-muted-foreground/56">{t("Progress")}</dt>
             <dd className="tabular-nums text-foreground/84">{progress}</dd>
           </>
         ) : null}
         {activity.detail ? (
           <>
-            <dt className="text-muted-foreground/56">Detail</dt>
+            <dt className="text-muted-foreground/56">{t("Detail")}</dt>
             <dd className="break-words text-foreground/84">{activity.detail}</dd>
           </>
         ) : null}
@@ -197,15 +200,17 @@ function MarkdownToolCodeBlock(props: { language: string; children: string }) {
 }
 
 function ToolDetailSection(props: { title: string; children: ReactNode }) {
+  const { t } = useUiLanguage();
   return (
     <section className="space-y-2">
-      <h3 className="text-[11px] font-medium text-muted-foreground/56">{props.title}</h3>
+      <h3 className="text-[11px] font-medium text-muted-foreground/56">{t(props.title)}</h3>
       {props.children}
     </section>
   );
 }
 
 function ToolOutputMetadata({ output }: { output: WorkLogToolOutputDetails }) {
+  const { t } = useUiLanguage();
   if (output.exitCode === undefined && !output.truncated) {
     return null;
   }
@@ -213,12 +218,12 @@ function ToolOutputMetadata({ output }: { output: WorkLogToolOutputDetails }) {
     <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground/68">
       {output.exitCode !== undefined ? (
         <span className="rounded-full border border-border/45 px-2 py-0.5">
-          Exit code {output.exitCode}
+          {t("Exit code")} {output.exitCode}
         </span>
       ) : null}
       {output.truncated ? (
         <span className="rounded-full border border-amber-500/30 bg-amber-500/8 px-2 py-0.5 text-amber-200/90">
-          Truncated
+          {t("Truncated")}
         </span>
       ) : null}
     </div>
@@ -249,6 +254,7 @@ function ToolOutputSection({ output }: { output: WorkLogToolOutputDetails }) {
 }
 
 function LabeledCodeBlock(props: { title: string; tone: "output" | "error"; children: string }) {
+  const { t } = useUiLanguage();
   return (
     <div className="overflow-hidden rounded-lg border border-border/45 bg-background/58">
       <div
@@ -257,7 +263,7 @@ function LabeledCodeBlock(props: { title: string; tone: "output" | "error"; chil
           props.tone === "error" ? "text-rose-200/88" : "text-muted-foreground/60",
         )}
       >
-        {props.title}
+        {t(props.title)}
       </div>
       <ToolCodeBlock bare>{props.children}</ToolCodeBlock>
     </div>
@@ -265,6 +271,7 @@ function LabeledCodeBlock(props: { title: string; tone: "output" | "error"; chil
 }
 
 function TextChangeBlock(props: { title: string; tone: "add" | "remove"; children: string }) {
+  const { t } = useUiLanguage();
   return (
     <div
       className={cn(
@@ -278,7 +285,7 @@ function TextChangeBlock(props: { title: string; tone: "add" | "remove"; childre
           props.tone === "add" ? "text-emerald-200/82" : "text-rose-200/82",
         )}
       >
-        {props.title}
+        {t(props.title)}
       </div>
       <ToolCodeBlock bare>{props.children}</ToolCodeBlock>
     </div>

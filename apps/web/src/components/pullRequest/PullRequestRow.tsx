@@ -10,8 +10,9 @@ import { pullRequestListProjectContexts } from "@synara/shared/githubRepository"
 
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { PinStatusIcon, pinActionLabel } from "~/lib/pin";
-import { formatRelativeTime } from "~/lib/relativeTime";
+import { formatRelativeTimeForLanguage } from "~/lib/relativeTime";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   PR_BODY_TEXT_CLASS_NAME,
   PR_FINE_TEXT_CLASS_NAME,
@@ -64,18 +65,28 @@ export const PullRequestRow = function PullRequestRow({
   onClick: (entry: PullRequestListEntry) => void;
   onTogglePinned: (entry: PullRequestListEntry) => void;
 }) {
+  const { language, t } = useUiLanguage();
   const showProjectTitle = showProjectTitleProp ?? false;
   const showDiffColors = showDiffColorsProp ?? true;
   const isPinned = entry.isPinned === true;
   const projectContexts = pullRequestListProjectContexts(entry);
   const projectLabel =
-    projectContexts.length > 1 ? `${projectContexts.length} projects` : entry.projectTitle;
+    projectContexts.length > 1
+      ? language === "zh-CN"
+        ? `${projectContexts.length} 个项目`
+        : `${projectContexts.length} projects`
+      : entry.projectTitle;
   const projectTitle = projectContexts.map((context) => context.projectTitle).join(", ");
   const pinLabel = pinActionLabel(
     showProjectTitle
-      ? `pull request #${entry.number} in ${projectLabel}`
-      : `pull request #${entry.number}`,
+      ? language === "zh-CN"
+        ? `${projectLabel} 中的拉取请求 #${entry.number}`
+        : `pull request #${entry.number} in ${projectLabel}`
+      : language === "zh-CN"
+        ? `拉取请求 #${entry.number}`
+        : `pull request #${entry.number}`,
     isPinned,
+    t,
   );
   return (
     <div
@@ -147,7 +158,7 @@ export const PullRequestRow = function PullRequestRow({
             "flex shrink-0 flex-col items-end gap-0.5 tabular-nums",
           )}
         >
-          <span>{formatRelativeTime(entry.updatedAt)}</span>
+          <span>{formatRelativeTimeForLanguage(entry.updatedAt, language)}</span>
           <PullRequestDiffStat
             additions={entry.additions}
             deletions={entry.deletions}

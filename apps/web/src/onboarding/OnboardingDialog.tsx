@@ -24,6 +24,7 @@ import { useTheme } from "~/hooks/useTheme";
 import { CheckIcon } from "~/lib/icons";
 import { findProviderStatus } from "~/lib/providerAvailability";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { CODE_THEME_OPTIONS } from "~/theme/theme.logic";
 import { ONBOARDING_INSET_CLASS_NAME } from "./layout";
 import {
@@ -75,6 +76,7 @@ function OnboardingFlow(props: {
   projectBusy: boolean;
   onProjectBusyChange: (busy: boolean) => void;
 }) {
+  const { language, t } = useUiLanguage();
   const [step, setStep] = useState<OnboardingStep>("welcome");
   const [projectResults, setProjectResults] = useState<ReadonlyArray<OnboardingProjectResult>>([]);
   const { settings } = useAppSettings();
@@ -102,13 +104,20 @@ function OnboardingFlow(props: {
   const themeLabel =
     CODE_THEME_OPTIONS.find((option) => option.id === activeTheme.codeThemeId)?.label ??
     activeTheme.codeThemeId;
-  const doneSummary = [
-    `${plural(providerSummary.connected, "agent")} connected`,
-    `${themeLabel} theme`,
-    projectResults.length > 0
-      ? `${plural(projectResults.length, "project")} added`
-      : "No project yet",
-  ].join(" · ");
+  const doneSummary =
+    language === "zh-CN"
+      ? [
+          `已连接 ${providerSummary.connected} 个 Agent`,
+          `${themeLabel} 主题`,
+          projectResults.length > 0 ? `已添加 ${projectResults.length} 个项目` : "尚未添加项目",
+        ].join(" · ")
+      : [
+          `${plural(providerSummary.connected, "agent")} connected`,
+          `${themeLabel} theme`,
+          projectResults.length > 0
+            ? `${plural(projectResults.length, "project")} added`
+            : "No project yet",
+        ].join(" · ");
 
   const description = step === "done" ? doneSummary : STEP_DESCRIPTIONS[step];
   const stepIndex = ONBOARDING_STEPS.indexOf(step);
@@ -152,13 +161,15 @@ function OnboardingFlow(props: {
         ) : null}
         {hero ? null : (
           <span className="text-[length:var(--app-font-size-ui-sm,11px)] font-medium tracking-[0.04em] text-muted-foreground/70 uppercase">
-            Step {stepIndex + 1} of {ONBOARDING_STEPS.length}
+            {language === "zh-CN"
+              ? `第 ${stepIndex + 1} 步，共 ${ONBOARDING_STEPS.length} 步`
+              : `Step ${stepIndex + 1} of ${ONBOARDING_STEPS.length}`}
           </span>
         )}
-        <DialogTitle className="text-[22px] tracking-[-0.01em]">{STEP_TITLES[step]}</DialogTitle>
+        <DialogTitle className="text-[22px] tracking-[-0.01em]">{t(STEP_TITLES[step])}</DialogTitle>
         {description ? (
           <DialogDescription className="max-w-[560px] text-[length:var(--app-font-size-ui-lg,13px)] leading-normal">
-            {description}
+            {step === "done" ? description : t(description)}
           </DialogDescription>
         ) : null}
       </DialogHeader>

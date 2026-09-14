@@ -8,6 +8,7 @@ import { type CSSProperties } from "react";
 import type { ProfileHeatmapCell } from "@synara/contracts";
 import { cn } from "~/lib/utils";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
+import { useUiLanguage } from "~/uiLanguage";
 import { formatCompact, formatShortDate } from "./profileFormatting";
 
 // Single-hue ramp built from the theme accent (`--info`, defaults to blue-500) for the
@@ -108,6 +109,7 @@ export function ActivityHeatmap({
   tooltipUnit: tooltipUnitProp,
   className,
 }: ActivityHeatmapProps) {
+  const { language, t } = useUiLanguage();
   const cellSize = cellSizeProp ?? 13;
   const gap = gapProp ?? 3;
   const radius = radiusProp ?? 4;
@@ -200,7 +202,7 @@ export function ActivityHeatmap({
           )}
           style={monthLabelWidth}
         >
-          {monthByColumn[index] ?? ""}
+          {monthByColumn[index] ? t(monthByColumn[index]!) : ""}
         </div>
       ))}
     </div>
@@ -247,7 +249,15 @@ export function ActivityHeatmap({
                     render={<div className={cellClassName} style={cellStyle} />}
                   />
                   <TooltipPopup side="top" sideOffset={6}>
-                    {heatmapTooltipText(slot.cell, tooltipUnit)}
+                    {language === "zh-CN"
+                      ? slot.cell.count <= 0
+                        ? `${formatShortDate(slot.cell.day) ?? slot.cell.day} · ${t("No activity")}`
+                        : `${formatShortDate(slot.cell.day) ?? slot.cell.day} · ${formatCompact(slot.cell.count)} ${t(
+                            slot.cell.count === 1 && tooltipUnit.endsWith("s")
+                              ? tooltipUnit.slice(0, -1)
+                              : tooltipUnit,
+                          )}`
+                      : heatmapTooltipText(slot.cell, tooltipUnit)}
                   </TooltipPopup>
                 </Tooltip>
               );

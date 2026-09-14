@@ -1667,6 +1667,13 @@ describe("buildExpiredTerminalContextToastCopy", () => {
       description: "Re-add it if you want that terminal output included.",
     });
   });
+
+  it("formats Chinese guidance without leaking the English dynamic title", () => {
+    expect(buildExpiredTerminalContextToastCopy(2, "omitted", "zh-CN")).toEqual({
+      title: "消息中已省略 2 个已过期的终端上下文",
+      description: "如需包含终端输出，请重新添加。",
+    });
+  });
 });
 
 describe("shouldRenderTerminalWorkspace", () => {

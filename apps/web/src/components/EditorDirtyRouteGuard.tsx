@@ -7,10 +7,12 @@
 
 import { useBlocker } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useUiLanguage } from "~/uiLanguage";
 
 import { WorkspaceFileEditorDiscardDialog } from "./chat/WorkspaceFileEditorChrome";
 
 export function EditorDirtyRouteGuard(props: { enabled: boolean; saving: boolean }) {
+  const { t } = useUiLanguage();
   const blocker = useBlocker({
     shouldBlockFn: () => props.enabled,
     withResolver: true,
@@ -37,9 +39,9 @@ export function EditorDirtyRouteGuard(props: { enabled: boolean; saving: boolean
   return (
     <WorkspaceFileEditorDiscardDialog
       open={blocked !== null}
-      title="Discard unsaved changes?"
-      description="Leaving this page drops the changes you have not saved yet."
-      confirmLabel="Discard changes and leave"
+      title={t("Discard unsaved changes?")}
+      description={t("Leaving this page drops the changes you have not saved yet.")}
+      confirmLabel={t("Discard changes and leave")}
       onOpenChange={(open) => {
         if (!open && blocker.status === "blocked") {
           setProceedAfterSave(false);

@@ -17,6 +17,7 @@ import {
   type WorkspaceFileEditorState,
 } from "~/lib/workspaceFileEditor";
 import { ensureNativeApi } from "~/nativeApi";
+import { useUiLanguage } from "~/uiLanguage";
 
 export interface UseWorkspaceFileEditorInput {
   cwd: string | null;
@@ -42,6 +43,7 @@ export interface WorkspaceFileEditorController {
 export function useWorkspaceFileEditor(
   input: UseWorkspaceFileEditorInput,
 ): WorkspaceFileEditorController {
+  const { tError } = useUiLanguage();
   const { cwd, enabled, filePath } = input;
   const queryClient = useQueryClient();
   const [state, dispatch] = useReducer(
@@ -130,7 +132,7 @@ export function useWorkspaceFileEditor(
       } catch (error) {
         dispatch({
           type: "saveFailed",
-          message: error instanceof Error ? error.message : "Could not save the file.",
+          message: "Could not save the file.",
           conflict: isWorkspaceFileWriteConflictError(error),
         });
       }
@@ -165,7 +167,7 @@ export function useWorkspaceFileEditor(
       .catch((error: unknown) => {
         dispatch({
           type: "saveFailed",
-          message: error instanceof Error ? error.message : "Could not reload the file.",
+          message: "Could not reload the file.",
           conflict: false,
         });
       });
@@ -181,7 +183,7 @@ export function useWorkspaceFileEditor(
     loading: fileQuery.isLoading,
     loadError:
       fileQuery.error instanceof Error
-        ? fileQuery.error.message
+        ? tError(fileQuery.error, "Could not read file.")
         : fileQuery.error
           ? "Could not read file."
           : null,

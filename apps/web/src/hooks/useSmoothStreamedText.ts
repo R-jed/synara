@@ -16,7 +16,7 @@
 //      while a ~25/s multi-character reveal is visually equivalent.
 
 import { useEffect, useRef, useState } from "react";
-import { useMediaQuery } from "./useMediaQuery";
+import { useReducedMotion } from "./useReducedMotion";
 
 // Drain the current backlog over this window. Kept above the ~100ms network flush so a
 // small backlog cushion always remains and the reveal tracks inflow without running dry.
@@ -91,6 +91,9 @@ export function stepSmoothReveal(
   const targetVelocity = Math.min(MAX_CHARS_PER_SECOND, backlog / DRAIN_WINDOW_SECONDS);
   state.velocity += (targetVelocity - state.velocity) * VELOCITY_LERP;
   state.shown = Math.min(targetLength, state.shown + state.velocity * dt);
+  if (targetLength - state.shown < 1) {
+    state.shown = targetLength;
+  }
 
   const nextCount = Math.floor(state.shown);
   const caughtUp = nextCount >= targetLength;
@@ -119,7 +122,7 @@ export function stepSmoothReveal(
  * - Text already present on mount is shown immediately; only newly-arriving deltas animate.
  */
 export function useSmoothStreamedText(text: string, isStreaming: boolean): string {
-  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const reduceMotion = useReducedMotion();
   // Testable env (jsdom/vitest) has no rAF or has mocked timers – smooth reveal would
   // jank and never settle. Fall back to immediate text so streaming tests stay
   // deterministic and the main thread isn't blocked by rAF loops.

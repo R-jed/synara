@@ -24,6 +24,7 @@ import { useRefreshProviderStatusesNow } from "~/hooks/useProviderStatusRefresh"
 import { createAndSendKanbanTask, createKanbanDraftTask } from "~/lib/kanbanTaskCreate";
 import { resolveProviderSendAvailabilityWithRefresh } from "~/lib/providerAvailability";
 import { buildModelSelection } from "~/providerModelOptions";
+import { useUiLanguage } from "~/uiLanguage";
 import { truncateKanbanTaskPreview } from "./KanbanNewTaskDialog.logic";
 
 interface UseKanbanTaskSubmitInput {
@@ -49,6 +50,7 @@ interface UseKanbanTaskSubmitInput {
 }
 
 export function useKanbanTaskSubmit(input: UseKanbanTaskSubmitInput) {
+  const { t, tError } = useUiLanguage();
   const {
     selectedProjectId,
     hasSendableContent,
@@ -97,7 +99,13 @@ export function useKanbanTaskSubmit(input: UseKanbanTaskSubmitInput) {
 
     isCreatingRef.current = true;
     await waitForPendingImages();
-    const truncatedPrompt = truncateKanbanTaskPreview(taskPreview);
+    const localizedTaskPreview =
+      trimmedPrompt.length > 0
+        ? taskPreview
+        : taskPreview.startsWith("Image: ")
+          ? `${t("Image")}: ${taskPreview.slice("Image: ".length)}`
+          : t(taskPreview);
+    const truncatedPrompt = truncateKanbanTaskPreview(localizedTaskPreview);
     // The scratch draft carries the full selection (model + reasoning effort +
     // speed) set through the picker; fall back to a bare selection otherwise.
     const scratchState = useComposerDraftStore.getState().draftsByThreadId[scratchThreadId];
@@ -128,7 +136,7 @@ export function useKanbanTaskSubmit(input: UseKanbanTaskSubmitInput) {
       createKanbanDraftTask(taskInput);
       toastManager.add({
         type: "success",
-        title: "Task added to Drafts",
+        title: t("Task added to Drafts"),
         description: truncatedPrompt,
       });
       onOpenChange(false);
@@ -144,7 +152,7 @@ export function useKanbanTaskSubmit(input: UseKanbanTaskSubmitInput) {
     if (!sendAvailability.usable) {
       toastManager.add({
         type: "error",
-        title: sendAvailability.unavailableReason,
+        title: tError(sendAvailability.unavailableReason, "Could not send draft"),
       });
       isCreatingRef.current = false;
       return;
@@ -161,7 +169,7 @@ export function useKanbanTaskSubmit(input: UseKanbanTaskSubmitInput) {
         if (result.kind === "dispatched") {
           toastManager.add({
             type: "success",
-            title: "Task started",
+            title: t("Task started"),
             description: truncatedPrompt,
           });
           onOpenChange(false);
@@ -170,11 +178,11 @@ export function useKanbanTaskSubmit(input: UseKanbanTaskSubmitInput) {
         if (result.kind === "open-thread") {
           toastManager.add({
             type: "info",
-            title: "Finish this task in the chat",
+            title: t("Finish this task in the chat"),
             description:
               result.reason === "worktree-pending"
-                ? "Worktree setup stays on the normal composer send path."
-                : "The task was saved as a draft.",
+                ? t("Worktree setup stays on the normal composer send path.")
+                : t("The task was saved as a draft."),
           });
           onOpenChange(false);
           void navigate({ to: "/$threadId", params: { threadId } });
@@ -184,11 +192,11 @@ export function useKanbanTaskSubmit(input: UseKanbanTaskSubmitInput) {
         // exists on the board, so surface the failure and keep the dialog open.
         toastManager.add({
           type: "error",
-          title: "Couldn't start the task",
+          title: t("Couldn't start the task"),
           description:
             result.kind === "error"
-              ? result.message
-              : "The task was saved to Drafts instead. Open it to send manually.",
+              ? tError(result.message)
+              : t("The task was saved to Drafts instead. Open it to send manually."),
         });
         isCreatingRef.current = false;
         setIsCreating(false);
@@ -196,8 +204,8 @@ export function useKanbanTaskSubmit(input: UseKanbanTaskSubmitInput) {
       .catch((error: unknown) => {
         toastManager.add({
           type: "error",
-          title: "Couldn't start the task",
-          description: error instanceof Error ? error.message : "Unexpected error.",
+          title: t("Couldn't start the task"),
+          description: tError(error, "Unexpected error."),
         });
         isCreatingRef.current = false;
         setIsCreating(false);

@@ -16,6 +16,7 @@ import {
 } from "~/lib/icons";
 import { type PullRequestContextScope } from "~/lib/pullRequestContext";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { AttachmentCard } from "./AttachmentCard";
 
 const SCOPE_ICONS: Record<PullRequestContextScope, ComponentType<{ className?: string }>> = {
@@ -34,6 +35,51 @@ interface PullRequestContextCardShellProps {
   className?: string;
 }
 
+function localizePullRequestContextTitle(
+  scope: PullRequestContextScope,
+  title: string,
+  t: (text: string) => string,
+): string {
+  if (scope === "comments") {
+    const match = /^(\d+\+?) review comments?$/.exec(title);
+    if (match) return t("{count} review comments").replace("{count}", match[1]!);
+  }
+  if (scope === "checks") {
+    const match = /^(\d+) failing checks?$/.exec(title);
+    if (match) return t("{count} failing checks").replace("{count}", match[1]!);
+  }
+  if (scope === "conflicts" && title === "Merge conflicts") {
+    return t("Merge conflicts");
+  }
+  if (scope === "everything") {
+    const match = /^Repair PR (#\d+)$/.exec(title);
+    if (match) return t("Repair PR {number}").replace("{number}", match[1]!);
+  }
+  return title;
+}
+
+function localizePullRequestContextSubtitle(
+  scope: PullRequestContextScope,
+  subtitle: string,
+  t: (text: string) => string,
+): string {
+  if (scope === "conflicts") {
+    const match = /^Conflicts with (.+)$/.exec(subtitle);
+    if (match) return t("Conflicts with {branch}").replace("{branch}", match[1]!);
+  }
+  if (scope !== "everything") return subtitle;
+  return subtitle
+    .split(", ")
+    .map((part) => {
+      const comments = /^(\d+) comments?$/.exec(part);
+      if (comments) return t("{count} comments").replace("{count}", comments[1]!);
+      const checks = /^(\d+) failing checks?$/.exec(part);
+      if (checks) return t("{count} failing checks").replace("{count}", checks[1]!);
+      return part === "merge conflicts" ? t("Merge conflicts") : part;
+    })
+    .join("，");
+}
+
 function PullRequestContextCardShell({
   scope,
   title,
@@ -41,16 +87,21 @@ function PullRequestContextCardShell({
   onRemove,
   className,
 }: PullRequestContextCardShellProps) {
+  const { t } = useUiLanguage();
   const Icon = SCOPE_ICONS[scope];
+  const displayTitle = localizePullRequestContextTitle(scope, title, t);
+  const displaySubtitle = localizePullRequestContextSubtitle(scope, subtitle, t);
   return (
     <AttachmentCard
       size="md"
       className={cn("w-64", className)}
       icon={<Icon className="size-4" />}
-      title={title}
-      subtitle={subtitle.length > 0 ? <span className="truncate">{subtitle}</span> : undefined}
+      title={displayTitle}
+      subtitle={
+        displaySubtitle.length > 0 ? <span className="truncate">{displaySubtitle}</span> : undefined
+      }
       onRemove={onRemove}
-      removeLabel={`Remove ${title}`}
+      removeLabel={`${t("Remove")} ${displayTitle}`}
     />
   );
 }
@@ -83,13 +134,14 @@ export function UserMessagePullRequestContextCard({
   subtitle,
   text,
 }: UserMessagePullRequestContextCardProps) {
+  const { t } = useUiLanguage();
   const [expanded, setExpanded] = useState(false);
   return (
     <div className="flex flex-col items-end gap-1">
       <button
         type="button"
         aria-expanded={expanded}
-        title={expanded ? "Hide the prompt this card sent" : "Show the prompt this card sent"}
+        title={expanded ? t("Hide the prompt this card sent") : t("Show the prompt this card sent")}
         className="cursor-pointer rounded-xl text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         onClick={() => setExpanded((value) => !value)}
       >

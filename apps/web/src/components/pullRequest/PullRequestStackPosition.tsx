@@ -9,12 +9,9 @@ import { Badge } from "~/components/ui/badge";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 import { GitForkIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 
 type StackPosition = Pick<PullRequestStackSummary, "number" | "size" | "position" | "baseBranch">;
-
-function stackPositionAriaLabel(stack: StackPosition): string {
-  return `Stack #${stack.number}, pull request ${stack.position} of ${stack.size}`;
-}
 
 function StackPositionContents({ stack }: { stack: StackPosition }) {
   return (
@@ -36,6 +33,7 @@ export function PullRequestStackPosition({
   appearance?: "badge" | "plain";
   className?: string;
 }) {
+  const { language } = useUiLanguage();
   if (appearance === "plain") {
     return (
       <span className={cn("inline-flex items-center gap-1.5", className)} aria-hidden="true">
@@ -44,7 +42,10 @@ export function PullRequestStackPosition({
     );
   }
 
-  const label = stackPositionAriaLabel(stack);
+  const label =
+    language === "zh-CN"
+      ? `PR 栈 #${stack.number}，第 ${stack.position}/${stack.size} 个拉取请求`
+      : `Stack #${stack.number}, pull request ${stack.position} of ${stack.size}`;
   return (
     <Tooltip>
       <TooltipTrigger
@@ -60,7 +61,9 @@ export function PullRequestStackPosition({
         }
       />
       <TooltipPopup side="top">
-        Stack #{stack.number} · PR {stack.position} of {stack.size} · targets {stack.baseBranch}
+        {language === "zh-CN"
+          ? `PR 栈 #${stack.number} · PR ${stack.position}/${stack.size} · 目标分支 ${stack.baseBranch}`
+          : `Stack #${stack.number} · PR ${stack.position} of ${stack.size} · targets ${stack.baseBranch}`}
       </TooltipPopup>
     </Tooltip>
   );

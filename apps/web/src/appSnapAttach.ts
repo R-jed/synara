@@ -12,18 +12,23 @@ export async function attachAppSnapCapture(
   threadId: ThreadId,
   capture: DesktopAppSnapCapture,
   acknowledge?: () => Promise<void>,
+  translate: (text: string) => string = (text) => text,
 ): Promise<"persisted" | "unverified"> {
   const persistenceResult = await insertAppSnapCaptureIntoDraft(threadId, capture);
 
-  const unverifiedDescription =
-    "The capture is attached, but Synara could not verify its draft metadata. If it is missing after a reload, Synara will attach it again.";
+  const unverifiedDescription = translate(
+    "The capture is attached, but Synara could not verify its draft metadata. If it is missing after a reload, Synara will attach it again.",
+  );
   const successDescription = capture.sourceAppName
-    ? `Captured ${capture.sourceAppName} and added it to the composer.`
-    : "The window was added to the composer.";
+    ? `${translate("Captured")} ${capture.sourceAppName} ${translate("and added it to the composer.")}`
+    : translate("The window was added to the composer.");
 
   toastManager.add({
     type: persistenceResult === "unverified" ? "warning" : "success",
-    title: persistenceResult === "unverified" ? "AppSnap added with a warning" : "AppSnap added",
+    title:
+      persistenceResult === "unverified"
+        ? translate("AppSnap added with a warning")
+        : translate("AppSnap added"),
     description: persistenceResult === "unverified" ? unverifiedDescription : successDescription,
     data: { allowCrossThreadVisibility: true },
   });

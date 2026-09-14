@@ -2,10 +2,9 @@
 // Purpose: Renders the compact file-comment count chip used in composer and user bubbles.
 // Layer: Chat attachment presentation
 
-import { pluralize } from "@synara/shared/text";
-
 import { formatFileCommentLabel } from "~/lib/fileComments";
 import { MessageCircleIcon } from "~/lib/icons";
+import { useUiLanguage } from "~/uiLanguage";
 import { AttachmentSummaryChip } from "./AttachmentSummaryChip";
 
 // Minimal shape shared by composer drafts (FileCommentDraft) and parsed bubble
@@ -22,11 +21,8 @@ interface FileCommentsSummaryChipProps {
   onRemove?: (() => void) | undefined;
 }
 
-function commentCountLabel(count: number): string {
-  return `${count} ${pluralize(count, "comment")}`;
-}
-
 export function FileCommentsSummaryChip(props: FileCommentsSummaryChipProps) {
+  const { t } = useUiLanguage();
   if (props.comments.length === 0) {
     return null;
   }
@@ -34,8 +30,8 @@ export function FileCommentsSummaryChip(props: FileCommentsSummaryChipProps) {
   return (
     <AttachmentSummaryChip
       icon={MessageCircleIcon}
-      label={commentCountLabel(props.comments.length)}
-      removeLabel="Remove comments"
+      label={`${props.comments.length} ${t("comments")}`}
+      removeLabel={t("Remove comments")}
       onRemove={props.onRemove}
       tooltip={props.comments.map((comment, index) => (
         <div key={`${formatFileCommentLabel(comment)}:${index}`} className="space-y-0.5">

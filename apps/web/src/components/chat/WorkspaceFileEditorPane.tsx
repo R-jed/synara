@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 
 import { useWorkspaceFileEditorSession } from "~/hooks/useWorkspaceFileEditorSession";
+import { useUiLanguage } from "~/uiLanguage";
 import { CodeEditorPane } from "../codeEditor/CodeEditorPane";
 import {
   INITIAL_CODE_EDIT_HISTORY_STATE,
@@ -24,6 +25,7 @@ export interface WorkspaceFileEditorPaneProps {
 }
 
 export function WorkspaceFileEditorPane(props: WorkspaceFileEditorPaneProps) {
+  const { t, tError } = useUiLanguage();
   const paneRef = useRef<HTMLDivElement | null>(null);
   const session = useWorkspaceFileEditorSession({
     cwd: props.workspaceRoot,
@@ -45,7 +47,7 @@ export function WorkspaceFileEditorPane(props: WorkspaceFileEditorPaneProps) {
       <WorkspaceFileEditorHeader
         workspaceRoot={props.workspaceRoot}
         filePath={props.filePath}
-        title="Editing"
+        title={t("Editing")}
         dirty={session.dirty}
         saving={session.state.saving}
         canSave={session.dirty && session.canEdit}
@@ -63,7 +65,7 @@ export function WorkspaceFileEditorPane(props: WorkspaceFileEditorPaneProps) {
       />
       {session.state.saveError ? (
         <WorkspaceFileEditorConflictBar
-          message={session.state.saveError}
+          message={t(session.state.saveError)}
           conflict={session.state.conflict}
           onReload={session.requestReload}
           onOverwrite={session.overwrite}
@@ -72,15 +74,17 @@ export function WorkspaceFileEditorPane(props: WorkspaceFileEditorPaneProps) {
       ) : null}
       {session.loadError ? (
         <PanelStateMessage density="compact" fill="flex" className="items-start justify-start p-3">
-          <p className="text-left text-[11px] text-destructive/85">{session.loadError}</p>
+          <p className="text-left text-[11px] text-destructive/85">
+            {tError(session.loadError, "Could not read file.")}
+          </p>
         </PanelStateMessage>
       ) : session.readOnlyReason ? (
         <PanelStateMessage density="compact" fill="flex">
-          <p>{session.readOnlyReason}</p>
+          <p>{t(session.readOnlyReason)}</p>
         </PanelStateMessage>
       ) : session.loading || !session.canEdit ? (
         <PanelStateMessage density="compact" fill="flex">
-          <p>Loading file...</p>
+          <p>{t("Loading file...")}</p>
         </PanelStateMessage>
       ) : (
         <CodeEditorPane
@@ -96,14 +100,14 @@ export function WorkspaceFileEditorPane(props: WorkspaceFileEditorPaneProps) {
       )}
       <WorkspaceFileEditorDiscardDialog
         open={session.pendingDiscard !== null}
-        title="Discard unsaved changes?"
+        title={t("Discard unsaved changes?")}
         description={
           session.pendingDiscard === "reload"
-            ? "Reloading replaces the editor contents with what is currently on disk."
-            : "Closing the editor drops the changes you have not saved yet."
+            ? t("Reloading replaces the editor contents with what is currently on disk.")
+            : t("Closing the editor drops the changes you have not saved yet.")
         }
         confirmLabel={
-          session.pendingDiscard === "reload" ? "Reload and discard" : "Discard changes"
+          session.pendingDiscard === "reload" ? t("Reload and discard") : t("Discard changes")
         }
         onOpenChange={(open) => {
           if (!open) {

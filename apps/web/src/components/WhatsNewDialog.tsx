@@ -10,10 +10,11 @@ import { useState } from "react";
 
 import { ArrowLeftIcon, ArrowRightIcon } from "~/lib/icons";
 import { SynaraLogo } from "~/components/SynaraLogo";
+import { useUiLanguage } from "~/uiLanguage";
 
 import { ChangelogAccordion } from "../whatsNew/ChangelogAccordion";
 import { FeatureSection } from "../whatsNew/FeatureSection";
-import type { WhatsNewEntry } from "../whatsNew/logic";
+import { formatWhatsNewDate, type WhatsNewEntry } from "../whatsNew/logic";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -88,6 +89,7 @@ function WhatsNewDialogContent({
   readonly currentVersion: string;
   readonly onOpenChange: (open: boolean) => void;
 }) {
+  const { t } = useUiLanguage();
   const [view, setView] = useState<View>("current");
 
   return (
@@ -120,11 +122,11 @@ function WhatsNewDialogContent({
             className="gap-1 text-muted-foreground"
             onClick={() => setView("changelog")}
           >
-            View changelog
+            {t("View changelog")}
             <ArrowRightIcon className="size-3" />
           </Button>
           <Button size="sm" onClick={() => onOpenChange(false)}>
-            Got it
+            {t("Got it")}
           </Button>
         </DialogFooter>
       )}
@@ -139,15 +141,16 @@ function CurrentHeader({
   readonly entry: WhatsNewEntry;
   readonly currentVersion: string;
 }) {
+  const { language, t } = useUiLanguage();
   return (
     <div className="flex items-center gap-3">
       <SynaraLogo aria-hidden className="size-8 shrink-0 text-foreground" />
       <div className="flex min-w-0 flex-col">
-        <DialogTitle className="text-base">What&rsquo;s new?</DialogTitle>
+        <DialogTitle className="text-base">{t("What's new?")}</DialogTitle>
         <DialogDescription className="text-xs">
           v{currentVersion}
           <span aria-hidden="true"> · </span>
-          {entry.date}
+          {formatWhatsNewDate(entry.date, language)}
         </DialogDescription>
       </div>
     </div>
@@ -155,15 +158,16 @@ function CurrentHeader({
 }
 
 function ChangelogHeader({ onBack }: { readonly onBack: () => void }) {
+  const { t } = useUiLanguage();
   return (
     <div className="flex items-center gap-3">
-      <Button size="icon-sm" variant="ghost" aria-label="Back to What's new" onClick={onBack}>
+      <Button size="icon-sm" variant="ghost" aria-label={t("Back to What's new")} onClick={onBack}>
         <ArrowLeftIcon className="size-4" />
       </Button>
       <div className="flex min-w-0 flex-col">
-        <DialogTitle className="text-base">Complete changelog</DialogTitle>
+        <DialogTitle className="text-base">{t("Complete changelog")}</DialogTitle>
         <DialogDescription className="text-xs">
-          Every curated release, newest first.
+          {t("Every curated release, newest first.")}
         </DialogDescription>
       </div>
     </div>

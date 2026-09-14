@@ -13,6 +13,7 @@ import { expandLocalFolderPath } from "~/lib/localFolderMentions";
 import { projectSearchLocalEntriesQueryOptions } from "~/lib/projectReactQuery";
 import { readNativeApi } from "~/nativeApi";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   ELEVATED_HOVER_SURFACE_CLASS_NAME,
   ELEVATED_HOVER_SURFACE_RAISED_TEXT_CLASS_NAME,
@@ -128,18 +129,18 @@ function isRootDirectory(directoryPath: string): boolean {
 
 // Effect/fs errors come through with deep stack traces and absolute internal paths.
 // Surface a short, user-friendly reason so the popover stays tidy on missing/denied paths.
-function summarizeDirectoryLoadError(error: unknown): string {
+function summarizeDirectoryLoadError(error: unknown, t: (text: string) => string): string {
   const raw = error instanceof Error ? error.message : String(error ?? "");
   if (/ENOENT|no such file or directory/i.test(raw)) {
-    return "Folder not found.";
+    return t("Folder not found.");
   }
   if (/EACCES|permission denied/i.test(raw)) {
-    return "Permission denied.";
+    return t("Permission denied.");
   }
   if (/ENOTDIR|not a directory/i.test(raw)) {
-    return "Not a folder.";
+    return t("Not a folder.");
   }
-  return "Unable to load folders.";
+  return t("Unable to load folders.");
 }
 
 export function ComposerLocalDirectoryMenu(props: {
@@ -150,6 +151,7 @@ export function ComposerLocalDirectoryMenu(props: {
   onNavigateFolder: (absolutePath: string) => void;
   handleRef?: Ref<ComposerLocalDirectoryMenuHandle>;
 }) {
+  const { t } = useUiLanguage();
   const { mentionQuery, rootLabel, homeDir, onSelectEntry, onNavigateFolder, handleRef } = props;
   const [entriesByPath, setEntriesByPath] = useState<EntriesByPath>({});
   const [loadingPaths, setLoadingPaths] = useState<ReadonlySet<string>>(() => new Set());
@@ -191,7 +193,7 @@ export function ComposerLocalDirectoryMenu(props: {
       if (cancelled) return;
       const api = readNativeApi();
       if (!api) {
-        setErrorMessage("App is still connecting. Try again in a moment.");
+        setErrorMessage(t("App is still connecting. Try again in a moment."));
         return;
       }
 
@@ -206,7 +208,7 @@ export function ComposerLocalDirectoryMenu(props: {
         })
         .catch((error) => {
           setEntriesByPath((current) => ({ ...current, [expandedDirectory]: [] }));
-          setErrorMessage(summarizeDirectoryLoadError(error));
+          setErrorMessage(summarizeDirectoryLoadError(error, t));
         })
         .finally(() => {
           setLoadingPaths((current) => {
@@ -220,7 +222,7 @@ export function ComposerLocalDirectoryMenu(props: {
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [entriesByPath, expandedDirectory, isAwaitingHomeDir, loadingPaths]);
+  }, [entriesByPath, expandedDirectory, isAwaitingHomeDir, loadingPaths, t]);
 
   const rawEntries = entriesByPath[expandedDirectory];
   const isLoading = loadingPaths.has(expandedDirectory);
@@ -399,7 +401,7 @@ export function ComposerLocalDirectoryMenu(props: {
           {parent ? (
             <button
               type="button"
-              aria-label="Go up one directory"
+              aria-label={t("Go up one directory")}
               onMouseDown={(event) => event.preventDefault()}
               onClick={handleGoUp}
               className={cn(
@@ -422,7 +424,7 @@ export function ComposerLocalDirectoryMenu(props: {
               onClick={handleSelectCurrentDirectory}
               className={cn(DIRECTORY_MENU_HEADER_ACTION_CLASS_NAME, "px-1.5 py-0.5 text-[10.5px]")}
             >
-              Use this folder
+              {t("Use this folder")}
             </button>
           ) : null}
         </div>
@@ -490,7 +492,7 @@ export function ComposerLocalDirectoryMenu(props: {
                 ) : null}
                 <CommandGroup>
                   <CommandGroupLabel className="px-2 pt-1.5 pb-1 text-[10px] font-semibold text-muted-foreground/55">
-                    Matches deeper
+                    {t("Matches deeper")}
                   </CommandGroupLabel>
                   {searchRows.map((entry, searchIndex) => {
                     const absoluteIndex = searchRowStartIndex + searchIndex;
@@ -513,23 +515,25 @@ export function ComposerLocalDirectoryMenu(props: {
         </div>
         {isAwaitingHomeDir ? (
           <p className="px-2 py-1.5 text-muted-foreground/50 text-[11px]">
-            Waiting for home directory from server…
+            {t("Waiting for home directory from server…")}
           </p>
         ) : isLoading && visibleCount === 0 ? (
-          <p className="px-2 py-1.5 text-muted-foreground/50 text-[11px]">Loading local files…</p>
+          <p className="px-2 py-1.5 text-muted-foreground/50 text-[11px]">
+            {t("Loading local files…")}
+          </p>
         ) : errorMessage ? (
           <p className="px-2 py-1.5 text-destructive/80 text-[11px]">{errorMessage}</p>
         ) : isSearchPending ? (
           <p className="px-2 py-1.5 text-muted-foreground/50 text-[11px]">
-            Searching nested files…
+            {t("Searching nested files…")}
           </p>
         ) : visibleCount === 0 ? (
           <p className="px-2 py-1.5 text-muted-foreground/50 text-[11px]">
-            {filter.trim().length > 0 ? "No matches." : "No files or folders here."}
+            {filter.trim().length > 0 ? t("No matches.") : t("No files or folders here.")}
           </p>
         ) : searchQuery.data?.truncated ? (
           <p className="px-2 py-1 text-muted-foreground/40 text-[10.5px]">
-            Showing top matches. Keep typing to narrow.
+            {t("Showing top matches. Keep typing to narrow.")}
           </p>
         ) : null}
       </div>
@@ -544,6 +548,7 @@ function UseCurrentFolderRow(props: {
   onHighlight: (index: number) => void;
   onActivate: () => void;
 }) {
+  const { t } = useUiLanguage();
   const { directoryLabel, index, isHighlighted, onHighlight, onActivate } = props;
   return (
     <CommandItem
@@ -561,7 +566,7 @@ function UseCurrentFolderRow(props: {
       <FolderClosed className="size-3.5 text-muted-foreground/60" />
       <div className="min-w-0 flex flex-1 items-center gap-1.5 overflow-hidden">
         <span className="shrink-0 text-[11.5px] font-medium text-foreground/80">
-          Use this folder
+          {t("Use this folder")}
         </span>
         <span className="truncate text-[11px] text-muted-foreground/55">{directoryLabel}</span>
       </div>

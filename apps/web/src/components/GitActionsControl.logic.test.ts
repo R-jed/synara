@@ -3,6 +3,7 @@ import { assert, describe, it } from "vitest";
 import {
   buildGitActionProgressStages,
   buildMenuItems,
+  localizeGitActionProgressLabel,
   requiresFeatureBranchForDefaultBranchAction,
   requiresDefaultBranchConfirmation,
   resolveAutoFeatureBranchName,
@@ -1768,6 +1769,22 @@ describe("resolveDefaultBranchActionDialogCopy", () => {
       continueLabel: "Create feature branch & continue",
     });
   });
+
+  it("builds Chinese default-branch copy before interpolating the branch name", () => {
+    const copy = resolveDefaultBranchActionDialogCopy({
+      action: "commit_push",
+      branchName: "main",
+      includesCommit: false,
+      language: "zh-CN",
+    });
+
+    assert.deepEqual(copy, {
+      title: "推送到默认分支？",
+      description:
+        "此操作会将本地提交推送到“main”。你可以继续使用该分支，或创建功能分支并在那里执行相同操作。",
+      continueLabel: "推送到 main",
+    });
+  });
 });
 
 describe("buildGitActionProgressStages", () => {
@@ -1826,6 +1843,15 @@ describe("buildGitActionProgressStages", () => {
       "Committing...",
       "Pushing to origin/feature/test...",
     ]);
+  });
+});
+
+describe("localizeGitActionProgressLabel", () => {
+  it("localizes dynamic push targets for Chinese UI", () => {
+    assert.equal(
+      localizeGitActionProgressLabel("Pushing to origin/feature/test...", "zh-CN"),
+      "正在推送到 origin/feature/test...",
+    );
   });
 });
 

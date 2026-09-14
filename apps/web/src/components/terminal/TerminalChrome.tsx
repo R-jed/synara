@@ -17,6 +17,7 @@ import { Popover, PopoverPopup, PopoverTrigger } from "~/components/ui/popover";
 import { XIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
 import { selectRepresentativeTerminalVisualIdentity } from "~/terminalVisualIdentity";
+import { useUiLanguage } from "~/uiLanguage";
 
 import { DOCK_HEADER_ICON_BUTTON_CLASS, SurfaceTabChip } from "../chat/chatHeaderControls";
 import type { ResolvedTerminalGroupLayout } from "./TerminalLayout";
@@ -71,6 +72,7 @@ export function TerminalWorkspaceTabBar(props: {
   onActiveGroupChange: (groupId: string) => void;
   onCloseGroup: (groupId: string) => void;
 }) {
+  const { t } = useUiLanguage();
   const canCloseGroups = props.terminalGroups.length > 1;
   return (
     <div className="flex min-h-9 min-w-0 items-center gap-1 bg-[var(--color-background-surface)] px-1.5 py-1">
@@ -82,8 +84,8 @@ export function TerminalWorkspaceTabBar(props: {
             terminalIds: terminalGroup.terminalIds,
             terminalVisualIdentityById: props.terminalVisualIdentityById,
           })?.identity;
-          const groupTitle = visualIdentity?.title ?? "Terminal";
-          const closeTabLabel = `Close ${visualIdentity?.title ?? "Terminal tab"}`;
+          const groupTitle = visualIdentity?.title ?? t("Terminal");
+          const closeTabLabel = `${t("Close")} ${visualIdentity?.title ?? t("Terminal")}`;
           return (
             <SurfaceTabChip
               key={terminalGroup.id}
@@ -138,6 +140,7 @@ export function TerminalSidebar(props: {
   onActiveTerminalChange: (terminalId: string) => void;
   onCloseTerminal: (terminalId: string) => void;
 }) {
+  const { t } = useUiLanguage();
   return (
     <aside className="flex w-36 min-w-36 flex-col border border-border/70 bg-[var(--color-background-surface)]">
       <div className="flex h-[22px] items-stretch justify-end border-b border-border/70">
@@ -164,7 +167,7 @@ export function TerminalSidebar(props: {
                   }`}
                   onClick={() => props.onActiveTerminalChange(groupActiveTerminalId)}
                 >
-                  {groupVisualIdentity?.title ?? `Terminal ${groupIndex + 1}`}
+                  {groupVisualIdentity?.title ?? `${t("Terminal")} ${groupIndex + 1}`}
                   {terminalGroup.terminalIds.length > 1
                     ? ` (${terminalGroup.terminalIds.length})`
                     : ""}
@@ -177,8 +180,8 @@ export function TerminalSidebar(props: {
                 {terminalGroup.terminalIds.map((terminalId) => {
                   const isActive = terminalId === props.activeTerminalId;
                   const visualIdentity = props.terminalVisualIdentityById.get(terminalId);
-                  const closeTerminalLabel = `Close ${
-                    visualIdentity?.title ?? "terminal"
+                  const closeTerminalLabel = `${t("Close")} ${
+                    visualIdentity?.title ?? t("Terminal")
                   }${isActive && props.closeShortcutLabel ? ` (${props.closeShortcutLabel})` : ""}`;
                   return (
                     <div
@@ -207,7 +210,7 @@ export function TerminalSidebar(props: {
                             state={visualIdentity.state}
                           />
                         ) : null}
-                        <span className="truncate">{visualIdentity?.title ?? "Terminal"}</span>
+                        <span className="truncate">{visualIdentity?.title ?? t("Terminal")}</span>
                       </button>
                       {props.terminalIds.length > 1 && (
                         <Popover>

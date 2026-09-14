@@ -15,6 +15,7 @@ import {
 import { readNativeApi } from "../../nativeApi";
 import type { RefreshProviderStatusesNow } from "../../hooks/useProviderStatusRefresh";
 import { toastManager } from "../ui/toast";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   deriveComposerVoiceState,
   describeVoiceRecordingStartError,
@@ -72,6 +73,7 @@ const DEFAULT_FAILURE_COPY: ComposerVoiceFailureCopy = {
 export function useComposerVoiceController(
   options: UseComposerVoiceControllerOptions,
 ): UseComposerVoiceControllerResult {
+  const { t, tError } = useUiLanguage();
   const {
     activeProject,
     activeThreadId,
@@ -100,7 +102,11 @@ export function useComposerVoiceController(
   const voiceProviderRef = useRef<ProviderKind>(selectedProvider);
   const voiceRecordingStartedAtRef = useRef<number | null>(null);
   const failureCopy = {
-    ...DEFAULT_FAILURE_COPY,
+    transcriptionFailedTitle: t(DEFAULT_FAILURE_COPY.transcriptionFailedTitle),
+    fallbackDescription: t(DEFAULT_FAILURE_COPY.fallbackDescription),
+    authExpiredTitle: t(DEFAULT_FAILURE_COPY.authExpiredTitle),
+    authExpiredDescription: t(DEFAULT_FAILURE_COPY.authExpiredDescription),
+    refreshActionLabel: t(DEFAULT_FAILURE_COPY.refreshActionLabel),
     ...failureCopyOverrides,
   };
   // A transcription can resolve immediately after navigation commits, so stamp
@@ -186,21 +192,21 @@ export function useComposerVoiceController(
     if (activeProviderStatus?.authStatus === "unauthenticated") {
       toastManager.add({
         type: "error",
-        title: "Sign in to ChatGPT in Codex before using voice notes.",
+        title: t("Sign in to ChatGPT in Codex before using voice notes."),
       });
       return;
     }
     if (!canStartVoiceNotes) {
       toastManager.add({
         type: "error",
-        title: "Voice notes require a ChatGPT-authenticated Codex session.",
+        title: t("Voice notes require a ChatGPT-authenticated Codex session."),
       });
       return;
     }
     if (pendingUserInputCount > 0) {
       toastManager.add({
         type: "error",
-        title: "Answer plan questions before recording a voice note.",
+        title: t("Answer plan questions before recording a voice note."),
       });
       return;
     }
@@ -222,8 +228,11 @@ export function useComposerVoiceController(
       }
       toastManager.add({
         type: "error",
-        title: "Could not start recording",
-        description: describeVoiceRecordingStartError(error),
+        title: t("Could not start recording"),
+        description: tError(
+          describeVoiceRecordingStartError(error),
+          "The microphone could not be opened.",
+        ),
       });
     }
   };
@@ -240,7 +249,7 @@ export function useComposerVoiceController(
     if (!api) {
       toastManager.add({
         type: "error",
-        title: "Voice transcription is unavailable right now.",
+        title: t("Voice transcription is unavailable right now."),
       });
       void cancelVoiceRecording();
       return Promise.resolve();
@@ -266,7 +275,7 @@ export function useComposerVoiceController(
         if (!payload) {
           toastManager.add({
             type: "warning",
-            title: "No audio was captured.",
+            title: t("No audio was captured."),
           });
           return;
         }
@@ -289,18 +298,21 @@ export function useComposerVoiceController(
           return;
         }
 
-        const description =
+        const rawDescription =
           error instanceof Error
             ? sanitizeVoiceErrorMessage(error.message)
             : failureCopy.fallbackDescription;
-        const authExpired = isVoiceAuthExpiredMessage(description);
+        const authExpired = isVoiceAuthExpiredMessage(rawDescription);
+        const description = authExpired
+          ? failureCopy.authExpiredDescription
+          : tError(rawDescription, "The voice note could not be transcribed.");
         if (authExpired) {
           void refreshVoiceStatus();
         }
         toastManager.add({
           type: "error",
           title: authExpired ? failureCopy.authExpiredTitle : failureCopy.transcriptionFailedTitle,
-          description: authExpired ? failureCopy.authExpiredDescription : description,
+          description,
           ...(authExpired
             ? {
                 actionProps: {

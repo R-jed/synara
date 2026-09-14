@@ -10,6 +10,7 @@ import {
   type ThreadId,
 } from "@synara/contracts";
 import { useEffect, useRef } from "react";
+import { useUiLanguage } from "~/uiLanguage";
 
 import { toastManager } from "~/components/ui/toast";
 import {
@@ -51,20 +52,27 @@ function matchesPinState(pin: PinnedMessage | undefined, expected: PinnedMessage
   );
 }
 
-function handlePinnedMessageDispatchError(error: unknown) {
+function handlePinnedMessageDispatchError(
+  error: unknown,
+  t: (text: string) => string,
+  tError: (error: unknown, fallback?: string) => string,
+) {
   toastManager.add({
     type: "error",
-    title: "Failed to update pinned message",
-    description:
-      error instanceof Error ? error.message : "The pinned message change could not be saved.",
+    title: t("Failed to update pinned message"),
+    description: tError(error, "The pinned message change could not be saved."),
   });
 }
 
-function handleThreadNotesDispatchError(error: unknown) {
+function handleThreadNotesDispatchError(
+  error: unknown,
+  t: (text: string) => string,
+  tError: (error: unknown, fallback?: string) => string,
+) {
   toastManager.add({
     type: "error",
-    title: "Failed to save notes",
-    description: error instanceof Error ? error.message : "The note change could not be saved.",
+    title: t("Failed to save notes"),
+    description: tError(error, "The note change could not be saved."),
   });
 }
 
@@ -73,6 +81,7 @@ export function usePinnedMessageActions({
   activeThreadId,
   pinnedMessages,
 }: UsePinnedMessageActionsInput): UsePinnedMessageActionsResult {
+  const { t, tError } = useUiLanguage();
   const pinnedMessagesRef = useRef<readonly PinnedMessage[]>(pinnedMessages);
   const activePinnedThreadIdRef = useRef<ThreadId | null>(activeThreadId);
 
@@ -99,15 +108,15 @@ export function usePinnedMessageActions({
             removedPinIndex,
           );
         }
-        handlePinnedMessageDispatchError(error);
+        handlePinnedMessageDispatchError(error, t, tError);
       });
       return;
     }
     if (pins.length >= PINNED_MESSAGES_MAX_COUNT) {
       toastManager.add({
         type: "warning",
-        title: "Pinned message limit reached",
-        description: `You can keep up to ${PINNED_MESSAGES_MAX_COUNT} pinned messages in a thread.`,
+        title: t("Pinned message limit reached"),
+        description: `${t("You can keep up to")} ${PINNED_MESSAGES_MAX_COUNT} ${t("pinned messages in a thread.")}`,
       });
       return;
     }
@@ -121,7 +130,7 @@ export function usePinnedMessageActions({
       if (matchesPinState(currentPin, optimisticPin)) {
         pinnedMessagesRef.current = removePin(pinnedMessagesRef.current, messageId);
       }
-      handlePinnedMessageDispatchError(error);
+      handlePinnedMessageDispatchError(error, t, tError);
     });
   };
 
@@ -144,7 +153,7 @@ export function usePinnedMessageActions({
       if (currentPin?.done === done) {
         pinnedMessagesRef.current = setPinDone(pinnedMessagesRef.current, messageId, previousDone);
       }
-      handlePinnedMessageDispatchError(error);
+      handlePinnedMessageDispatchError(error, t, tError);
     });
   };
 
@@ -168,7 +177,7 @@ export function usePinnedMessageActions({
         removedPin,
         removedPinIndex,
       );
-      handlePinnedMessageDispatchError(error);
+      handlePinnedMessageDispatchError(error, t, tError);
     });
   };
 
@@ -194,7 +203,7 @@ export function usePinnedMessageActions({
           previousLabel,
         );
       }
-      handlePinnedMessageDispatchError(error);
+      handlePinnedMessageDispatchError(error, t, tError);
     });
   };
 
@@ -202,7 +211,7 @@ export function usePinnedMessageActions({
     try {
       await dispatchThreadNotes(threadId, notes);
     } catch (error) {
-      handleThreadNotesDispatchError(error);
+      handleThreadNotesDispatchError(error, t, tError);
       throw error;
     }
   };

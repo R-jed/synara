@@ -7,6 +7,7 @@ import type { OrchestrationThreadActivity } from "@synara/contracts";
 import { Alert, AlertAction, AlertDescription } from "../ui/alert";
 import { IconButton } from "../ui/icon-button";
 import { CircleAlertIcon, XIcon } from "~/lib/icons";
+import { useUiLanguage } from "~/uiLanguage";
 import { ChatColumnBannerFrame } from "./ChatColumnBannerFrame";
 
 export type RateLimitStatus = {
@@ -44,13 +45,13 @@ export function deriveLatestRateLimitStatus(
   return null;
 }
 
-function formatResetsAt(resetsAt: string): string {
+function formatResetsAt(resetsAt: string, t: (text: string) => string): string {
   const ms = Date.parse(resetsAt);
   if (Number.isNaN(ms)) return "";
   const secondsLeft = Math.max(0, Math.ceil((ms - Date.now()) / 1000));
-  if (secondsLeft < 60) return ` Resets in ${secondsLeft}s.`;
+  if (secondsLeft < 60) return ` ${t("Resets in")} ${secondsLeft}s.`;
   const minutesLeft = Math.ceil(secondsLeft / 60);
-  return ` Resets in ${minutesLeft}m.`;
+  return ` ${t("Resets in")} ${minutesLeft}m.`;
 }
 
 export const RateLimitBanner = function RateLimitBanner({
@@ -60,14 +61,15 @@ export const RateLimitBanner = function RateLimitBanner({
   onDismiss?: () => void;
   rateLimitStatus: RateLimitStatus | null;
 }) {
+  const { t } = useUiLanguage();
   if (!rateLimitStatus) return null;
 
   const { status, resetsAt, utilization } = rateLimitStatus;
   const isRejected = status === "rejected";
 
   const message = isRejected
-    ? `Rate limit reached.${resetsAt ? formatResetsAt(resetsAt) : ""}`
-    : `Approaching rate limit${utilization !== undefined ? ` (${Math.round(utilization * 100)}% used)` : ""}.${resetsAt ? formatResetsAt(resetsAt) : ""}`;
+    ? `${t("Rate limit reached.")}${resetsAt ? formatResetsAt(resetsAt, t) : ""}`
+    : `${t("Approaching rate limit")}${utilization !== undefined ? ` (${Math.round(utilization * 100)}% ${t("used")})` : ""}.${resetsAt ? formatResetsAt(resetsAt, t) : ""}`;
 
   return (
     <ChatColumnBannerFrame>
@@ -77,8 +79,8 @@ export const RateLimitBanner = function RateLimitBanner({
         {onDismiss ? (
           <AlertAction>
             <IconButton
-              label="Dismiss rate limit status"
-              title="Dismiss rate limit status"
+              label={t("Dismiss rate limit status")}
+              title={t("Dismiss rate limit status")}
               onClick={onDismiss}
             >
               <XIcon className="size-3.5" />

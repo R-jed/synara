@@ -6,7 +6,6 @@
 // Exports: ComposerSubagentStrip
 
 import type { ThreadId } from "@synara/contracts";
-import { pluralize } from "@synara/shared/text";
 
 import {
   BackgroundTrayIcon,
@@ -22,6 +21,7 @@ import {
   subagentStatusTextToneClassName,
 } from "~/lib/subagentPresentation";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { Button } from "../ui/button";
 import { DisclosureRegion } from "../ui/DisclosureRegion";
 import type {
@@ -62,6 +62,7 @@ export const ComposerSubagentStrip = function ComposerSubagentStrip({
   onStopAll,
   attachedToPrevious: attachedToPreviousProp,
 }: ComposerSubagentStripProps) {
+  const { t } = useUiLanguage();
   const attachedToPrevious = attachedToPreviousProp ?? false;
   const subagentItems = items.filter(
     (item): item is ComposerSubagentStripItem => item.kind === "subagent",
@@ -83,8 +84,8 @@ export const ComposerSubagentStrip = function ComposerSubagentStrip({
           )}
           <ComposerStackedPanelRowLabel tone="meta">
             {runningCount > 0
-              ? `${runningCount} of ${subagentItems.length} ${pluralize(subagentItems.length, "subagent")} running`
-              : `${subagentItems.length} ${pluralize(subagentItems.length, "subagent")}`}
+              ? `${runningCount}/${subagentItems.length} ${t("subagents running")}`
+              : `${subagentItems.length} ${t("subagents")}`}
           </ComposerStackedPanelRowLabel>
         </ComposerStackedPanelRowMain>
         {onStopAll && runningCount > 1 ? (
@@ -94,8 +95,8 @@ export const ComposerSubagentStrip = function ComposerSubagentStrip({
             size="icon-xs"
             className={cn("shrink-0", COMPOSER_STACKED_PANEL_ICON_BUTTON_CLASS_NAME)}
             onClick={onStopAll}
-            aria-label="Stop all subagents"
-            title="Stop all running subagents"
+            aria-label={t("Stop all subagents")}
+            title={t("Stop all running subagents")}
           >
             <StopIcon className="size-3" />
           </Button>
@@ -106,8 +107,8 @@ export const ComposerSubagentStrip = function ComposerSubagentStrip({
           size="icon-xs"
           className={cn("shrink-0", COMPOSER_STACKED_PANEL_ICON_BUTTON_CLASS_NAME)}
           onClick={() => onCompactChange(!compact)}
-          aria-label={compact ? "Expand subagent strip" : "Collapse subagent strip"}
-          title={compact ? "Expand subagent strip" : "Collapse subagent strip"}
+          aria-label={compact ? t("Expand subagent strip") : t("Collapse subagent strip")}
+          title={compact ? t("Expand subagent strip") : t("Collapse subagent strip")}
         >
           {compact ? (
             <PanelExpandIcon className="size-3" />
@@ -135,12 +136,12 @@ export const ComposerSubagentStrip = function ComposerSubagentStrip({
                 <button
                   type="button"
                   className="flex min-w-0 flex-1 items-center gap-2 text-left"
-                  title={item.label}
+                  title={item.isFallbackLabel ? t(item.label) : item.label}
                   onClick={() => onOpenThread(item.threadId)}
                 >
                   <BackToParentIcon className="size-3 shrink-0 text-muted-foreground/55" />
                   <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-foreground/85">
-                    {item.label}
+                    {item.isFallbackLabel ? t(item.label) : item.label}
                   </span>
                 </button>
               </div>
@@ -180,7 +181,7 @@ export const ComposerSubagentStrip = function ComposerSubagentStrip({
                     ) : null}
                     {item.isBackground ? (
                       <span className="ml-1.5 text-[11px] font-normal text-muted-foreground/45">
-                        background
+                        {t("background")}
                       </span>
                     ) : null}
                   </span>
@@ -191,7 +192,7 @@ export const ComposerSubagentStrip = function ComposerSubagentStrip({
                         subagentStatusTextToneClassName(item.statusKind),
                       )}
                     >
-                      {item.statusLabel}
+                      {t(item.statusLabel)}
                     </span>
                   ) : null}
                 </button>
@@ -205,8 +206,8 @@ export const ComposerSubagentStrip = function ComposerSubagentStrip({
                       COMPOSER_STACKED_PANEL_ICON_BUTTON_CLASS_NAME,
                     )}
                     onClick={() => onBackgroundItem(item)}
-                    aria-label="Run in background (ctrl+b)"
-                    title="Run in background (ctrl+b)"
+                    aria-label={t("Run in background (ctrl+b)")}
+                    title={t("Run in background (ctrl+b)")}
                   >
                     <BackgroundTrayIcon className="size-3" />
                   </Button>
@@ -221,8 +222,8 @@ export const ComposerSubagentStrip = function ComposerSubagentStrip({
                       COMPOSER_STACKED_PANEL_ICON_BUTTON_CLASS_NAME,
                     )}
                     onClick={() => onStopItem(item)}
-                    aria-label="Stop subagent"
-                    title="Stop subagent"
+                    aria-label={t("Stop subagent")}
+                    title={t("Stop subagent")}
                   >
                     <StopIcon className="size-3" />
                   </Button>

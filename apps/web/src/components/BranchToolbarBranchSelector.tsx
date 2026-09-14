@@ -29,6 +29,7 @@ import {
 } from "../lib/gitReactQuery";
 import { readNativeApi } from "../nativeApi";
 import { parsePullRequestReference } from "../pullRequestReference";
+import { useUiLanguage } from "../uiLanguage";
 import {
   dedupeRemoteBranchesWithLocalMatches,
   deriveLocalBranchNameFromRemoteRef,
@@ -98,8 +99,11 @@ type StashDiscardDialogState = {
   loading: boolean;
 };
 
-function toBranchActionErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "An error occurred.";
+function toBranchActionErrorMessage(
+  error: unknown,
+  fallback: string = "An error occurred.",
+): string {
+  return error instanceof Error ? error.message : fallback;
 }
 
 const DIRTY_WORKTREE_ERROR_PATTERN =
@@ -162,13 +166,15 @@ function isGitIndexWriteError(error: unknown): boolean {
   return GIT_INDEX_WRITE_PATTERN.test(message);
 }
 
-function formatDirtyWorktreeDescription(files: string[]): string {
+function formatDirtyWorktreeDescription(files: string[], t: (text: string) => string): string {
   const basenames = files.map((file) => file.split("/").pop() ?? file);
   if (basenames.length <= 3) {
-    return `${basenames.join(", ")} ${pluralize(basenames.length, "has", "have")} uncommitted changes. Commit or stash before switching.`;
+    return basenames.length === 1
+      ? `${basenames.join(", ")} ${t("has uncommitted changes. Commit or stash before switching.")}`
+      : `${basenames.join(", ")} ${t("have uncommitted changes. Commit or stash before switching.")}`;
   }
   const remaining = basenames.length - 2;
-  return `${basenames.slice(0, 2).join(", ")} and ${remaining} other ${pluralize(remaining, "file")} have uncommitted changes. Commit or stash before switching.`;
+  return `${basenames.slice(0, 2).join(", ")}, ${t("and")} ${remaining} ${t("other files have uncommitted changes. Commit or stash before switching.")}`;
 }
 
 function handleCheckoutError(
@@ -177,6 +183,8 @@ function handleCheckoutError(
     api: NativeApi;
     branch: string;
     cwd: string;
+    t: (text: string) => string;
+    tError: (error: unknown, fallback?: string) => string;
     fallbackTitle: string;
     onSuccess: () => void;
     runBranchAction: (
@@ -203,11 +211,11 @@ function handleCheckoutError(
       : ".git/index.lock";
     addBranchRecoveryToast({
       type: "error",
-      title: "Git index is locked.",
-      description: `${lockFileLabel} already exists. Close any running Git operation, remove the stale lock file if none is running, then retry.`,
-      data: { copyText: toBranchActionErrorMessage(error) },
+      title: input.t("Git index is locked."),
+      description: `${lockFileLabel} ${input.t("already exists. Close any running Git operation, remove the stale lock file if none is running, then retry.")}`,
+      data: { copyText: toBranchActionErrorMessage(error, input.t("An error occurred.")) },
       actionProps: {
-        children: "Remove lock & retry",
+        children: input.t("Remove lock & retry"),
         onClick: () => {
           input.runBranchAction(async () => {
             try {
@@ -225,12 +233,13 @@ function handleCheckoutError(
   const addGitIndexWriteToast = (error: unknown): void => {
     addBranchRecoveryToast({
       type: "error",
-      title: "Git index could not be written.",
-      description:
+      title: input.t("Git index could not be written."),
+      description: input.t(
         "Git could not update the repository index. Retry after any current Git operation finishes.",
-      data: { copyText: toBranchActionErrorMessage(error) },
+      ),
+      data: { copyText: toBranchActionErrorMessage(error, input.t("An error occurred.")) },
       actionProps: {
-        children: "Retry stash & switch",
+        children: input.t("Retry stash & switch"),
         onClick: () => {
           input.runBranchAction(async () => {
             try {
@@ -246,14 +255,14 @@ function handleCheckoutError(
 
   const dirtyWorktree = parseDirtyWorktreeError(error);
   if (dirtyWorktree) {
-    const copyText = toBranchActionErrorMessage(error);
+    const copyText = toBranchActionErrorMessage(error, input.t("An error occurred."));
     addBranchRecoveryToast({
       type: "warning",
-      title: "Uncommitted changes block checkout.",
-      description: formatDirtyWorktreeDescription(dirtyWorktree.files),
+      title: input.t("Uncommitted changes block checkout."),
+      description: formatDirtyWorktreeDescription(dirtyWorktree.files, input.t),
       data: { copyText },
       actionProps: {
-        children: "Stash & Switch",
+        children: input.t("Stash & Switch"),
         onClick: () => {
           closeActiveBranchRecoveryToast();
           input.runBranchAction(async () => {
@@ -272,12 +281,15 @@ function handleCheckoutError(
                 input.onSuccess();
                 addBranchRecoveryToast({
                   type: "warning",
-                  title: "Changes saved, but not reapplied.",
-                  description:
+                  title: input.t("Changes saved, but not reapplied."),
+                  description: input.t(
                     "Synara switched branches and kept your changes in a stash because they could not be restored onto this branch cleanly.",
-                  data: { copyText: toBranchActionErrorMessage(stashError) },
+                  ),
+                  data: {
+                    copyText: toBranchActionErrorMessage(stashError, input.t("An error occurred.")),
+                  },
                   actionProps: {
-                    children: "Discard stash",
+                    children: input.t("Discard stash"),
                     className:
                       "border-destructive bg-destructive text-white shadow-destructive/24 hover:bg-destructive/90",
                     onClick: () => {
@@ -291,18 +303,23 @@ function handleCheckoutError(
               if (parseDirtyWorktreeError(stashError)) {
                 addBranchRecoveryToast({
                   type: "error",
-                  title: "Cannot switch branches.",
-                  description:
+                  title: input.t("Cannot switch branches."),
+                  description: input.t(
                     "Some conflicting files are not covered by git stash, such as ignored files. Move or remove them before switching.",
-                  data: { copyText: toBranchActionErrorMessage(stashError) },
+                  ),
+                  data: {
+                    copyText: toBranchActionErrorMessage(stashError, input.t("An error occurred.")),
+                  },
                 });
                 return;
               }
               addBranchRecoveryToast({
                 type: "error",
-                title: "Failed to stash and switch.",
-                description: toBranchActionErrorMessage(stashError),
-                data: { copyText: toBranchActionErrorMessage(stashError) },
+                title: input.t("Failed to stash and switch."),
+                description: input.tError(stashError, "An error occurred."),
+                data: {
+                  copyText: toBranchActionErrorMessage(stashError, input.t("An error occurred.")),
+                },
               });
             }
           }, retryRefreshOptions);
@@ -324,10 +341,10 @@ function handleCheckoutError(
   addBranchRecoveryToast({
     type: "error",
     title: isUnresolvedIndexError(error)
-      ? "Unresolved conflicts in the repository."
+      ? input.t("Unresolved conflicts in the repository.")
       : input.fallbackTitle,
-    description: toBranchActionErrorMessage(error),
-    data: { copyText: toBranchActionErrorMessage(error) },
+    description: input.tError(error, "An error occurred."),
+    data: { copyText: toBranchActionErrorMessage(error, input.t("An error occurred.")) },
   });
 }
 
@@ -335,21 +352,25 @@ function getBranchTriggerLabel(input: {
   activeWorktreePath: string | null;
   effectiveEnvMode: EnvMode;
   resolvedActiveBranch: string | null;
+  t: (text: string) => string;
 }): string {
-  const { activeWorktreePath, effectiveEnvMode, resolvedActiveBranch } = input;
+  const { activeWorktreePath, effectiveEnvMode, resolvedActiveBranch, t } = input;
   if (!resolvedActiveBranch) {
-    return "Select branch";
+    return t("Select branch");
   }
   if (effectiveEnvMode === "worktree" && !activeWorktreePath) {
-    return `From ${resolvedActiveBranch}`;
+    return `${t("From")} ${resolvedActiveBranch}`;
   }
   return resolvedActiveBranch;
 }
 
-function getCreateBranchActionLabel(trimmedBranchQuery: string): string {
+function getCreateBranchActionLabel(
+  trimmedBranchQuery: string,
+  t: (text: string) => string,
+): string {
   return trimmedBranchQuery.length > 0
-    ? `Create and checkout "${trimmedBranchQuery}"`
-    : "Create and checkout new branch...";
+    ? `${t("Create and checkout")} "${trimmedBranchQuery}"`
+    : t("Create and checkout new branch...");
 }
 
 function getCurrentBranchChangeSummary(
@@ -385,6 +406,7 @@ export function BranchToolbarBranchSelector({
   onComposerFocusRequest,
   variant: variantProp,
 }: BranchToolbarBranchSelectorProps) {
+  const { t, tError } = useUiLanguage();
   const variant = variantProp ?? "toolbar";
   const isPanel = variant === "panel";
   const queryClient = useQueryClient();
@@ -498,35 +520,40 @@ export function BranchToolbarBranchSelector({
     setIsCreateBranchDialogOpen(true);
   }, [canPrefillCreateBranch, hasExactBranchMatch, trimmedBranchQuery]);
 
-  const openStashDiscardDialog = useCallback((input: { cwd: string }) => {
-    const api = readNativeApi();
-    setStashDiscardDialog({
-      cwd: input.cwd,
-      error: api ? null : "Native API is unavailable.",
-      info: null,
-      loading: Boolean(api),
-    });
-    if (!api) return;
-    void api.git.stashInfo({ cwd: input.cwd }).then(
-      (info) => {
-        setStashDiscardDialog((current) =>
-          current?.cwd === input.cwd ? { ...current, error: null, info, loading: false } : current,
-        );
-      },
-      (error) => {
-        setStashDiscardDialog((current) =>
-          current?.cwd === input.cwd
-            ? {
-                ...current,
-                error: toBranchActionErrorMessage(error),
-                info: null,
-                loading: false,
-              }
-            : current,
-        );
-      },
-    );
-  }, []);
+  const openStashDiscardDialog = useCallback(
+    (input: { cwd: string }) => {
+      const api = readNativeApi();
+      setStashDiscardDialog({
+        cwd: input.cwd,
+        error: api ? null : t("Native API is unavailable."),
+        info: null,
+        loading: Boolean(api),
+      });
+      if (!api) return;
+      void api.git.stashInfo({ cwd: input.cwd }).then(
+        (info) => {
+          setStashDiscardDialog((current) =>
+            current?.cwd === input.cwd
+              ? { ...current, error: null, info, loading: false }
+              : current,
+          );
+        },
+        (error) => {
+          setStashDiscardDialog((current) =>
+            current?.cwd === input.cwd
+              ? {
+                  ...current,
+                  error: tError(error, "An error occurred."),
+                  info: null,
+                  loading: false,
+                }
+              : current,
+          );
+        },
+      );
+    },
+    [t, tError],
+  );
 
   const discardStashFromDialog = useCallback(() => {
     const dialog = stashDiscardDialog;
@@ -593,7 +620,9 @@ export function BranchToolbarBranchSelector({
             api,
             branch: branch.name,
             cwd: selectionTarget.checkoutCwd,
-            fallbackTitle: "Failed to checkout branch.",
+            t,
+            tError,
+            fallbackTitle: t("Failed to checkout branch."),
             onSuccess: () => {
               setOptimisticBranch(selectedBranchName);
               onSetThreadWorkspace({
@@ -645,7 +674,9 @@ export function BranchToolbarBranchSelector({
             api,
             branch: name,
             cwd: branchCwd,
-            fallbackTitle: "Failed to checkout branch.",
+            t,
+            tError,
+            fallbackTitle: t("Failed to checkout branch."),
             onSuccess: () => {
               setOptimisticBranch(name);
               onSetThreadWorkspace({
@@ -663,8 +694,8 @@ export function BranchToolbarBranchSelector({
       } catch (error) {
         toastManager.add({
           type: "error",
-          title: "Failed to create branch.",
-          description: toBranchActionErrorMessage(error),
+          title: t("Failed to create branch."),
+          description: tError(error, "An error occurred."),
         });
         return;
       }
@@ -758,6 +789,7 @@ export function BranchToolbarBranchSelector({
     activeWorktreePath,
     effectiveEnvMode,
     resolvedActiveBranch,
+    t,
   });
 
   function renderPickerItem(itemValue: string, index: number, style?: CSSProperties) {
@@ -780,7 +812,7 @@ export function BranchToolbarBranchSelector({
           }}
         >
           <div className="flex min-w-0 flex-col items-start py-1">
-            <span className="truncate font-medium">Checkout Pull Request</span>
+            <span className="truncate font-medium">{t("Checkout Pull Request")}</span>
             <span className="truncate text-muted-foreground text-xs">{prReference}</span>
           </div>
         </ComboboxItem>
@@ -804,6 +836,16 @@ export function BranchToolbarBranchSelector({
           : branch.isDefault
             ? "default"
             : null;
+    const badgeLabel =
+      badge === "current"
+        ? t("Current")
+        : badge === "worktree"
+          ? t("Worktree")
+          : badge === "remote"
+            ? t("Remote")
+            : badge === "default"
+              ? t("Default")
+              : null;
     return (
       <ComboboxItem
         hideIndicator
@@ -822,15 +864,15 @@ export function BranchToolbarBranchSelector({
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
               <span className="truncate">{itemValue}</span>
-              {badge && (
-                <span className="shrink-0 text-[10px] text-muted-foreground/45">{badge}</span>
+              {badgeLabel && (
+                <span className="shrink-0 text-[10px] text-muted-foreground/45">{badgeLabel}</span>
               )}
             </div>
             {currentBranchChangeSummary ? (
               <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] leading-4">
                 <span className="text-muted-foreground">
-                  Uncommitted: {currentBranchChangeSummary.fileCount.toLocaleString()}{" "}
-                  {pluralize(currentBranchChangeSummary.fileCount, "file")}
+                  {t("Uncommitted")}: {currentBranchChangeSummary.fileCount.toLocaleString()}{" "}
+                  {t(pluralize(currentBranchChangeSummary.fileCount, "file"))}
                 </span>
                 <DiffStat
                   className="font-mono"
@@ -886,14 +928,14 @@ export function BranchToolbarBranchSelector({
           <ComboboxInput
             className="rounded-xl border-[color:var(--color-border)] bg-[var(--color-background-control-opaque)] shadow-none before:hidden has-focus-visible:border-[color:var(--color-border-focus)] has-focus-visible:ring-0 [&_input]:font-sans"
             inputClassName="ring-0"
-            placeholder="Search branches..."
+            placeholder={t("Search branches...")}
             showTrigger={false}
             size="sm"
             value={branchQuery}
             onChange={(event) => setBranchQuery(event.target.value)}
           />
         </div>
-        <ComboboxEmpty>No branches found.</ComboboxEmpty>
+        <ComboboxEmpty>{t("No branches found.")}</ComboboxEmpty>
 
         <ComboboxList ref={setBranchListRef} className="max-h-56">
           {shouldVirtualizeBranchList ? (
@@ -928,7 +970,7 @@ export function BranchToolbarBranchSelector({
               onClick={openCreateBranchDialog}
             >
               <PlusIcon className="size-3.5 shrink-0" />
-              <span className="truncate">{getCreateBranchActionLabel(trimmedBranchQuery)}</span>
+              <span className="truncate">{getCreateBranchActionLabel(trimmedBranchQuery, t)}</span>
             </button>
           </div>
         ) : null}
@@ -944,9 +986,10 @@ export function BranchToolbarBranchSelector({
       >
         <DialogPopup className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Create Branch</DialogTitle>
+            <DialogTitle>{t("Create Branch")}</DialogTitle>
             <DialogDescription>
-              {`Create and switch to a new branch from ${resolvedActiveBranch ?? currentGitBranch ?? "the current HEAD"}.`}
+              {t("Create and switch to a new branch from")}{" "}
+              {resolvedActiveBranch ?? currentGitBranch ?? t("the current HEAD")}.
             </DialogDescription>
           </DialogHeader>
           <DialogPanel className="space-y-3">
@@ -964,7 +1007,7 @@ export function BranchToolbarBranchSelector({
             >
               <div className="space-y-1.5">
                 <label className="block font-medium text-sm" htmlFor="branch-create-name">
-                  Branch name
+                  {t("Branch name")}
                 </label>
                 <Input
                   autoFocus
@@ -975,7 +1018,9 @@ export function BranchToolbarBranchSelector({
                 />
               </div>
               {branchByName.has(createBranchName.trim()) ? (
-                <p className="text-destructive text-sm">A branch with this name already exists.</p>
+                <p className="text-destructive text-sm">
+                  {t("A branch with this name already exists.")}
+                </p>
               ) : null}
               <DialogFooter variant="bare">
                 <Button
@@ -987,7 +1032,7 @@ export function BranchToolbarBranchSelector({
                     setCreateBranchName("");
                   }}
                 >
-                  Cancel
+                  {t("Cancel")}
                 </Button>
                 <Button
                   type="submit"
@@ -997,7 +1042,7 @@ export function BranchToolbarBranchSelector({
                     branchByName.has(createBranchName.trim())
                   }
                 >
-                  Create and switch
+                  {t("Create and switch")}
                 </Button>
               </DialogFooter>
             </form>
@@ -1015,14 +1060,16 @@ export function BranchToolbarBranchSelector({
       >
         <DialogPopup className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Discard saved stash?</DialogTitle>
+            <DialogTitle>{t("Discard saved stash?")}</DialogTitle>
             <DialogDescription>
-              This will permanently drop the stash entry that preserved your uncommitted changes.
+              {t(
+                "This will permanently drop the stash entry that preserved your uncommitted changes.",
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogPanel className="space-y-4">
             {stashDiscardDialog?.loading ? (
-              <p className="text-muted-foreground text-sm">Loading stash details...</p>
+              <p className="text-muted-foreground text-sm">{t("Loading stash details...")}</p>
             ) : stashDiscardDialog?.error ? (
               <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-destructive text-sm">
                 {stashDiscardDialog.error}
@@ -1031,31 +1078,31 @@ export function BranchToolbarBranchSelector({
               <>
                 <div className="grid gap-2 rounded-lg border border-[color:var(--color-border-light)] bg-[var(--color-background-elevated-secondary)] p-3 text-sm">
                   <div className="flex min-w-0 gap-2">
-                    <span className="w-20 shrink-0 text-muted-foreground">Branch</span>
+                    <span className="w-20 shrink-0 text-muted-foreground">{t("Branch")}</span>
                     <span className="min-w-0 truncate font-medium">
-                      {stashDiscardDialog.info.branch ?? currentGitBranch ?? "Detached HEAD"}
+                      {stashDiscardDialog.info.branch ?? currentGitBranch ?? t("Detached HEAD")}
                     </span>
                   </div>
                   <div className="flex min-w-0 gap-2">
-                    <span className="w-20 shrink-0 text-muted-foreground">Worktree</span>
+                    <span className="w-20 shrink-0 text-muted-foreground">{t("Worktree")}</span>
                     <span className="min-w-0 truncate font-mono text-xs">
                       {stashDiscardDialog.info.cwd}
                     </span>
                   </div>
                   <div className="flex min-w-0 gap-2">
-                    <span className="w-20 shrink-0 text-muted-foreground">Stash</span>
+                    <span className="w-20 shrink-0 text-muted-foreground">{t("Stash")}</span>
                     <span className="min-w-0 truncate font-mono text-xs">
                       {stashDiscardDialog.info.stashRef}
                     </span>
                   </div>
                   <div className="flex min-w-0 gap-2">
-                    <span className="w-20 shrink-0 text-muted-foreground">Name</span>
+                    <span className="w-20 shrink-0 text-muted-foreground">{t("Name")}</span>
                     <span className="min-w-0 truncate">{stashDiscardDialog.info.message}</span>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <p className="font-medium text-sm">
-                    Changed files ({stashDiscardDialog.info.files.length})
+                    {t("Changed files")} ({stashDiscardDialog.info.files.length})
                   </p>
                   {stashDiscardDialog.info.files.length > 0 ? (
                     <ul className="max-h-48 overflow-auto rounded-lg border border-[color:var(--color-border-light)] bg-[var(--color-background-control-opaque)] py-1">
@@ -1071,7 +1118,7 @@ export function BranchToolbarBranchSelector({
                     </ul>
                   ) : (
                     <p className="rounded-lg border border-[color:var(--color-border-light)] px-3 py-2 text-muted-foreground text-sm">
-                      Git did not report changed file names for this stash.
+                      {t("Git did not report changed file names for this stash.")}
                     </p>
                   )}
                 </div>
@@ -1087,7 +1134,7 @@ export function BranchToolbarBranchSelector({
                 setIsDroppingStash(false);
               }}
             >
-              Keep stash
+              {t("Keep stash")}
             </Button>
             <Button
               variant="destructive"
@@ -1095,7 +1142,7 @@ export function BranchToolbarBranchSelector({
               disabled={!stashDiscardDialog?.info || isDroppingStash}
               onClick={discardStashFromDialog}
             >
-              {isDroppingStash ? "Discarding..." : "Discard stash"}
+              {isDroppingStash ? t("Discarding...") : t("Discard stash")}
             </Button>
           </DialogFooter>
         </DialogPopup>

@@ -58,6 +58,7 @@ export interface SidebarSearchThread {
   title: string;
   projectId: string;
   projectName: string;
+  projectNameIsFallback?: boolean;
   projectRemoteName: string;
   spaceName: string;
   provider: ProviderKind;

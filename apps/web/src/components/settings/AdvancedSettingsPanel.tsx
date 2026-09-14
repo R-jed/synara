@@ -19,6 +19,7 @@ import { cn } from "~/lib/utils";
 import { SETTINGS_INSET_LIST_CLASS_NAME } from "~/settingsPanelStyles";
 import { useStore } from "~/store";
 import { createAllThreadsMessagelessSelector, createThreadShellsSelector } from "~/storeSelectors";
+import { useUiLanguage } from "~/uiLanguage";
 import { useSettingsRestoreSignal } from "./SettingControls";
 import { SettingsRow, SettingsSection } from "./SettingsPanelPrimitives";
 
@@ -27,6 +28,7 @@ export function AdvancedSettingsPanel(props: {
   onOpenReleaseHistory: () => void;
   resetEpoch: number;
 }) {
+  const { t, tError } = useUiLanguage();
   const configQuery = useQuery(serverConfigQueryOptions());
   const authSessionQuery = useQuery(serverAuthSessionQueryOptions());
   const syncServerReadModel = useStore((store) => store.syncServerReadModel);
@@ -60,30 +62,28 @@ export function AdvancedSettingsPanel(props: {
     setIsOpeningKeybindings(true);
     const editor = resolveAndPersistPreferredEditor(availableEditors ?? []);
     if (!editor) {
-      setOpenKeybindingsError("No available editors found.");
+      setOpenKeybindingsError(t("No available editors found."));
       setIsOpeningKeybindings(false);
       return;
     }
     void ensureNativeApi()
       .shell.openInEditor(keybindingsConfigPath, editor)
       .catch((error) => {
-        setOpenKeybindingsError(
-          error instanceof Error ? error.message : "Unable to open keybindings file.",
-        );
+        setOpenKeybindingsError(tError(error, "Unable to open keybindings file."));
       })
       .finally(() => {
         setIsOpeningKeybindings(false);
       });
-  }, [availableEditors, keybindingsConfigPath]);
+  }, [availableEditors, keybindingsConfigPath, t, tError]);
 
   const repairLocalState = useCallback(async () => {
     if (isRepairingLocalState) return;
     const api = readNativeApi() ?? ensureNativeApi();
     const confirmed = await api.dialogs.confirm(
       [
-        "Repair local state?",
-        "This rebuilds local project indexes and refreshes project snapshots.",
-        "It keeps existing chats in place, but it may take a moment.",
+        t("Repair local state?"),
+        t("This rebuilds local project indexes and refreshes project snapshots."),
+        t("It keeps existing chats in place, but it may take a moment."),
       ].join("\n"),
     );
     if (!confirmed) return;
@@ -95,21 +95,21 @@ export function AdvancedSettingsPanel(props: {
         syncServerReadModel(snapshot);
         toastManager.add({
           type: "success",
-          title: "Local state repaired",
-          description: "Project indexes were rebuilt without clearing existing chats.",
+          title: t("Local state repaired"),
+          description: t("Project indexes were rebuilt without clearing existing chats."),
         });
       })
       .catch((error: unknown) => {
         toastManager.add({
           type: "error",
-          title: "Repair failed",
-          description: error instanceof Error ? error.message : "Unable to repair local state.",
+          title: t("Repair failed"),
+          description: tError(error, "Unable to repair local state."),
         });
       })
       .finally(() => {
         setIsRepairingLocalState(false);
       });
-  }, [isRepairingLocalState, syncServerReadModel]);
+  }, [isRepairingLocalState, syncServerReadModel, t, tError]);
 
   const logoutCurrentSession = useCallback(async () => {
     if (isLoggingOut) return;
@@ -118,30 +118,32 @@ export function AdvancedSettingsPanel(props: {
     const result = await logoutCurrentBrowserSession({
       confirm: () =>
         api.dialogs.confirm(
-          "Sign out this browser?\n\nIts session and every live connection opened with it will be revoked.",
+          `${t("Sign out this browser?")}\n\n${t("Its session and every live connection opened with it will be revoked.")}`,
         ),
       logout: () => api.server.logoutAuthSession(),
       navigate: (path) => window.location.assign(path),
       onError: (error) =>
         toastManager.add({
           type: "error",
-          title: "Sign out failed",
-          description: error instanceof Error ? error.message : "Unable to revoke this session.",
+          title: t("Sign out failed"),
+          description: tError(error, "Unable to revoke this session."),
         }),
     });
     if (result !== "redirecting") setIsLoggingOut(false);
-  }, [isLoggingOut]);
+  }, [isLoggingOut, t, tError]);
 
   if (!props.active) return null;
 
   return (
     <div className="space-y-6">
       {authSessionQuery.data?.authenticated ? (
-        <SettingsSection title="Session">
+        <SettingsSection title={t("Session")}>
           <SettingsRow
-            title="This browser"
-            description="Revoke this browser session and close every live Synara connection it owns. A fresh pairing link is required to reconnect."
-            status={`Authenticated as ${authSessionQuery.data.role ?? "client"}.`}
+            title={t("This browser")}
+            description={t(
+              "Revoke this browser session and close every live Synara connection it owns. A fresh pairing link is required to reconnect.",
+            )}
+            status={`${t("Authenticated as")} ${t(authSessionQuery.data.role ?? "client")}.`}
             control={
               <Button
                 size="xs"
@@ -149,26 +151,28 @@ export function AdvancedSettingsPanel(props: {
                 disabled={isLoggingOut}
                 onClick={() => void logoutCurrentSession()}
               >
-                {isLoggingOut ? "Signing out..." : "Sign out"}
+                {isLoggingOut ? t("Signing out...") : t("Sign out")}
               </Button>
             }
           />
         </SettingsSection>
       ) : null}
 
-      <SettingsSection title="Developer tools">
+      <SettingsSection title={t("Developer tools")}>
         <SettingsRow
-          title="Keybindings"
-          description="Open the persisted `keybindings.json` file to edit advanced bindings directly."
+          title={t("Keybindings")}
+          description={t(
+            "Open the persisted `keybindings.json` file to edit advanced bindings directly.",
+          )}
           status={
             <>
               <span className="block break-all font-mono text-[11px] text-foreground">
-                {keybindingsConfigPath ?? "Resolving keybindings path..."}
+                {keybindingsConfigPath ?? t("Resolving keybindings path...")}
               </span>
               {openKeybindingsError ? (
                 <span className="mt-1 block text-destructive">{openKeybindingsError}</span>
               ) : (
-                <span className="mt-1 block">Opens in your preferred editor.</span>
+                <span className="mt-1 block">{t("Opens in your preferred editor.")}</span>
               )}
             </>
           }
@@ -179,18 +183,20 @@ export function AdvancedSettingsPanel(props: {
               disabled={!keybindingsConfigPath || isOpeningKeybindings}
               onClick={openKeybindingsFile}
             >
-              {isOpeningKeybindings ? "Opening..." : "Open file"}
+              {isOpeningKeybindings ? t("Opening...") : t("Open file")}
             </Button>
           }
         />
 
         <SettingsRow
-          title="Recovery tools"
-          description="Rebuild local project indexes without clearing existing chats when the local state gets out of sync."
+          title={t("Recovery tools")}
+          description={t(
+            "Rebuild local project indexes without clearing existing chats when the local state gets out of sync.",
+          )}
           status={
             shouldOfferRecoveryTools
-              ? "Visible because projects exist but no chat history is currently available."
-              : "Shown automatically only when recovery actions are relevant."
+              ? t("Visible because projects exist but no chat history is currently available.")
+              : t("Shown automatically only when recovery actions are relevant.")
           }
           control={
             <Button
@@ -199,7 +205,7 @@ export function AdvancedSettingsPanel(props: {
               disabled={!shouldOfferRecoveryTools || isRepairingLocalState}
               onClick={() => void repairLocalState()}
             >
-              {isRepairingLocalState ? "Repairing..." : "Repair state"}
+              {isRepairingLocalState ? t("Repairing...") : t("Repair state")}
             </Button>
           }
         >
@@ -211,7 +217,9 @@ export function AdvancedSettingsPanel(props: {
                 aria-expanded={showRecoveryTools}
                 onClick={() => setShowRecoveryTools((current) => !current)}
               >
-                <span className="text-xs font-medium text-muted-foreground">What this does</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {t("What this does")}
+                </span>
                 <DisclosureChevron
                   open={showRecoveryTools}
                   className="size-4 shrink-0 text-muted-foreground"
@@ -225,8 +233,9 @@ export function AdvancedSettingsPanel(props: {
                 )}
               >
                 <div>
-                  Rebuilds local project indexes and refreshes project snapshots. Existing chats
-                  stay in place.
+                  {t(
+                    "Rebuilds local project indexes and refreshes project snapshots. Existing chats stay in place.",
+                  )}
                 </div>
               </DisclosureRegion>
             </div>
@@ -234,18 +243,20 @@ export function AdvancedSettingsPanel(props: {
         </SettingsRow>
       </SettingsSection>
 
-      <SettingsSection title="About">
+      <SettingsSection title={t("About")}>
         <SettingsRow
-          title="Version"
-          description="Current application version."
+          title={t("Version")}
+          description={t("Current application version.")}
           control={<code className="text-xs font-medium text-muted-foreground">{APP_VERSION}</code>}
         />
         <SettingsRow
-          title="Release history"
-          description="A running log of every update, newest first. Same notes the post-update dialog shows, kept here so you can revisit them any time."
+          title={t("Release history")}
+          description={t(
+            "A running log of every update, newest first. Same notes the post-update dialog shows, kept here so you can revisit them any time.",
+          )}
           control={
             <Button size="sm" variant="outline" onClick={props.onOpenReleaseHistory}>
-              View release history
+              {t("View release history")}
             </Button>
           }
         />

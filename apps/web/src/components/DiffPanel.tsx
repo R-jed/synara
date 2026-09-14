@@ -59,6 +59,7 @@ import { createProjectSelector } from "../storeSelectors";
 import { inferCheckpointTurnCountByTurnId } from "../session-logic";
 import { type TimestampFormat, useAppSettings } from "../appSettings";
 import { useComposerDraftStore } from "../composerDraftStore";
+import { useUiLanguage } from "../uiLanguage";
 import { DOCK_HEADER_ICON_BUTTON_CLASS, type DiffRenderMode } from "./chat/chatHeaderControls";
 import {
   areAllRenderableFilesCollapsed,
@@ -171,6 +172,7 @@ function EditorDiffOptionsMenu(props: {
   onCopyDiff: () => void;
   onToggleCollapseAll: () => void;
 }) {
+  const { t } = useUiLanguage();
   const [optionsOpen, setOptionsOpen] = useState(false);
 
   return (
@@ -181,8 +183,8 @@ function EditorDiffOptionsMenu(props: {
             variant="ghost"
             size="icon-xs"
             className="text-muted-foreground hover:text-foreground"
-            label="Diff options"
-            title="Diff options"
+            label={t("Diff options")}
+            title={t("Diff options")}
             onClick={() => {
               setOptionsOpen(true);
             }}
@@ -201,7 +203,7 @@ function EditorDiffOptionsMenu(props: {
       />
       <ComposerPickerMenuPopup align="end" side="bottom" sideOffset={6} className="w-64 min-w-64">
         <MenuGroup>
-          <MenuGroupLabel>Source</MenuGroupLabel>
+          <MenuGroupLabel>{t("Source")}</MenuGroupLabel>
           <MenuRadioGroup
             value={props.scopePickerValue ?? ""}
             onValueChange={(value) => {
@@ -220,15 +222,15 @@ function EditorDiffOptionsMenu(props: {
           >
             {DIFF_PANEL_PICKER_SCOPE_OPTIONS.map((scope) => (
               <MenuRadioItem key={scope} value={scope}>
-                <span className="min-w-0 flex-1 truncate">{REPO_DIFF_SCOPE_LABELS[scope]}</span>
+                <span className="min-w-0 flex-1 truncate">{t(REPO_DIFF_SCOPE_LABELS[scope])}</span>
                 <EditorDiffOptionsCountBadge count={props.scopeFileCounts[scope]} />
               </MenuRadioItem>
             ))}
             <MenuRadioItem value="allTurns">
-              <span className="min-w-0 flex-1 truncate">All turns</span>
+              <span className="min-w-0 flex-1 truncate">{t("All turns")}</span>
             </MenuRadioItem>
             <MenuRadioItem value="lastTurn">
-              <span className="min-w-0 flex-1 truncate">Last turn</span>
+              <span className="min-w-0 flex-1 truncate">{t("Last turn")}</span>
             </MenuRadioItem>
           </MenuRadioGroup>
         </MenuGroup>
@@ -244,7 +246,7 @@ function EditorDiffOptionsMenu(props: {
 
         {props.orderedTurnDiffSummaries.length > 0 ? (
           <MenuGroup>
-            <MenuGroupLabel>Turns</MenuGroupLabel>
+            <MenuGroupLabel>{t("Turns")}</MenuGroupLabel>
             <MenuRadioGroup
               value={props.selectedTurnId ?? "all-turns"}
               onValueChange={(value) => {
@@ -252,7 +254,7 @@ function EditorDiffOptionsMenu(props: {
               }}
             >
               <MenuRadioItem value="all-turns">
-                <span className="min-w-0 flex-1 truncate">All turns</span>
+                <span className="min-w-0 flex-1 truncate">{t("All turns")}</span>
               </MenuRadioItem>
               {props.orderedTurnDiffSummaries.map((summary) => {
                 const turnNumber =
@@ -261,7 +263,9 @@ function EditorDiffOptionsMenu(props: {
                   "?";
                 return (
                   <MenuRadioItem key={summary.turnId} value={summary.turnId}>
-                    <span className="min-w-0 flex-1 truncate">Turn {turnNumber}</span>
+                    <span className="min-w-0 flex-1 truncate">
+                      {t("Turn")} {turnNumber}
+                    </span>
                     <span className="shrink-0 text-[10px] text-muted-foreground tabular-nums">
                       {formatShortTimestamp(summary.completedAt, props.timestampFormat)}
                     </span>
@@ -273,7 +277,7 @@ function EditorDiffOptionsMenu(props: {
         ) : null}
 
         <MenuGroup>
-          <MenuGroupLabel>View</MenuGroupLabel>
+          <MenuGroupLabel>{t("View")}</MenuGroupLabel>
           <MenuRadioGroup
             value={props.diffRenderMode}
             onValueChange={(value) => {
@@ -284,11 +288,11 @@ function EditorDiffOptionsMenu(props: {
           >
             <MenuRadioItem value="stacked">
               <Rows3Icon className={EDITOR_DIFF_OPTIONS_MENU_ICON_CLASS_NAME} />
-              <span>Stacked diff</span>
+              <span>{t("Stacked diff")}</span>
             </MenuRadioItem>
             <MenuRadioItem value="split">
               <Columns2Icon className={EDITOR_DIFF_OPTIONS_MENU_ICON_CLASS_NAME} />
-              <span>Split diff</span>
+              <span>{t("Split diff")}</span>
             </MenuRadioItem>
           </MenuRadioGroup>
           <MenuCheckboxItem
@@ -298,7 +302,7 @@ function EditorDiffOptionsMenu(props: {
               props.onDiffIgnoreWhitespaceChange(checked === true);
             }}
           >
-            Ignore whitespace-only changes
+            {t("Ignore whitespace-only changes")}
           </MenuCheckboxItem>
           <MenuCheckboxItem
             checked={props.diffWordWrap}
@@ -307,7 +311,7 @@ function EditorDiffOptionsMenu(props: {
               props.onDiffWordWrapChange(checked === true);
             }}
           >
-            Wrap long lines
+            {t("Wrap long lines")}
           </MenuCheckboxItem>
           <MenuCheckboxItem
             checked={props.changeMarkersEnabled}
@@ -316,7 +320,7 @@ function EditorDiffOptionsMenu(props: {
               props.onChangeMarkersEnabledChange(checked === true);
             }}
           >
-            Change markers
+            {t("Change markers")}
           </MenuCheckboxItem>
           {props.diffCopyText ? (
             <MenuItem
@@ -335,7 +339,9 @@ function EditorDiffOptionsMenu(props: {
               }}
             >
               <FolderIcon className={EDITOR_DIFF_OPTIONS_MENU_ICON_CLASS_NAME} />
-              <span>{props.allFilesCollapsed ? "Expand all files" : "Collapse all files"}</span>
+              <span>
+                {props.allFilesCollapsed ? t("Expand all files") : t("Collapse all files")}
+              </span>
             </MenuItem>
           ) : null}
         </MenuGroup>
@@ -449,6 +455,7 @@ export default function DiffPanel({
   onVisibleFileChange,
   onEditFile,
 }: DiffPanelProps) {
+  const { t, tError } = useUiLanguage();
   const queryClient = useQueryClient();
   const mode = modeProp ?? "inline";
   const liveRefreshEnabled = liveRefreshEnabledProp ?? true;
@@ -598,12 +605,7 @@ export default function DiffPanel({
     enabled: gitStatusQueriesEnabled,
   });
   const gitRepoStatus = gitBranchesQuery.isSuccess ? gitBranchesQuery.data.isRepo : undefined;
-  const gitRepoStatusError =
-    gitBranchesQuery.error instanceof Error
-      ? gitBranchesQuery.error.message
-      : gitBranchesQuery.error
-        ? "Failed to check git repository."
-        : null;
+  const gitRepoStatusError = gitBranchesQuery.error ? t("Failed to check git repository.") : null;
   const isGitRepo = gitRepoStatus === true;
   const turnDiffSummaries = activeThreadContext?.turnDiffSummaries ?? [];
   const inferredCheckpointTurnCountByTurnId = useMemo(
@@ -715,6 +717,9 @@ export default function DiffPanel({
   });
   const isLoadingCheckpointDiff = checkpointDiffDisplay.isLoading;
   const checkpointDiffError = checkpointDiffDisplay.error;
+  const localizedCheckpointDiffError = checkpointDiffError
+    ? tError(checkpointDiffError, "Failed to load checkpoint diff.")
+    : null;
 
   const selectedPatch = selectedTurn ? selectedTurnCheckpointDiff : conversationCheckpointDiff;
   const hasResolvedPatch = typeof selectedPatch === "string";
@@ -763,12 +768,7 @@ export default function DiffPanel({
   const repoPatch = repoDiffQuery.data?.patch;
   const hasResolvedRepoPatch = typeof repoPatch === "string";
   const hasNoRepoChanges = hasResolvedRepoPatch && repoPatch.trim().length === 0;
-  const repoDiffError =
-    repoDiffQuery.error instanceof Error
-      ? repoDiffQuery.error.message
-      : repoDiffQuery.error
-        ? "Failed to load repo diff."
-        : null;
+  const repoDiffError = repoDiffQuery.error ? t("Failed to load repo diff.") : null;
   const branchHasCommittedChanges = (gitStatusQuery.data?.aheadCount ?? 0) > 0;
 
   useEffect(() => {
@@ -803,7 +803,7 @@ export default function DiffPanel({
   );
   const activeReviewPatch = diffViewKind === "repo" ? repoPatch : selectedPatch;
   const activeReviewTruncated = diffViewKind === "repo" && repoDiffQuery.data?.truncated === true;
-  const activeReviewError = diffViewKind === "repo" ? repoDiffError : checkpointDiffError;
+  const activeReviewError = diffViewKind === "repo" ? repoDiffError : localizedCheckpointDiffError;
   const activeReviewIsLoading =
     diffViewKind === "repo" ? repoDiffQuery.isLoading : isLoadingCheckpointDiff;
   const activeDiffIsFetching =
@@ -824,11 +824,11 @@ export default function DiffPanel({
   );
   const diffCopyLabel = isDiffCopied
     ? activeReviewTruncated
-      ? "Copied partial diff"
-      : "Copied diff"
+      ? t("Copied partial diff")
+      : t("Copied diff")
     : activeReviewTruncated
-      ? "Copy partial diff"
-      : "Copy diff";
+      ? t("Copy partial diff")
+      : t("Copy diff");
   const renderableFiles = useMemo(() => {
     if (!renderablePatch || renderablePatch.kind !== "files") {
       return [];
@@ -1413,7 +1413,7 @@ export default function DiffPanel({
           <IconButton
             variant="chrome"
             size="icon-xs"
-            label="Close file view"
+            label={t("Close file view")}
             className={DOCK_HEADER_ICON_BUTTON_CLASS}
             onClick={(event) => {
               event.stopPropagation();
@@ -1472,22 +1472,23 @@ export default function DiffPanel({
     <DiffPanelShell mode={mode} header={shellHeader}>
       {!activeThreadContext ? (
         <PanelStateMessage density="compact" fill="flex">
-          Select a thread to inspect turn diffs.
+          {t("Select a thread to inspect turn diffs.")}
         </PanelStateMessage>
       ) : gitRepoStatus === false ? (
         <PanelStateMessage density="compact" fill="flex">
-          Turn diffs are unavailable because this project is not a git repository.
+          {t("Turn diffs are unavailable because this project is not a git repository.")}
         </PanelStateMessage>
       ) : gitRepoStatusError ? (
         <PanelStateMessage density="compact" fill="flex">
           {gitRepoStatusError}
         </PanelStateMessage>
       ) : gitRepoStatus === undefined && diffQueriesEnabled && activeCwd ? (
-        <DiffPanelLoadingState label="Checking git repository..." />
+        <DiffPanelLoadingState label={t("Checking git repository...")} />
       ) : diffEnvironmentPending ? (
         <PanelStateMessage density="compact" fill="flex">
-          This chat environment is still being prepared. Diffs will be available once the worktree
-          is ready.
+          {t(
+            "This chat environment is still being prepared. Diffs will be available once the worktree is ready.",
+          )}
         </PanelStateMessage>
       ) : (
         <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
@@ -1514,19 +1515,19 @@ export default function DiffPanel({
               viewKind={diffViewKind}
               loadingLabel={
                 diffViewKind !== "repo"
-                  ? "Loading checkpoint diff..."
+                  ? t("Loading checkpoint diff...")
                   : repoDiffScope === "ref"
-                    ? `Loading diff ${resolveRepoDiffScopeLabel(repoDiffScope, repoDiffCompareRef)}...`
-                    : `Loading ${REPO_DIFF_SCOPE_LABELS[repoDiffScope].toLowerCase()} diff...`
+                    ? `${t("Loading diff:")} ${resolveRepoDiffScopeLabel(repoDiffScope, repoDiffCompareRef)}...`
+                    : `${t("Loading diff:")} ${t(REPO_DIFF_SCOPE_LABELS[repoDiffScope])}...`
               }
               emptyLabel={
                 diffViewKind === "repo"
-                  ? "No changes in the selected diff source."
+                  ? t("No changes in the selected diff source.")
                   : orderedTurnDiffSummaries.length === 0
-                    ? "No turn diffs are available yet."
-                    : "No net changes in this selection."
+                    ? t("No turn diffs are available yet.")
+                    : t("No net changes in this selection.")
               }
-              unavailableLabel="No repo diff is available right now."
+              unavailableLabel={t("No repo diff is available right now.")}
             />
             {changeMarkersEnabled ? (
               <DiffPanelChangeMarkers

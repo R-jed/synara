@@ -27,6 +27,7 @@ import {
   WorktreeIcon,
 } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   SIDEBAR_ROW_ACTIVE_CLASS_NAME,
   SIDEBAR_ROW_FOCUS_CLASS_NAME,
@@ -134,6 +135,7 @@ function ActivityThreadRow({
   onContextMenu: (threadId: ThreadId, position: SidebarRowContextMenuPosition) => void;
   renderHoverCard: (anchorId: string) => ReactNode;
 }) {
+  const { t } = useUiLanguage();
   const provider = thread.session?.provider ?? thread.modelSelection.provider;
   const branch = resolveThreadDisplayBranch(thread);
   const isWorktree =
@@ -268,8 +270,8 @@ function ActivityThreadRow({
           />
           <SidebarIconButton
             icon={isSettled ? Undo2Icon : CircleCheckIcon}
-            label={isSettled ? "Undo" : "Done"}
-            title={isSettled ? "Undo" : "Done"}
+            label={isSettled ? t("Undo") : t("Done")}
+            title={isSettled ? t("Undo") : t("Done")}
             iconClassName={SIDEBAR_TRAILING_ICON_CLASS}
             className={cn("hover:text-foreground/89", actionToneClassName)}
             onMouseDown={stopRowActivation}
@@ -366,10 +368,11 @@ function ActivityScopeMenu({
   scopeSelection: ActivityScopeSelection;
   onChangeScopeSelection: (selection: ActivityScopeSelection) => void;
 }) {
+  const { t } = useUiLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const scopeLabel =
     scopeSelection === null
-      ? "All activity"
+      ? t("All activity")
       : scopeSelection === "chats"
         ? "Synara"
         : resolveThreadProjectLabel(projectById.get(scopeSelection));
@@ -380,7 +383,7 @@ function ActivityScopeMenu({
         render={
           <button
             type="button"
-            aria-label="Filter activity by project"
+            aria-label={t("Filter activity by project")}
             className={cn(
               "flex h-full min-w-0 flex-1 cursor-pointer items-center gap-1 rounded-md text-left",
               SIDEBAR_ROW_FOCUS_CLASS_NAME,
@@ -402,7 +405,7 @@ function ActivityScopeMenu({
       <ComposerPickerMenuPopup align="start" side="bottom" className="min-w-44">
         <MenuGroup>
           <div className="px-2 py-1 sm:text-xs font-medium text-muted-foreground">
-            Activity scope
+            {t("Activity scope")}
           </div>
           <MenuRadioGroup
             value={scopeSelection ?? "all"}
@@ -413,7 +416,7 @@ function ActivityScopeMenu({
             }}
           >
             <MenuRadioItem value="all" className="min-h-7 py-1 sm:text-xs">
-              All activity
+              {t("All activity")}
             </MenuRadioItem>
             {options.map((option) => (
               <MenuRadioItem
@@ -453,27 +456,30 @@ function ActivityFilterMenu({
   markAllReadDisabled: boolean;
   onMarkAllRead: () => void;
 }) {
+  const { t } = useUiLanguage();
   return (
     <Menu>
       <SidebarIconButton
         icon={SortIcon}
-        label="Activity options"
-        tooltip="Activity options"
+        label={t("Activity options")}
+        tooltip={t("Activity options")}
         tooltipSide="bottom"
         render={<MenuTrigger />}
       />
       <ComposerPickerMenuPopup align="end" side="bottom" className="min-w-44">
         <MenuGroup>
-          <div className="px-2 py-1 sm:text-xs font-medium text-muted-foreground">Group by</div>
+          <div className="px-2 py-1 sm:text-xs font-medium text-muted-foreground">
+            {t("Group by")}
+          </div>
           <MenuRadioGroup
             value={groupMode}
             onValueChange={(value) => onChangeGroupMode(value as ActivityGroupMode)}
           >
             <MenuRadioItem value="time" className="min-h-7 py-1 sm:text-xs">
-              Time
+              {t("Time")}
             </MenuRadioItem>
             <MenuRadioItem value="project" className="min-h-7 py-1 sm:text-xs">
-              Project
+              {t("Project")}
             </MenuRadioItem>
           </MenuRadioGroup>
         </MenuGroup>
@@ -483,7 +489,7 @@ function ActivityFilterMenu({
           disabled={markAllReadDisabled}
           onClick={onMarkAllRead}
         >
-          Mark all as read
+          {t("Mark all as read")}
         </MenuItem>
       </ComposerPickerMenuPopup>
     </Menu>
@@ -501,6 +507,7 @@ function ActivityShowMoreRow({
   onShowMore: () => void;
   onShowLess: () => void;
 }) {
+  const { t } = useUiLanguage();
   if (!canShowMore && !canShowLess) return null;
   const buttonClassName =
     "h-7 cursor-pointer rounded-lg px-2.5 text-left text-[length:var(--app-font-size-ui,12px)] text-muted-foreground/79 hover:text-foreground";
@@ -508,7 +515,7 @@ function ActivityShowMoreRow({
     <div className="flex w-full items-center gap-1">
       {canShowMore ? (
         <button type="button" className={cn(buttonClassName, "flex-1")} onClick={onShowMore}>
-          Show more
+          {t("Show more")}
         </button>
       ) : null}
       {canShowLess ? (
@@ -517,7 +524,7 @@ function ActivityShowMoreRow({
           className={cn(buttonClassName, canShowMore ? "flex-none" : "flex-1")}
           onClick={onShowLess}
         >
-          Show less
+          {t("Show less")}
         </button>
       ) : null}
     </div>
@@ -584,6 +591,7 @@ export function SidebarActivityView({
   /** Same "Add project" action the Projects section header runs. */
   onAddProject: () => void;
 }) {
+  const { t } = useUiLanguage();
   const [scopeSelection, setScopeSelection] = useState<ActivityScopeSelection>(null);
   const [groupMode, setGroupMode] = useState<ActivityGroupMode>("time");
   const [pinnedOpen, setPinnedOpen] = useState(true);
@@ -754,16 +762,16 @@ export function SidebarActivityView({
     model.active.length === 0 && model.settled.length === 0 && scopedPinnedThreads.length === 0;
   const emptyLabel =
     activeScope === null
-      ? "No activity yet"
+      ? t("No activity yet")
       : activeScope === "chats"
-        ? "No activity in Synara chats"
-        : "No activity for this project";
+        ? t("No activity in Synara chats")
+        : t("No activity for this project");
 
   return (
     <div className="flex flex-col gap-3">
       {scopedPinnedThreads.length > 0 ? (
         <ActivityCollapsibleSection
-          label="Pinned"
+          label={t("Pinned")}
           open={pinnedOpen}
           onToggle={() => setPinnedOpen((open) => !open)}
         >
@@ -785,15 +793,15 @@ export function SidebarActivityView({
         <SidebarSectionToolbar revealOnHover className="mr-0">
           <SidebarIconButton
             icon={NewThreadIcon}
-            label="Start new chat in last used project"
-            tooltip="New chat"
+            label={t("Start new chat in last used project")}
+            tooltip={t("New chat")}
             tooltipSide="bottom"
             onClick={onCreateChat}
           />
           <SidebarIconButton
             icon={AddPlusIcon}
-            label="Add project"
-            tooltip="Add project"
+            label={t("Add project")}
+            tooltip={t("Add project")}
             tooltipSide="bottom"
             onClick={onAddProject}
           />
@@ -808,7 +816,7 @@ export function SidebarActivityView({
 
       {isEmpty ? (
         <div className="px-2 pt-4 text-center text-[length:var(--app-font-size-ui,12px)] text-muted-foreground/58">
-          {threadsHydrated ? emptyLabel : "Loading activity..."}
+          {threadsHydrated ? emptyLabel : t("Loading activity...")}
         </div>
       ) : groupMode === "project" ? (
         pagedProjectGroups.map(({ group, paging, threads: visibleThreads }) => (
@@ -855,7 +863,7 @@ export function SidebarActivityView({
         <>
           {priorityThreads.length > 0 || recentThreads.length > 0 ? (
             <div>
-              <ActivitySectionLabel label="Recent" />
+              <ActivitySectionLabel label={t("Recent")} />
               <div className="flex flex-col gap-0.5">
                 {priorityThreads.map(renderActiveRow)}
                 {recentThreads.map(renderActiveRow)}
@@ -864,13 +872,13 @@ export function SidebarActivityView({
           ) : null}
           {dateBuckets.today.length > 0 ? (
             <div>
-              <ActivitySectionLabel label="Today" />
+              <ActivitySectionLabel label={t("Today")} />
               <div className="flex flex-col gap-0.5">{dateBuckets.today.map(renderActiveRow)}</div>
             </div>
           ) : null}
           {dateBuckets.yesterday.length > 0 ? (
             <div>
-              <ActivitySectionLabel label="Yesterday" />
+              <ActivitySectionLabel label={t("Yesterday")} />
               <div className="flex flex-col gap-0.5">
                 {dateBuckets.yesterday.map(renderActiveRow)}
               </div>
@@ -878,7 +886,7 @@ export function SidebarActivityView({
           ) : null}
           {dateBuckets.earlier.length > 0 ? (
             <ActivityCollapsibleSection
-              label="Earlier"
+              label={t("Earlier")}
               open={earlierOpen}
               onToggle={() => setEarlierOpen((open) => !open)}
             >
@@ -898,7 +906,7 @@ export function SidebarActivityView({
 
       {model.settled.length > 0 ? (
         <ActivityCollapsibleSection
-          label="Done"
+          label={t("Done")}
           open={settledOpen}
           onToggle={() => setSettledOpen((open) => !open)}
         >

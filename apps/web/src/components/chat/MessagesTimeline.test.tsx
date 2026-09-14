@@ -3418,7 +3418,7 @@ describe("MessagesTimeline", () => {
     expect(markup).toContain("Review");
     expect(markup).toContain('aria-expanded="true"');
     expect(markup).toContain('data-edited-file-row="true"');
-    expect(markup).toContain('aria-label="Open apps/web/src/components/Sidebar.tsx options"');
+    expect(markup).toContain('aria-label="Open options for apps/web/src/components/Sidebar.tsx"');
     expect(markup).toContain("apps/web/src/components/Sidebar.tsx");
     expect(markup.indexOf('aria-label="Copy message"')).toBeGreaterThan(
       markup.indexOf("Edited 1 file"),

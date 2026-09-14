@@ -510,3 +510,25 @@ export function filterShortcutSheetSections(
     }))
     .filter((section) => section.entries.length > 0);
 }
+
+export function localizeShortcutSheetText(
+  text: string,
+  language: "en" | "zh-CN",
+  translate: (text: string) => string,
+): string {
+  const translated = translate(text);
+  if (language !== "zh-CN" || translated !== text) return translated;
+
+  const visibleThread = /^Jump to visible thread (\d+)$/u.exec(text);
+  if (visibleThread) return `切换到可见对话 ${visibleThread[1]}`;
+
+  const space = /^Jump to space (\d+)$/u.exec(text);
+  if (space) return `切换到空间 ${space[1]}`;
+
+  if (text === "Jump to Void") return "切换到 Void";
+
+  const setupScript = /^(.+) setup script$/u.exec(text);
+  if (setupScript) return `${setupScript[1]} 设置脚本`;
+
+  return text;
+}

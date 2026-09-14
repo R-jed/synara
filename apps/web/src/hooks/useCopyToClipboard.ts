@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { toastManager } from "../components/ui/toast";
+import { useUiLanguage } from "../uiLanguage";
 
 function fallbackCopyTextToClipboard(value: string): boolean {
   if (typeof document === "undefined" || typeof document.execCommand !== "function") {
@@ -151,18 +152,19 @@ interface CopyToastLabels {
  * one success/error toast shape, one place to change it.
  */
 function useCopyWithToasts(): (value: string, labels: CopyToastLabels) => void {
+  const { t, tError } = useUiLanguage();
   const { copyToClipboard } = useCopyToClipboard<CopyToastLabels>({
     onCopy: (labels) =>
       toastManager.add({
         type: "success",
-        title: labels.successTitle,
+        title: t(labels.successTitle),
         description: labels.successDescription,
       }),
     onError: (error, labels) =>
       toastManager.add({
         type: "error",
-        title: labels.errorTitle,
-        description: error instanceof Error ? error.message : "An error occurred.",
+        title: t(labels.errorTitle),
+        description: tError(error, "An error occurred."),
       }),
   });
   return copyToClipboard;
@@ -195,10 +197,15 @@ export function useCopyFileContentsToClipboard(): (
   fileName: string,
   options?: { partial?: boolean },
 ) => void {
+  const { t } = useUiLanguage();
   const copy = useCopyWithToasts();
   return (contents: string, fileName: string, options?: { partial?: boolean }) => {
     if (contents.length === 0) {
-      toastManager.add({ type: "info", title: "Nothing to copy", description: "File is empty" });
+      toastManager.add({
+        type: "info",
+        title: t("Nothing to copy"),
+        description: t("File is empty"),
+      });
       return;
     }
     copy(
@@ -206,7 +213,7 @@ export function useCopyFileContentsToClipboard(): (
       options?.partial
         ? {
             successTitle: "Partial contents copied",
-            successDescription: "Large file — only the loaded part was copied",
+            successDescription: t("Large file — only the loaded part was copied"),
             errorTitle: "Failed to copy contents",
           }
         : {

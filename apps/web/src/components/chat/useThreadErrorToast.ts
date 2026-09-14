@@ -6,6 +6,7 @@
 import type { ThreadId } from "@synara/contracts";
 import { isProviderDeliveryBlockDetail } from "@synara/shared/providerDeliveryBlock";
 import { useEffect, useRef, type RefObject } from "react";
+import { useUiLanguage } from "~/uiLanguage";
 
 import { toastManager } from "../ui/toast";
 
@@ -17,13 +18,16 @@ export function threadErrorToastId(threadId: ThreadId): string {
   return `thread-error:${threadId}`;
 }
 
-export function buildThreadErrorToastOptions(input: {
-  error: string;
-  onClose: () => void;
-  onUnblock: () => void;
-  threadId: ThreadId;
-  unblocking: boolean;
-}): ThreadErrorToastOptions {
+export function buildThreadErrorToastOptions(
+  input: {
+    error: string;
+    onClose: () => void;
+    onUnblock: () => void;
+    threadId: ThreadId;
+    unblocking: boolean;
+  },
+  translate: (text: string) => string = (text) => text,
+): ThreadErrorToastOptions {
   const canUnblock = isProviderDeliveryBlockDetail(input.error);
   return {
     id: threadErrorToastId(input.threadId),
@@ -36,7 +40,7 @@ export function buildThreadErrorToastOptions(input: {
     ...(canUnblock
       ? {
           actionProps: {
-            children: input.unblocking ? "Unblocking…" : "Unblock thread",
+            children: input.unblocking ? translate("Unblocking…") : translate("Unblock thread"),
             disabled: input.unblocking,
             onClick: input.onUnblock,
           },
@@ -65,6 +69,7 @@ export function useThreadErrorToast(input: {
   threadId: ThreadId | null;
   unblocking: boolean;
 }): void {
+  const { t, tError } = useUiLanguage();
   const { error, onDismiss, onUnblock, threadId, unblocking } = input;
   const callbacksRef = useRef({ onDismiss, onUnblock });
   const closingSilentlyRef = useRef(false);
@@ -79,8 +84,8 @@ export function useThreadErrorToast(input: {
       closeSilently(threadId, closingSilentlyRef);
       return;
     }
-    toastManager.add(
-      buildThreadErrorToastOptions({
+    const options = buildThreadErrorToastOptions(
+      {
         error,
         threadId,
         unblocking,
@@ -91,9 +96,11 @@ export function useThreadErrorToast(input: {
         onUnblock: () => {
           callbacksRef.current.onUnblock();
         },
-      }),
+      },
+      t,
     );
-  }, [error, threadId, unblocking]);
+    toastManager.add({ ...options, title: tError(error) });
+  }, [error, t, tError, threadId, unblocking]);
 
   // Kept separate from the content effect so an error update refreshes the card in
   // place instead of tearing it down and replaying the entrance animation.

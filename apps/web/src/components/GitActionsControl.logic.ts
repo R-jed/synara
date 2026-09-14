@@ -108,6 +108,28 @@ export function buildGitActionProgressStages(input: {
   return [...branchStages, ...commitStages, pushStage, "Creating PR..."];
 }
 
+export function localizeGitActionProgressLabel(label: string, language: "en" | "zh-CN"): string {
+  if (language !== "zh-CN") return label;
+  const pushTarget = /^Pushing to (.+)\.\.\.$/u.exec(label)?.[1];
+  if (pushTarget) return `正在推送到 ${pushTarget}...`;
+  switch (label) {
+    case "Preparing feature branch...":
+      return "正在准备功能分支...";
+    case "Generating commit message...":
+      return "正在生成提交信息...";
+    case "Committing...":
+      return "正在提交...";
+    case "Pushing...":
+      return "正在推送...";
+    case "Creating PR...":
+      return "正在创建 PR...";
+    case "Running git action...":
+      return "正在执行 Git 操作...";
+    default:
+      return label;
+  }
+}
+
 const withDescription = (title: string, description: string | undefined) =>
   description ? { title, description } : { title };
 
@@ -901,37 +923,63 @@ export function resolveDefaultBranchActionDialogCopy(input: {
   action: DefaultBranchConfirmableAction;
   branchName: string;
   includesCommit: boolean;
+  language?: "en" | "zh-CN";
 }): DefaultBranchActionDialogCopy {
   const branchLabel = input.branchName;
-  const suffix = ` on "${branchLabel}". You can continue on this branch or create a feature branch and run the same action there.`;
-
-  if (input.action === "push" || input.action === "commit_push") {
-    if (input.includesCommit) {
-      return {
-        title: "Commit & push to default branch?",
-        description: `This action will commit and push changes${suffix}`,
-        continueLabel: `Commit & push to ${branchLabel}`,
-      };
+  if (input.language === "zh-CN") {
+    if (input.action === "push" || input.action === "commit_push") {
+      return input.includesCommit
+        ? {
+            title: "提交并推送到默认分支？",
+            description: `此操作会在“${branchLabel}”上提交并推送更改。你可以继续使用该分支，或创建功能分支并在那里执行相同操作。`,
+            continueLabel: `提交并推送到 ${branchLabel}`,
+          }
+        : {
+            title: "推送到默认分支？",
+            description: `此操作会将本地提交推送到“${branchLabel}”。你可以继续使用该分支，或创建功能分支并在那里执行相同操作。`,
+            continueLabel: `推送到 ${branchLabel}`,
+          };
     }
-    return {
-      title: "Push to default branch?",
-      description: `This action will push local commits${suffix}`,
-      continueLabel: `Push to ${branchLabel}`,
-    };
+
+    return input.includesCommit
+      ? {
+          title: "创建功能分支、提交并创建 PR？",
+          description: `无法从“${branchLabel}”向其自身创建拉取请求。此操作会创建功能分支，在该分支提交更改、推送并创建 PR。`,
+          continueLabel: "创建功能分支并继续",
+        }
+      : {
+          title: "创建功能分支并创建 PR？",
+          description: `无法从“${branchLabel}”向其自身创建拉取请求。此操作会基于当前提交创建功能分支，推送该分支并创建 PR。`,
+          continueLabel: "创建功能分支并继续",
+        };
   }
 
-  if (input.includesCommit) {
-    return {
-      title: "Create feature branch, commit & PR?",
-      description: `Pull requests can't be opened from "${branchLabel}" into itself. This action will create a feature branch, commit your changes there, push it, and create the PR.`,
-      continueLabel: "Create feature branch & continue",
-    };
+  const suffix = ` on "${branchLabel}". You can continue on this branch or create a feature branch and run the same action there.`;
+  if (input.action === "push" || input.action === "commit_push") {
+    return input.includesCommit
+      ? {
+          title: "Commit & push to default branch?",
+          description: `This action will commit and push changes${suffix}`,
+          continueLabel: `Commit & push to ${branchLabel}`,
+        }
+      : {
+          title: "Push to default branch?",
+          description: `This action will push local commits${suffix}`,
+          continueLabel: `Push to ${branchLabel}`,
+        };
   }
-  return {
-    title: "Create feature branch & PR?",
-    description: `Pull requests can't be opened from "${branchLabel}" into itself. This action will create a feature branch from your current commits, push it, and create the PR.`,
-    continueLabel: "Create feature branch & continue",
-  };
+
+  return input.includesCommit
+    ? {
+        title: "Create feature branch, commit & PR?",
+        description: `Pull requests can't be opened from "${branchLabel}" into itself. This action will create a feature branch, commit your changes there, push it, and create the PR.`,
+        continueLabel: "Create feature branch & continue",
+      }
+    : {
+        title: "Create feature branch & PR?",
+        description: `Pull requests can't be opened from "${branchLabel}" into itself. This action will create a feature branch from your current commits, push it, and create the PR.`,
+        continueLabel: "Create feature branch & continue",
+      };
 }
 
 export function resolveLiveThreadBranchUpdate(input: {

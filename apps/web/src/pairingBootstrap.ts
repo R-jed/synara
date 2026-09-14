@@ -1,6 +1,8 @@
 // FILE: pairingBootstrap.ts
 // Purpose: Exchanges one-time remote pairing links before the application opens a WebSocket.
 
+import { readStoredUiLanguagePreference, resolveUiLanguage } from "./uiLanguagePreference";
+
 const PAIRING_PATH = "/pair";
 
 interface PairingLocation {
@@ -27,13 +29,30 @@ function renderPairingFailure(): void {
   const root = document.getElementById("root");
   if (!root) return;
 
-  document.title = "Pairing failed · Synara";
+  const language = resolveUiLanguage(readStoredUiLanguagePreference());
+  const copy =
+    language === "zh-CN"
+      ? {
+          title: "配对失败 · Synara",
+          eyebrow: "安全配对已中断",
+          heading: "无法使用此配对链接。",
+          body: "此链接可能不完整、已过期或已被使用。请从 Synara 服务端生成新的配对链接后重试。",
+        }
+      : {
+          title: "Pairing failed · Synara",
+          eyebrow: "Secure pairing interrupted",
+          heading: "This pairing link could not be used.",
+          body: "The link may be incomplete, expired, or already used. Generate a new pairing link from the Synara server and try again.",
+        };
+
+  document.documentElement.lang = language;
+  document.title = copy.title;
   root.innerHTML = `
     <main role="alert" aria-live="assertive" style="min-height:100vh;box-sizing:border-box;display:grid;place-items:center;padding:32px;background:#10110f;color:#f3f0e8;font-family:'DM Sans',sans-serif">
       <section style="width:min(100%,520px);border:1px solid #373a34;background:#171915;padding:clamp(28px,6vw,52px);box-shadow:12px 12px 0 #080907">
-        <p style="margin:0 0 22px;color:#d6ff55;font:600 12px/1.2 'Geist Mono',monospace;letter-spacing:.16em;text-transform:uppercase">Secure pairing interrupted</p>
-        <h1 tabindex="-1" style="margin:0;color:#fffdf7;font-size:clamp(32px,7vw,52px);font-weight:600;line-height:.98;letter-spacing:-.045em">This pairing link could not be used.</h1>
-        <p style="margin:24px 0 0;color:#b8bbb2;font-size:16px;line-height:1.6">The link may be incomplete, expired, or already used. Generate a new pairing link from the Synara server and try again.</p>
+        <p style="margin:0 0 22px;color:#d6ff55;font:600 12px/1.2 'Geist Mono',monospace;letter-spacing:.16em;text-transform:uppercase">${copy.eyebrow}</p>
+        <h1 tabindex="-1" style="margin:0;color:#fffdf7;font-size:clamp(32px,7vw,52px);font-weight:600;line-height:.98;letter-spacing:-.045em">${copy.heading}</h1>
+        <p style="margin:24px 0 0;color:#b8bbb2;font-size:16px;line-height:1.6">${copy.body}</p>
       </section>
     </main>`;
   root.querySelector<HTMLElement>("h1")?.focus();

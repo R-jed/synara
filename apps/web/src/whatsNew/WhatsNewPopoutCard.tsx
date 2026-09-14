@@ -10,8 +10,10 @@ import { useEffect, useState, type KeyboardEvent } from "react";
 import { XIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
 import { SynaraLogo } from "~/components/SynaraLogo";
+import { useUiLanguage } from "~/uiLanguage";
 
 import type { WhatsNewEntry } from "./logic";
+import { translateWhatsNewText } from "./uiLanguage";
 
 // The card anchors bottom-left over the thread sidebar, so it must fit inside
 // the sidebar's live width (user-resizable via --sidebar-width) rather than
@@ -74,8 +76,12 @@ export function WhatsNewPopoutCard({
   onDismiss,
   className,
 }: WhatsNewPopoutCardProps) {
+  const { language, t } = useUiLanguage();
+  const tRelease = (text: string) => translateWhatsNewText(language, text);
   const cardWidth = useSidebarFittedWidth();
-  const heroAlt = entry.heroImageAlt ?? `What's new in v${currentVersion}`;
+  const heroAlt =
+    entry.heroImageAlt ??
+    (language === "zh-CN" ? `v${currentVersion} 更新内容` : `What's new in v${currentVersion}`);
   const primaryFeature = entry.features[0];
   const primaryFeatureTitle = primaryFeature?.title;
   const primaryFeatureDescription = primaryFeature?.description;
@@ -108,7 +114,11 @@ export function WhatsNewPopoutCard({
       <div
         role="button"
         tabIndex={0}
-        aria-label={`Open What's new in v${currentVersion}`}
+        aria-label={
+          language === "zh-CN"
+            ? `打开 v${currentVersion} 更新内容`
+            : `Open What's new in v${currentVersion}`
+        }
         onClick={onOpen}
         onKeyDown={onKeyDown}
         className={cn(
@@ -123,7 +133,7 @@ export function WhatsNewPopoutCard({
             the card's onOpen handler. */}
         <button
           type="button"
-          aria-label="Dismiss What's new"
+          aria-label={t("Dismiss What's new")}
           onClick={(event) => {
             event.stopPropagation();
             onDismiss();
@@ -166,17 +176,23 @@ export function WhatsNewPopoutCard({
         </div>
 
         <div className="flex flex-col px-4 pb-4 pt-2.5">
-          <p className="text-xs font-medium text-primary">New · v{currentVersion}</p>
+          <p className="text-xs font-medium text-primary">
+            {t("New release")} · v{currentVersion}
+          </p>
           <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-foreground">
-            {primaryFeatureTitle ?? `What's new in v${currentVersion}`}
+            {primaryFeatureTitle
+              ? tRelease(primaryFeatureTitle)
+              : language === "zh-CN"
+                ? `v${currentVersion} 更新内容`
+                : `What's new in v${currentVersion}`}
           </p>
           {primaryFeatureDescription !== undefined && (
             <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground/90">
-              {primaryFeatureDescription}
+              {tRelease(primaryFeatureDescription)}
             </p>
           )}
           <p className="mt-2.5 text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">
-            Find out what&rsquo;s new <span aria-hidden="true">→</span>
+            {t("Find out what's new")} <span aria-hidden="true">→</span>
           </p>
         </div>
       </div>

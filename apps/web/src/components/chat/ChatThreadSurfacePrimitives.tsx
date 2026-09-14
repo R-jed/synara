@@ -15,6 +15,7 @@ import type { SplitViewPanePanelState } from "../../splitViewStore";
 import { CHAT_BACKGROUND_CLASS_NAME } from "./composerPickerStyles";
 import { Spinner } from "../ui/spinner";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import { scheduleDeferredChatMount } from "./deferredChatMount";
 
 const DiffPanel = lazy(() => import("../DiffPanel"));
@@ -24,12 +25,13 @@ export const LazyDevicePanel = lazy(() => import("../DevicePanel"));
 export const noopChatSurfaceAction = () => {};
 
 function DiffLoadingFallback(props: { mode: DiffPanelMode; hideHeader?: boolean }) {
+  const { t } = useUiLanguage();
   return (
     <DiffPanelShell
       mode={props.mode}
       header={props.hideHeader ? null : <DiffPanelHeaderSkeleton />}
     >
-      <DiffPanelLoadingState label="Loading diff viewer..." />
+      <DiffPanelLoadingState label={t("Loading diff viewer...")} />
     </DiffPanelShell>
   );
 }
