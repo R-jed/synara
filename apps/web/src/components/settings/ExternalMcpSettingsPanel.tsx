@@ -40,10 +40,16 @@ function dateMillis(value: string): number {
   return Date.parse(value);
 }
 
-function formatDate(value: string | null, t: (text: string) => string): string {
+function formatDate(
+  value: string | null,
+  t: (text: string) => string,
+  language: "en" | "zh-CN",
+): string {
   if (!value) return t("Never");
   const milliseconds = dateMillis(value);
-  return Number.isNaN(milliseconds) ? String(value) : new Date(milliseconds).toLocaleString();
+  return Number.isNaN(milliseconds)
+    ? String(value)
+    : new Date(milliseconds).toLocaleString(language === "zh-CN" ? "zh-CN" : undefined);
 }
 
 function copyWithToast(
@@ -64,7 +70,7 @@ function copyWithToast(
 }
 
 export function ExternalMcpSettingsPanel(props: { active: boolean }) {
-  const { t, tError } = useUiLanguage();
+  const { language, t, tError } = useUiLanguage();
   const queryClient = useQueryClient();
   const [name, setName] = useState<string>(DEFAULT_NAME);
   const [allProjects, setAllProjects] = useState(true);
@@ -422,8 +428,12 @@ export function ExternalMcpSettingsPanel(props: { active: boolean }) {
             }
             status={
               connected
-                ? `${t("Last connected")} ${formatDate(setupIntegration.lastUsedAt, t)}.`
-                : `${t("Connection expires")} ${formatDate(setupIntegration.expiresAt, t)}.`
+                ? language === "zh-CN"
+                  ? `${t("Last connected")}：${formatDate(setupIntegration.lastUsedAt, t, language)}。`
+                  : `${t("Last connected")} ${formatDate(setupIntegration.lastUsedAt, t, language)}.`
+                : language === "zh-CN"
+                  ? `${t("Connection expires")}：${formatDate(setupIntegration.expiresAt, t, language)}。`
+                  : `${t("Connection expires")} ${formatDate(setupIntegration.expiresAt, t, language)}.`
             }
             control={
               setupAction === "revoke" ? (
@@ -464,7 +474,9 @@ export function ExternalMcpSettingsPanel(props: { active: boolean }) {
             status={
               paired
                 ? t("Paired. The prompt now covers only registration and verification.")
-                : `${t("Pairing code expires")} ${formatDate(setup.pairingExpiresAt, t)}.`
+                : language === "zh-CN"
+                  ? `${t("Pairing code expires")}：${formatDate(setup.pairingExpiresAt, t, language)}。`
+                  : `${t("Pairing code expires")} ${formatDate(setup.pairingExpiresAt, t, language)}.`
             }
             control={
               <Button
@@ -606,9 +618,9 @@ export function ExternalMcpSettingsPanel(props: { active: boolean }) {
                       {describeExternalMcpPermissions(integration.capabilities, t)}
                     </div>
                     <div>
-                      {t("Created")} {formatDate(integration.createdAt, t)} · {t("Last used")}{" "}
-                      {formatDate(integration.lastUsedAt, t)} · {t("Expires")}{" "}
-                      {formatDate(integration.expiresAt, t)}
+                      {language === "zh-CN"
+                        ? `${t("Created")}：${formatDate(integration.createdAt, t, language)} · ${t("Last used")}：${formatDate(integration.lastUsedAt, t, language)} · ${t("Expires")}：${formatDate(integration.expiresAt, t, language)}`
+                        : `${t("Created")} ${formatDate(integration.createdAt, t, language)} · ${t("Last used")} ${formatDate(integration.lastUsedAt, t, language)} · ${t("Expires")} ${formatDate(integration.expiresAt, t, language)}`}
                     </div>
                   </div>
                 }

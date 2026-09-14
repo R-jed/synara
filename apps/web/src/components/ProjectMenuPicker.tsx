@@ -18,6 +18,7 @@ import {
 import { groupItemsBySpace, resolveActiveSpaceId, spaceDisplayName } from "~/lib/spaceGrouping";
 import { useSpacesUiStore } from "~/spacesUiStore";
 import { useStore } from "~/store";
+import { useUiLanguage } from "~/uiLanguage";
 import { useVoidSpace } from "~/voidSpaceStore";
 import { SpaceIcon } from "./SpaceIcon";
 
@@ -74,6 +75,7 @@ function ProjectMenuPickerList(props: {
   selectedProjectId: ProjectId | null;
   onProjectIdChange: (projectId: ProjectId) => void;
 }) {
+  const { t } = useUiLanguage();
   const [query, setQuery] = useState("");
   const projects = useStore((state) => state.projects);
   const spaces = useStore((state) => state.spaces);
@@ -117,7 +119,7 @@ function ProjectMenuPickerList(props: {
 
   return (
     <PickerPanelShell
-      searchPlaceholder="Search projects"
+      searchPlaceholder={t("Search projects")}
       query={query}
       onQueryChange={setQuery}
       // Lets Arrow/Enter fall through to the menu so the search field and the
@@ -156,7 +158,7 @@ function ProjectMenuPickerList(props: {
         </MenuRadioGroup>
       ) : (
         <p className="px-3 py-6 text-center text-[length:var(--app-font-size-ui-sm,11px)] text-muted-foreground/60">
-          {props.projectOptions.length === 0 ? "No projects yet" : "No matching projects"}
+          {t(props.projectOptions.length === 0 ? "No projects yet" : "No matching projects")}
         </p>
       )}
     </PickerPanelShell>

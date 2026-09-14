@@ -25,7 +25,7 @@ export const WHATS_NEW_PART_D_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "快照恢复、诊断和历史记录上限处理现在减少了不必要的工作，在繁忙会话或大型工作区重连时可降低内存压力。",
   "Pi and OpenCode edge cases are smoother": "Pi 与 OpenCode 的边缘情况更稳定",
   "Pi aborts now read as interruptions, thinking levels are clamped more safely, live sidebar updates are steadier, and OpenCode/provider update handling picked up targeted reliability fixes.":
-    "Pi 中止现在会明确显示为中断，思考级别会更安全地限制在有效范围内，边栏实时更新更稳定，OpenCode 和提供商更新流程也加入了针对性的可靠性修复。",
+    "Pi 中止现在会明确显示为中断，思考级别会被严格限制在有效范围内，边栏实时更新更稳定，OpenCode 和提供商更新流程也加入了针对性的可靠性修复。",
   "Answers survive the RPC hop": "回答经过 RPC 后仍会保留",
   "User-input answers are preserved through the JSON-RPC codec, which keeps pending provider questions from losing their payload as they move between the app and server.":
     "用户输入的回答现在会完整经过 JSON-RPC 编解码流程，待处理的提供商问题在应用与服务端之间传递时不会再丢失内容。",
@@ -70,7 +70,7 @@ export const WHATS_NEW_PART_D_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "Cursor 模型选择现在会根据提供商当前的 ACP 选项校准，不再依赖过期的上下文属性，让输入区显示的选项更贴合 Cursor 实际可运行的模型。",
   "Diff and pinned-thread state stay in sync": "差异与置顶对话状态保持同步",
   "Projection, sidebar, and store updates now carry pinned-thread metadata through the app, while the diff panel handles refreshed content with fewer display glitches.":
-    "投影数据、边栏和状态存储更新现在都会携带置顶对话元数据，差异面板刷新内容时也减少了显示异常。",
+    "状态数据、边栏和状态存储更新现在都会携带置顶对话元数据，差异面板刷新内容时也减少了显示异常。",
   "Small workflow polish for Git and keybindings": "Git 与快捷键工作流细节优化",
   "Git summaries are clearer for rename-like moves into untracked folders, and routine keybinding reloads no longer pop a success toast every time they quietly refresh.":
     "文件移动到未跟踪文件夹、看起来类似重命名时，Git 摘要会更清楚；快捷键常规重载也不会再每次静默刷新都弹出成功通知。",
@@ -97,7 +97,7 @@ export const WHATS_NEW_PART_D_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "新的 Effect TS ACP 包统一负责自动生成的模式定义、JSON-RPC 传输、客户端与 Agent 辅助工具、终端资源释放和协议测试，让提供商集成的底层更稳固。",
   "The server moved onto Effect RPC": "服务端已迁移到 Effect RPC",
   "WebSocket routing, auth, readiness, settings, environment, git status, and orchestration flows were rebuilt around Effect services so reconnects and failure paths stay more predictable.":
-    "WebSocket 路由、身份验证、就绪状态、设置、环境、Git 状态和编排流程都围绕 Effect 服务重构，让重连与故障处理更稳定。",
+    "WebSocket 路由、身份验证、就绪状态、设置、环境、Git 状态和会话协调流程都围绕 Effect 服务重构，让重连与故障处理更稳定。",
   "Cursor output is easier to read and resume": "Cursor 输出更易阅读和恢复",
   "Cursor reasoning, tool progress, usage events, plan updates, composer behavior, and model-selection compatibility now render more consistently across fresh and resumed threads.":
     "无论新建还是恢复对话，Cursor 的推理、工具进度、用量事件、计划更新、输入区行为和模型选择兼容性现在都会更一致地显示。",
@@ -106,7 +106,7 @@ export const WHATS_NEW_PART_D_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "边栏项目恢复、可见对话的 PR 查询、任务横幅尺寸调整、过期目标修复、侧边聊天分屏处理和紧凑聊天控件都做了加固，更适合高频日常使用。",
   "Sidechat threads are easier to track": "侧边聊天对话更容易区分",
   "Sidechat source metadata now flows through projections, filters, and snapshots so secondary threads stay easier to separate from the main conversation.":
-    "侧边聊天的来源元数据现在会贯穿投影、筛选和快照流程，让辅助对话更容易与主对话区分。",
+    "侧边聊天的来源元数据现在会贯穿状态同步、筛选和快照流程，让辅助对话更容易与主对话区分。",
   "Desktop startup feels faster": "桌面端启动体感更快",
   "Packaged desktop builds now open the app window before backend readiness finishes, reducing the blank-start feeling while services come online.":
     "打包后的桌面应用现在会在后端完全就绪前先打开窗口，服务启动期间不再长时间停留在空白画面。",
@@ -145,7 +145,7 @@ export const WHATS_NEW_PART_D_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "差异视图现在可直接复制完整补丁；从终端启动的聊天有更清楚的顶部图标；边栏标题截断更整齐；较长的对话记录也会限制标准化消息数量，减轻渲染负担。",
   "Split chats are easier to arrange": "分屏聊天更容易整理",
   "Split chat panes now support direct drag-and-drop, cross-project drops, and safer orphan handling so multi-chat layouts stay easier to build and recover.":
-    "分屏聊天面板现在支持直接拖放、跨项目拖放和更安全的孤立项处理，多聊天布局更容易搭建和恢复。",
+    "分屏聊天面板现在支持直接拖放、跨项目拖放，并能更稳妥地处理孤立项，多聊天布局更容易搭建和恢复。",
   "Split chat navigation is steadier": "分屏聊天导航更稳定",
   "Split chat activation, route restore, sidebar grouping, and thread subscriptions were tightened so opening and switching chats feels more predictable.":
     "分屏聊天激活、路由恢复、边栏分组和对话订阅都做了加固，打开和切换聊天时的行为更稳定。",
@@ -178,11 +178,11 @@ export const WHATS_NEW_PART_D_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "插件引用现在可以完整地随输入区提示词传递。把任务交给 Agent 时，已连接工具的上下文不易再因提及处理而出错。",
   "Toast behavior can be feature-flagged": "通知行为可通过功能开关控制",
   "Toast notifications picked up feature-flag wiring, giving Synara a safer way to roll notification changes forward or back.":
-    "浮动通知已接入功能开关，Synara 可以更安全地启用或撤回通知相关改动。",
+    "浮动通知已接入功能开关，Synara 可以更稳妥地启用或回退通知相关改动。",
   "Desktop reconnects are steadier": "桌面端重连更稳定",
   "The desktop bridge now refreshes reconnects more reliably and preserves the workspace home directory, reducing drift after desktop runtime restarts.":
     "桌面桥接现在能更可靠地重新建立连接，并保留工作区主目录，减少桌面运行环境重启后的状态偏移。",
-  "Branch switching is much safer": "分支切换更安全",
+  "Branch switching is much safer": "分支切换更稳妥",
   "Synara now handles messy branch switches with clearer recovery actions, recreated stashes, unpublished branch publishing, and stronger checks around conflicts and local work.":
     "遇到复杂的分支切换情况时，Synara 现在会提供更清楚的恢复操作，必要时重新创建储藏，支持发布未推送分支，并加强对冲突和本地更改的检查。",
   "Plan mode proposals show up properly": "计划模式提案会正确显示",
@@ -239,7 +239,7 @@ export const WHATS_NEW_PART_D_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "🧵 Steadier transcripts under load": "🧵 高负载时对话记录更稳定",
   "Transcript rendering and sidebar-owned state were separated more cleanly, reducing unnecessary churn while long conversations and live agent output are moving.":
     "对话记录渲染与边栏状态进一步分离，长对话和 Agent 实时输出持续更新时，可以减少不必要的重复处理。",
-  "🛡️ Safer runtime-mode recovery": "🛡️ 运行模式恢复更安全",
+  "🛡️ Safer runtime-mode recovery": "🛡️ 运行模式恢复更可靠",
   "Codex runtime permissions now propagate more reliably across resumed sessions and provider restarts, keeping the app closer to the mode you actually selected.":
     "恢复会话或重启提供商后，Codex 运行权限现在会更可靠地传递，让应用保持在你实际选择的运行模式。",
   "✨ Cleaner composer and picker styling": "✨ 输入区和选择器样式更整洁",

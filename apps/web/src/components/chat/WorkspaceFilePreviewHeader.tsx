@@ -304,7 +304,7 @@ export const WorkspaceFilePreviewHeader = function WorkspaceFilePreviewHeader(
       ) : props.readOnlyReason ? (
         <span
           className="hidden max-w-32 shrink-0 truncate text-[10px] text-muted-foreground/70 @sm/header-actions:inline"
-          title={props.readOnlyReason}
+          title={t(props.readOnlyReason)}
         >
           {t("Read-only")}
         </span>

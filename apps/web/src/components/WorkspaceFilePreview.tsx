@@ -612,7 +612,7 @@ function readFileSaveError(
 }
 
 export function WorkspaceFilePreview(props: WorkspaceFilePreviewProps) {
-  const { t } = useUiLanguage();
+  const { language, t } = useUiLanguage();
   const liveRevalidationEnabled = props.liveRevalidationEnabled ?? true;
   const { resolvedTheme } = useTheme();
   const diffThemeName = resolveDiffThemeName(resolvedTheme);
@@ -1404,7 +1404,11 @@ export function WorkspaceFilePreview(props: WorkspaceFilePreviewProps) {
                     left: hoveredCommentLine.left,
                     height: hoveredCommentLine.height,
                   }}
-                  aria-label={`${t("Comment on line")} ${hoveredCommentLine.lineNumber}`}
+                  aria-label={
+                    language === "zh-CN"
+                      ? `评论第 ${hoveredCommentLine.lineNumber} 行`
+                      : `${t("Comment on line")} ${hoveredCommentLine.lineNumber}`
+                  }
                   title={t("Comment")}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={(event) => {

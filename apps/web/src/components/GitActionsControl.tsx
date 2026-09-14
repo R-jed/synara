@@ -674,7 +674,9 @@ export default function GitActionsControl({
         title: result.status === "pulled" ? t("Remote synced") : t("Already up to date"),
         description:
           result.status === "pulled"
-            ? `${t("Updated")} ${result.branch} ${t("from")} ${result.upstreamBranch ?? t("upstream")}`
+            ? language === "zh-CN"
+              ? `已从 ${result.upstreamBranch ?? t("upstream")} 更新 ${result.branch}`
+              : `${t("Updated")} ${result.branch} ${t("from")} ${result.upstreamBranch ?? t("upstream")}`
             : `${result.branch} ${t("is already synchronized.")}`,
         data: threadToastData,
       }),
@@ -685,7 +687,7 @@ export default function GitActionsControl({
       }),
     });
     void promise.catch(() => undefined);
-  }, [pullMutation, t, tError, threadToastData]);
+  }, [language, pullMutation, t, tError, threadToastData]);
 
   const runGitActionWithToast = useCallback(
     async function runGitActionWithToast({

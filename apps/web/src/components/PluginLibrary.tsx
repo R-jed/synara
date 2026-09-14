@@ -340,8 +340,9 @@ function PluginGridItem({ entry }: { entry: PluginEntry }) {
 }
 
 function SkillGridItem({ skill }: { skill: ProviderSkillDescriptor }) {
+  const { t } = useUiLanguage();
   const description =
-    skill.interface?.shortDescription ?? skill.description ?? "No description available.";
+    skill.interface?.shortDescription ?? skill.description ?? t("No description available.");
 
   return (
     <div className="flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-[var(--sidebar-accent)]">

@@ -171,6 +171,7 @@ function automationStatusDisplay(definition: AutomationDefinition): {
 // return null — the status pill already reads "Paused" / "Done" for those.
 function automationStoppedExplanation(
   definition: AutomationDefinition,
+  language: "en" | "zh-CN",
   t: (text: string) => string,
 ): string | null {
   if (definition.enabled || definition.disabledReason == null) return null;
@@ -178,7 +179,9 @@ function automationStoppedExplanation(
     case "failures":
       return definition.consecutiveFailureCount === 1
         ? t("Stopped after a failed run.")
-        : `${t("Stopped after")} ${definition.consecutiveFailureCount} ${t("consecutive failed runs.")}`;
+        : language === "zh-CN"
+          ? `连续失败 ${definition.consecutiveFailureCount} 次后已停止。`
+          : `${t("Stopped after")} ${definition.consecutiveFailureCount} ${t("consecutive failed runs.")}`;
     case "max-iterations":
       return t("Stopped at its run limit.");
     case "completion":
@@ -190,7 +193,7 @@ function automationStoppedExplanation(
 }
 
 function AutomationDetailView() {
-  const { t } = useUiLanguage();
+  const { language, t } = useUiLanguage();
   const { automationId } = Route.useParams();
   const navigate = useNavigate();
   const { settings } = useAppSettings();
@@ -294,7 +297,7 @@ function AutomationDetailView() {
   const lastRun = lastFinishedRun(runs);
   const schedule = definition.schedule;
   const status = automationStatusDisplay(definition);
-  const stoppedExplanation = automationStoppedExplanation(definition, t);
+  const stoppedExplanation = automationStoppedExplanation(definition, language, t);
   const stopWhen = stopWhenFromCompletionPolicy(definition.completionPolicy ?? { type: "none" });
   const pendingProposal = definition.proposalState === "pending";
   const stoppedAfterFailures = !definition.enabled && definition.disabledReason === "failures";

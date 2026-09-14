@@ -28,7 +28,7 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "Scrolling up stays under your control, and provider status better reflects what is actually happening.":
     "向上滚动时由你掌控位置，提供商状态也更准确地反映实际情况。",
   "Tool activity, buffering, and reconnects no longer masquerade as live assistant text for scroll following. First-send transitions avoid an empty-home flash, elapsed durations remain stable, read conversations stay read after restart, and orchestrator approval cards are restored. Routine Codex startup messages no longer clutter the transcript; actual errors stay visible.":
-    "工具活动、缓冲和重连不会再被滚动跟随逻辑误当成实时助手文本。首次发送时不再短暂闪过空白主页，已用时显示保持稳定，已读对话在重启后仍保持已读，编排器审批卡也会恢复。常规 Codex 启动消息不再塞进对话记录，真正的错误仍会显示。",
+    "工具活动、缓冲和重连不会再被滚动跟随逻辑误当成实时助手文本。首次发送时不再短暂闪过空白主页，已用时显示保持稳定，已读对话在重启后仍保持已读，审批卡也会恢复。常规 Codex 启动消息不再塞进对话记录，真正的错误仍会显示。",
   "See file changes without reopening the viewer": "无需重新打开查看器即可看到文件变化",
   "Open file previews and diffs revalidate when workspace files change.":
     "工作区文件变化后，已打开的文件预览和差异会重新校验。",
@@ -58,7 +58,7 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "Devin recovery, Windows launches, and checkpoint capture handle more failure cases.":
     "Devin 恢复、Windows 启动和检查点捕获现在能处理更多失败情况。",
   "Stale Devin sessions recover before dispatch, and wedged children can be restarted instead of leaving turns waiting for the full idle budget. Windows Cursor and Devin detection accepts their launch shims; Effect child processes stay hidden and process snapshots accept PID zero. Failed Git remote refreshes back off. A task that initializes a Git repository no longer reports the absent pre-initialization baseline as a capture failure.":
-    "过期的 Devin 会话会在派发前恢复，卡死的子进程可以重启，不会再让轮次一直等到完整的空闲超时。Windows 上的 Cursor 和 Devin 检测现在接受各自的启动兼容脚本；Effect 子进程保持隐藏，进程快照也接受 PID 0。Git 远程刷新失败后会退避重试。任务刚初始化 Git 仓库时，不会再把初始化前本就不存在的基线误报为捕获失败。",
+    "过期的 Devin 会话会在发送前恢复，卡死的子进程可以重启，不会再让轮次一直等到完整的空闲超时。Windows 上的 Cursor 和 Devin 检测现在接受各自的启动兼容脚本；Effect 子进程保持隐藏，进程快照也接受 PID 0。Git 远程刷新失败后会退避重试。任务刚初始化 Git 仓库时，不会再把初始化前本就不存在的基线误报为捕获失败。",
   "Faster development checks and less idle website work": "开发检查更快，网站空闲开销更低",
   "Bun 1.4.2 and TypeScript 7 are now the default toolchain, with more parallel CI checks.":
     "Bun 1.4.2 和 TypeScript 7 现已成为默认工具链，更多 CI 检查也会并行运行。",
@@ -110,14 +110,15 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "A focused performance pass reduces model-loading delay, sidebar work, toggle churn, and streaming update cost.":
     "本轮性能优化减少了模型加载延迟、侧边栏计算、开关状态抖动和流式更新开销。",
   "Available models are ready sooner, sidebar projections do less repeated work, visibility changes avoid unnecessary updates, and assistant text follows a simpler live-output path. Auto-scroll now responds to real transcript messages rather than buffering, reconnecting, approvals, or tool-only activity, which avoids feedback loops and unwanted jumps while work is merely pending.":
-    "可用模型会更早准备好，侧边栏投影减少重复工作，可见性变化不会再触发不必要的更新，助手文本也走更简单的实时输出路径。自动滚动现在只响应真实对话消息，不会因缓冲、重连、审批或纯工具活动而动作，从而避免工作只是等待时出现反馈循环和意外跳动。",
+    "可用模型会更早准备好，侧边栏状态计算减少重复工作，可见性变化不会再触发不必要的更新，助手文本也走更简单的实时输出路径。自动滚动现在只响应真实对话消息，不会因缓冲、重连、审批或纯工具活动而动作，从而避免工作只是等待时出现反馈循环和意外跳动。",
   "Queued follow-ups wait, dispatch, and recover predictably":
-    "排队中的后续消息会稳定等待、派发和恢复",
+    "排队中的后续消息会稳定等待、发送和恢复",
   "Follow-ups no longer race the turn ahead of them or strand work when a task is in the background.":
     "后续消息不会再与前一个轮次抢跑，任务在后台时也不会把工作卡住。",
   "Synara holds a queued follow-up until the previous turn has actually started, promotes work for backgrounded tasks, preserves preview contents while capacity is constrained, resumes from the durable cursor after an idle stop, and prevents duplicated streamed replies. Reconnect and settlement paths converge on the same turn instead of replaying visible text twice.":
     "Synara 会等前一轮真正开始后再放行排队中的后续消息；后台任务会被提升以继续工作；容量受限时会保留预览内容；空闲停止后会从持久化游标继续；同时防止流式回复重复。重连和结束处理会汇合到同一轮次，不会把可见文本重放两遍。",
-  "Database upgrades fail safely and explain recovery": "数据库升级失败时更安全，并给出恢复说明",
+  "Database upgrades fail safely and explain recovery":
+    "数据库升级失败时会安全中止，并提供恢复指引",
   "Schema migrations now verify runtime identity, ask before risky recovery, and keep source builds isolated from installed app data.":
     "数据库结构迁移现在会验证运行时身份，在高风险恢复前询问用户，并让源码构建与已安装应用的数据保持隔离。",
   "A source checkout uses its own development home by default instead of silently opening Stable or Canary state. Migration startup verifies that the launcher and database belong together, creates recoverable backups, records recovery state, and presents deliberate restore or retry choices when an upgrade cannot complete. Existing Stable, Canary, and explicit home-directory behavior remains intact.":
@@ -215,7 +216,7 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "Antigravity 现在会流式显示工具卡片、正确结束已完成轮次、把子 Agent 路由到子对话，并让后台任务轮次保持运行，而不会直接终止 CLI。OpenCode 会保留原始流式助手文本。Cursor 在控件被禁用后不会再让快速模式或 Grok 高强度推理残留为卡死状态，也会保留回退模型选项；Grok 的推理强度选择器会跟随 CLI 实时提供的模型档位。",
   "Diagnostics reveal less and reject ambiguous input": "诊断暴露更少信息，并拒绝含糊输入",
   "Process, provider, environment, URL, and fixture diagnostics now apply a broader fail-closed credential policy.":
-    "进程、提供商、环境、URL 和测试数据集的诊断现在采用覆盖更广的凭据异常时默认拒绝策略。",
+    "进程、提供商、环境、URL 和测试数据的诊断现在采用更严格的凭据默认拒绝策略。",
   "Synara redacts quoted, wrapped, truncated, serialized, reordered, compact, URL-embedded, and shell-composed secret forms; bounds sanitizer traversal; preserves safe numeric diagnostic tokens; and keeps OpenAI credentials out of restricted provider children. Duplicate Origin headers, off-origin WebSocket token injection, high-water cursor violations, unterminated credentials, and ambiguous command substitutions are rejected instead of being interpreted optimistically.":
     "Synara 会遮盖带引号、包裹、截断、序列化、重排、压缩、嵌入 URL 以及由命令行环境组合出的各类敏感信息形式；限制清理器遍历范围；保留安全的数字诊断令牌；并确保 OpenAI 凭据不会进入受限的提供商子进程。重复 Origin 头、跨来源 WebSocket 令牌注入、超出高水位的游标、未闭合凭据和含糊的命令替换都会被拒绝，不再按乐观方式解释。",
   "Find files and start work with fewer corrective clicks": "查找文件和开始工作时少走弯路",
@@ -223,11 +224,11 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "工作区搜索的排序和结果展示更清楚，空白起始页也重新提供项目脚本。",
   "File search now emphasizes fuzzy matches, keeps the most useful parent path visible, limits mounted rows, debounces server work, and opens directories directly in Explorer. The landing composer and project controls share a flatter, more consistent visual treatment, muted labels and disclosure contrast are normalized, and project script shortcuts remain accessible before a chat exists.":
     "文件搜索现在更突出模糊匹配，保留最有用的父路径信息，限制挂载行数，对服务器请求做防抖，并可直接在资源管理器中打开目录。起始页输入框和项目控件采用更扁平一致的视觉样式，弱化标签和展开控件的对比度保持统一；即使还没有对话，项目脚本快捷入口仍然可用。",
-  "Repeated actions and restored state converge safely": "重复操作和恢复状态能安全收敛",
+  "Repeated actions and restored state converge safely": "重复操作和状态恢复现在更稳定",
   "Approvals, managed worktrees, feature flags, and route restoration now have stronger replay and ownership fences.":
     "审批、托管 Worktree、功能开关和路由恢复现在有更严格的重放与归属边界。",
   "Duplicate approval responses are rejected durably at the serialized decider. Permanent deletion reclaims only Synara-owned managed worktrees and preserves unowned paths. Malformed cached feature flags reset instead of leaving stale values, route restoration ignores snapshots from superseded refreshes, and large projection repair stops thrashing when the state is already being repaired.":
-    "重复的审批响应会在串行化决策器中被持久拒绝。永久删除只回收 Synara 自己管理的 Worktree，不会动未归属路径。格式异常的缓存功能开关会重置，不再保留旧值；路由恢复会忽略已被新刷新取代的快照；大型投影修复在状态已经进入修复时也不会反复抖动。",
+    "重复的审批响应会在串行化决策器中被持久拒绝。永久删除只回收 Synara 自己管理的 Worktree，不会动未归属路径。格式异常的缓存功能开关会重置，不再保留旧值；路由恢复会忽略已被新刷新取代的快照；大型状态修复在已经进行时也不会反复抖动。",
   "Text, paths, attachments, and origins survive edge cases":
     "文本、路径、附件和来源在边缘情况下仍保持完整",
   "Several low-level boundaries now preserve exact data instead of corrupting, truncating, or misclassifying it.":
@@ -279,11 +280,11 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "Choose how many consecutive failures an automation should tolerate, or let it keep retrying indefinitely.":
     "可以设置自动化最多容忍多少次连续失败，也可以让它无限重试。",
   "Failure counts, disable reasons, and timestamps are now durable; a successful run resets the count, hitting the threshold requires an explicit re-enable, and manual reruns keep the evidence intact. Inline creation and editing fields, clearer risk confirmation, optimistic concurrency, and visible disabled-state explanations make the policy easier to understand and safer to change.":
-    "失败次数、禁用原因和时间戳现在会持久保存；成功运行会重置计数，达到阈值后必须明确重新启用，手动重跑也会保留原有证据。内联创建和编辑字段、更清楚的风险确认、乐观并发控制以及可见的禁用状态说明，让这套策略更容易理解，也更安全地修改。",
+    "失败次数、禁用原因和时间戳现在会持久保存；成功运行会重置计数，达到阈值后必须明确重新启用，手动重跑也会保留原有证据。内联创建和编辑字段、更清楚的风险确认、乐观并发控制以及可见的禁用状态说明，让这套策略更容易理解，修改起来也更稳妥。",
   "Large histories start faster and live output does less work":
     "大型历史记录启动更快，实时输出开销更低",
   "Projector replay and the visible streaming pipeline received a measured performance pass.":
-    "投影重放和可见流式输出链路完成了一轮有数据验证的性能优化。",
+    "状态重放和可见流式输出链路完成了一轮有数据验证的性能优化。",
   "SQLite replay now keeps its primary-key range scan and uses bounded cache and memory-map settings; on the documented 2.9 GB fixture, a lagging replay fell from several minutes to about 24 seconds. Streaming text commits are batched, bottom-follow keys stay stable, layout reads and scroll work are coalesced, store selectors are narrower, and a production-path benchmark now covers the complete event-to-transcript pipeline.":
     "SQLite 重放现在会保持主键范围扫描，并使用有上限的缓存与内存映射设置；在记录的 2.9 GB 测试数据集上，落后重放从数分钟降到约 24 秒。流式文本提交会批量处理，底部跟随键值保持稳定，布局读取和滚动工作会合并，状态选择器范围更窄；生产路径基准测试也覆盖了从事件到对话记录的完整链路。",
   "Provider activity stays visible even when it is unfamiliar":
@@ -318,11 +319,12 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "Dock 与任务栏图标、终端启动、更新器关闭、时间戳和操作图标都进行了平台专项调整。",
   "macOS can follow appearance with a dark dock icon, Windows refreshes its taskbar icon after runtime changes and starts Bun PTYs reliably, updater failures no longer erase quit intent, and message metadata now adds day or date context when a time alone would be ambiguous. Sidebar and turn-action icons were simplified and aligned.":
     "macOS 可以根据外观使用深色 Dock 图标；Windows 会在运行时变化后刷新任务栏图标，并可靠启动 Bun PTY；更新器失败不会再清除退出意图；仅显示时间可能产生歧义时，消息元数据会补充星期或日期。侧边栏和轮次操作图标也进行了简化和对齐。",
-  "Interrupted and replayed work converges more reliably": "被中断和重放的工作能更可靠地收敛",
+  "Interrupted and replayed work converges more reliably":
+    "中断或重放后，任务状态能更可靠地恢复一致",
   "Queue promotion, snapshot replay, terminal settlement, and goal recovery now preserve durable ordering through restarts and races.":
     "队列中的轮次提升、快照重放、终止结算和目标恢复即使遇到重启或竞态，也会保持一致的持久化顺序。",
   "Queued turns can be promoted replay-safely, stalled projection cursors escape permanent resnapshot loops, superseded projections retain retry backoff, terminal sessions can retry eligible goals, and pause or blocked transitions fence automatic continuation before user interrupts or newer work can be overtaken.":
-    "排队轮次可以在保证重放安全的前提下提升；卡住的投影游标不会陷入永久重新快照循环；已被取代的投影仍保留重试退避；已结束会话可以重试符合条件的目标；暂停或阻塞状态会阻止自动续接抢在用户中断或更新工作之前执行。",
+    "排队轮次可以在保证重放安全的前提下提升；卡住的状态同步游标不会陷入永久重新快照循环；已被取代的状态同步仍保留重试退避；已结束会话可以重试符合条件的目标；暂停或阻塞状态会阻止自动续接抢在用户中断或更新工作之前执行。",
   "Release publication has stricter, clearer gates": "发布流程的门槛更严格、更清楚",
   "The release workflow now uses least-privilege permissions, clean-lane checks, deterministic Windows setup, and scoped unsigned exceptions.":
     "发布工作流现在采用最小权限、独立通道检查、确定性的 Windows 环境设置，以及范围受控的未签名例外。",
@@ -334,7 +336,7 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "Synara now keeps waiting for a healthy backend and recovers late connections instead of giving up while a large history is still loading.":
     "大型历史记录仍在加载时，Synara 会继续等待健康的后端，并恢复较晚建立的连接，而不会提前放弃。",
   "Desktop readiness is cancellable but no longer capped by a fixed timeout, WebSocket reconnects use bounded backoff, and orchestration replay filters irrelevant events before decoding them. Startup, resume, and late-event handling now converge without turning a slow database into a false failure.":
-    "桌面就绪等待仍可取消，但不再受固定超时限制；WebSocket 重连采用有上限的退避；编排重放会先过滤无关事件再解码。启动、恢复和迟到事件处理现在能统一收敛，不会再把数据库较慢误判成失败。",
+    "桌面就绪等待仍可取消，但不再受固定超时限制；WebSocket 重连采用有上限的退避；会话事件重放会先过滤无关事件再解码。启动、恢复和迟到事件处理现在能统一恢复一致，不会再把数据库较慢误判成失败。",
   "Branches and pull requests stay in sync while agents work":
     "Agent 工作时，分支和 PR 状态保持同步",
   "Task metadata now follows branch, worktree, push, and pull-request changes as they happen.":
@@ -345,7 +347,7 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "The PR dialog can commit the intended changes, push the branch, and open the pull request as one guided action.":
     "PR 对话框现在可以通过一次引导操作完成提交指定更改、推送分支并创建 PR。",
   "The flow has clearer draft and ready-for-review actions, safer branch and upstream handling, progress-aware controls, and refresh behavior that detaches after the terminal Git action succeeds instead of leaving the UI stuck while metadata catches up.":
-    "流程提供更清楚的草稿和“准备审核”操作，更安全地处理分支与上游，控件会反映进度；最终 Git 操作成功后，刷新流程会脱离等待，不会因为元数据还在追赶而让界面卡住。",
+    "流程提供更清楚的草稿和“准备审核”操作，更稳妥地处理分支与上游，控件会反映进度；最终 Git 操作成功后，刷新流程会脱离等待，不会因为元数据还在追赶而让界面卡住。",
   "Edit and save files directly from Explorer": "直接在资源管理器中编辑并保存文件",
   "Workspace previews are now useful for small code and text edits without leaving Synara.":
     "工作区预览现在可以直接完成小范围代码和文本编辑，无需离开 Synara。",
@@ -369,7 +371,7 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "Worktree setup is visible, cancellable, and easier to recover":
     "Worktree 设置过程可见、可取消，也更容易恢复",
   "See setup progress, cancel before dispatch, or open a local checkout when that is the better path.":
-    "可以查看设置进度，在派发前取消，或在更合适时直接打开本地检出目录。",
+    "可以查看设置进度，在发送前取消，或在更合适时直接打开本地检出目录。",
   "Automatic branch creation and attachment were restored, setup races were closed, worktree activity is easier to identify, and imported Codex history can now create a real fork while preserving the source relationship. The configured Git model is also used when naming new worktree branches.":
     "自动创建并关联分支的能力已恢复，设置过程中的竞态已修复，Worktree 活动也更容易识别。导入的 Codex 历史现在可以创建真正的分叉，同时保留来源关系。为新 Worktree 分支命名时，也会使用已配置的 Git 模型。",
   "Choose the desktop icon and preview themes visually": "选择桌面图标，并直观看主题预览",
@@ -411,12 +413,12 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "Opening a side chat is more reliable, and moving between its tab, dock, and source task keeps the right conversation in view.":
     "打开侧边对话更稳定，在其标签页、停靠区和来源任务之间切换时，也会保持显示正确的对话。",
   "Side-chat creation now has one shared path with prompt deduplication, safer snapshot retention, and clearer recovery when activation races the new task. Dock navigation and tab presentation were simplified, while temporary user messages keep a distinct dashed treatment until the task becomes permanent.":
-    "侧边对话创建现在统一走一条路径，支持提示词去重、更安全的快照保留，以及激活与新任务发生竞态时更明确的恢复。停靠区导航和标签页展示也已简化；临时用户消息会保持明显的虚线样式，直到任务正式建立。",
+    "侧边对话创建现在统一走一条路径，支持提示词去重、更稳妥的快照保留，以及激活与新任务发生竞态时更明确的恢复。停靠区导航和标签页展示也已简化；临时用户消息会保持明显的虚线样式，直到任务正式建立。",
   "Interrupted work settles more cleanly": "被中断的工作能更可靠地收尾",
   "Tasks are less likely to remain stuck or replay the wrong command after a provider restart, delayed event, or partial failure.":
     "提供商重启、事件延迟或部分失败后，任务更不容易卡住，也不会误重放错误命令。",
   "Unreplayable runtime commands are quarantined instead of being dispatched again, terminal provider events reconcile against durable turn state, pending interactions settle against the owning request, and stale lifecycle updates are fenced before they can overwrite newer task state.":
-    "无法安全重放的运行时命令会被隔离，不会再次派发；提供商终止事件会根据持久化轮次状态进行对账；待处理交互会归并到所属请求；过期生命周期更新会被拦截，无法覆盖更新的任务状态。",
+    "无法安全重放的运行时命令会被隔离，不会再次发送；提供商终止事件会根据持久化轮次状态进行对账；待处理交互会归并到所属请求；过期生命周期更新会被拦截，无法覆盖更新的任务状态。",
   "Terminal context goes to the right chat": "终端上下文会发送到正确对话",
   "Add to chat now targets the composer beside the terminal you used, and a normal shell exit closes only that finished tab.":
     "“添加到对话”现在会定位到你所用终端旁的输入框，正常的命令行环境退出也只会关闭已经结束的那个标签页。",
@@ -462,7 +464,7 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "Synara no longer treats interrupted or errored work as a successful completion or repeats an alert as timestamps change.":
     "Synara 不会再把被中断或出错的工作当成成功完成，也不会因时间戳变化重复提醒。",
   "Completion identity is now tied to the turn rather than mutable session fields, stale snapshots cannot settle the active turn, and notification deduplication remains stable as status projections converge.":
-    "完成身份现在绑定到轮次，而不是可变的会话字段；过期快照无法结束当前活动轮次；状态投影逐步收敛时，通知去重也会保持稳定。",
+    "完成身份现在绑定到轮次，而不是可变的会话字段；过期快照无法结束当前活动轮次；状态逐步恢复一致时，通知去重也会保持稳定。",
 
   "See what needs attention from one Activity view": "在一个“活动”视图中查看所有待关注事项",
   "Switch the sidebar to a compact task inbox that keeps running work, input requests, failures, and recently finished tasks easy to scan.":
@@ -473,13 +475,13 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "Conversation state now stays closer to the provider's real lifecycle through starts, reconnects, handoffs, and delayed events.":
     "在启动、重连、转交和延迟事件期间，对话状态现在会更贴近提供商真实生命周期。",
   "Session orchestration now fences more stale updates, repairs workspace metadata immediately after a worktree handoff, keeps runtime activity attributed to the correct task, and strengthens recovery when provider or projection state arrives out of order.":
-    "会话编排现在会拦截更多过期更新，在 Worktree 转交后立即修复工作区元数据，让运行时活动始终归到正确任务，并在提供商或投影状态乱序到达时加强恢复。",
+    "会话处理现在会拦截更多过期更新，在 Worktree 转交后立即修复工作区元数据，让运行时活动始终归到正确任务，并在提供商或状态同步结果乱序到达时加强恢复。",
   "Take back scroll control instantly": "立即拿回滚动控制",
   "Touching the transcript during an automatic jump now stops smooth scrolling at the current position instead of fighting your input.":
     "自动跳转过程中只要你操作对话记录，平滑滚动就会停在当前位置，不再和你的操作对抗。",
   "The transcript cancels both native and virtual-list scroll state at the visible offset, guards late tail-settle work after user takeover or task replacement, and preserves the simpler non-virtualized path for ordinary conversation sizes.":
-    "对话记录会在当前可见偏移处同时取消原生和虚拟列表滚动状态；用户接管或任务替换后，迟到的尾部收敛工作会被拦截；普通长度对话仍保留更简单的非虚拟化路径。",
-  "Image attachments fail more safely": "图片附件失败时更安全",
+    "对话记录会在当前可见位置停止原生和虚拟列表滚动；用户接管或任务被替换后，迟到的滚动收尾任务不会再干扰界面；普通长度对话仍保留更简单的非虚拟化路径。",
+  "Image attachments fail more safely": "图片附件失败时处理更稳妥",
   "Large or awkward images are prepared more defensively before they enter a prompt, with clearer limits and fewer browser-worker edge cases.":
     "大图片或特殊图片在进入提示词前会经过更稳妥的处理，限制更清楚，也减少浏览器工作线程相关边缘问题。",
   "Composer image handling now bounds resize attempts, keeps worker communication scoped correctly, and hardens attachment intake so unsupported or oversized payloads fail predictably instead of destabilizing the draft.":
@@ -504,12 +506,12 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "Pick Approval required, Auto, or Full access when the selected provider and model support it, with clearer model, effort, and approval controls.":
     "当所选提供商和模型支持时，可选择“需要审批”“自动”或“完全访问”，并通过更清楚的模型、推理强度和审批控件进行管理。",
   "Runtime mode is validated before dispatch, and automation or delegated work cannot silently escalate its privilege. Codex and Claude Code expose Auto only when capability is confirmed; unsupported or unknown capabilities fail closed to approval-required. The composer and model pickers now explain the effective mode and pending approvals more clearly.":
-    "运行时模式会在派发前校验，自动化或委派工作无法静默提升权限。Codex 和 Claude Code 只有在能力已确认时才显示“自动”；不支持或未知能力会安全回退到“需要审批”。输入框和模型选择器现在也会更清楚地说明实际生效模式和待审批事项。",
+    "运行时模式会在发送前校验，自动化或委派工作无法静默提升权限。Codex 和 Claude Code 只有在能力已确认时才显示“自动”；不支持或未知能力会安全回退到“需要审批”。输入框和模型选择器现在也会更清楚地说明实际生效模式和待审批事项。",
   "Steer live turns without breaking the transcript": "在不破坏对话记录的情况下引导实时轮次",
   "Send guidance into a running Codex or Claude turn, or keep follow-ups queued, while the current task remains correctly attributed.":
     "可以向正在运行的 Codex 或 Claude 轮次发送引导，也可以让后续消息继续排队，同时保持当前任务归属正确。",
   "Native steer calls travel through provider-aware command handling, runtime activity projection, and lifecycle fencing. Sent user messages, live assistant answers, child work, and terminal events stay attached to the right turn across late or replayed updates, interruptions, and provider restarts.":
-    "原生引导调用会经过感知提供商的命令处理、运行时活动投影和生命周期隔离。已发送的用户消息、实时助手回复、子任务工作和终止事件，即使遇到迟到或重放更新、中断以及提供商重启，也会继续绑定到正确轮次。",
+    "原生引导调用会经过感知提供商的命令处理、运行时活动同步和生命周期隔离。已发送的用户消息、实时助手回复、子任务工作和终止事件，即使遇到迟到或重放更新、中断以及提供商重启，也会继续绑定到正确轮次。",
   "Streaming conversations stay anchored": "流式对话保持阅读位置稳定",
   "Long or fast responses no longer yank the viewport away from the point you are reading.":
     "长回复或高速输出不会再把视口突然拉离当前阅读位置。",
@@ -519,7 +521,7 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "Synara negotiates one authenticated connection, compresses large traffic, and resumes thread detail from a cursor when possible.":
     "Synara 会协商单一认证连接，压缩大流量，并在可能时从游标恢复对话详情。",
   "A single handshake negotiates compatibility and permessage-deflate; delta-capable subscriptions replay from safe cursors with conservative snapshot fallback; precompressed web assets and cache headers speed first loads. Hydration also reads durable projections directly, retries missing snapshots after timed-out starts, and keeps provider notification drains alive until sessions settle.":
-    "单次握手会协商兼容性和 permessage-deflate；支持增量的订阅会从安全游标开始重放，并保留保守的快照回退；预压缩网页资源和缓存头能加快首次加载。状态恢复也会直接读取持久投影，在启动超时后重试缺失快照，并让提供商通知排空过程持续运行到会话稳定结束。",
+    "单次握手会协商兼容性和 permessage-deflate；支持增量的订阅会从安全游标开始重放，并保留保守的快照回退；预压缩网页资源和缓存头能加快首次加载。状态恢复也会直接读取持久化状态，在启动超时后重试缺失快照，并让提供商通知排空过程持续运行到会话稳定结束。",
   "Open workspace tools from one right dock": "从一个右侧停靠区打开工作区工具",
   "A new launcher puts review, terminal, browser, files, side chat, and source control one click away without crowding the composer.":
     "新的启动器把审查、终端、浏览器、文件、侧边对话和源码控制集中到一处，一次点击即可打开，同时不挤占输入框。",
@@ -553,14 +555,14 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "Synara 会保留足够的轮次身份，以正确处理迟到的 Claude 结果；拦截过期的生命周期代次；对持久化提供商命令和运行时事件进行对账；并在启动、停止、重连和重启边界上统一 Codex、Claude、Cursor 与 ACP 的会话归属。",
   "Follow-ups no longer disappear into stale queues": "后续消息不会再掉进过期队列",
   "A thread that looks busy but has no real active turn keeps the composer available instead of accepting a message that cannot be dispatched.":
-    "如果对话看起来忙碌但实际上没有活动轮次，输入框会保持可用，而不会接收一条根本无法派发的消息。",
+    "如果对话看起来忙碌但实际上没有活动轮次，输入框会保持可用，而不会接收一条根本无法发送的消息。",
   "Queue draining now requires a queueable live turn, the transcript keeps the newest answer open while terminal state converges, and visible stop failures are reported immediately. These safeguards keep the conversation usable while server-side recovery repairs stale session state.":
     "队列排空现在要求存在可排队的实时轮次；终止状态收敛期间，对话记录会保持最新答案展开；可见的停止失败会立即报告。这些保护让服务端恢复旧会话状态时，对话仍然可用。",
   "Open tasks stay present during refreshes": "刷新期间已打开任务不会消失",
   "Visible task details are retained and re-requested across overlapping snapshot, subscription, and eviction work instead of briefly rendering as an empty conversation.":
     "快照、订阅和逐出操作发生重叠时，会保留并重新请求当前可见的任务详情，不会短暂渲染成空对话。",
   "Thread-detail retention now understands what is on screen, re-arms refreshes that race an in-flight snapshot, and normalizes projections more defensively. Cleanup also preserves archived tasks, newly forked or handed-off tasks, and soft-deleted history without proven manual-delete provenance.":
-    "对话详情保留逻辑现在会感知屏幕上正在显示什么；如果刷新与进行中的快照发生竞态，会重新安排刷新；投影规范化也更稳妥。清理过程还会保留已归档任务、新分叉或转交的任务，以及无法证明由用户手动删除的软删除历史。",
+    "对话详情保留逻辑现在会感知屏幕上正在显示什么；如果刷新与进行中的快照发生竞态，会重新安排刷新；状态规范化也更稳妥。清理过程还会保留已归档任务、新分叉或转交的任务，以及无法证明由用户手动删除的软删除历史。",
 
   "Every agent's live tool work is visible": "每个 Agent 的实时工具活动都清晰可见",
   "Follow tools as they start, update, and finish across supported providers, with consistent labels and details directly in the transcript.":
@@ -571,12 +573,12 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "Provider status, active turns, and thread details converge back to the server's real state after dropped connections or delayed events.":
     "连接中断或事件延迟后，提供商状态、活动轮次和对话详情会重新收敛到服务器的真实状态。",
   "Reconnect refreshes preserve useful status while new data arrives, stale live projections are fenced and repaired, settled turns stop polling, and thread-detail ownership is reconciled across lease, snapshot, and subscription races.":
-    "重连刷新会在新数据到达前保留仍有用的状态；过期实时投影会被隔离并修复；已结束轮次停止轮询；对话详情归属会在租约、快照和订阅竞态之间完成对账。",
+    "重连刷新会在新数据到达前保留仍有用的状态；过期实时状态会被隔离并修复；已结束轮次停止轮询；对话详情归属会在租约、快照和订阅竞态之间完成对账。",
   "Choose whether follow-ups queue or steer": "选择后续消息排队还是直接引导",
   "Set new messages sent during active work to wait their turn or steer the current agent immediately.":
     "可以设置活动工作期间发送的新消息是等待轮到自己，还是立即引导当前 Agent。",
   "The new conversation setting is searchable in Settings and is applied consistently by the composer while a task is running, with Queue as the predictable default and Steer available for more interactive workflows.":
-    "新的对话设置可在设置页中搜索，任务运行期间输入框会统一应用该设置。“排队”是稳定可预期的默认选项，“引导”则适合需要更多实时交互的工作流。",
+    "新的对话设置可在设置页中搜索，任务运行期间输入框会统一应用该设置。“排队”是稳定可靠的默认选项，“引导”则适合需要更多实时交互的工作流。",
   "Blocked threads can be recovered": "被阻塞的对话可以恢复",
   "When an uncertain provider delivery quarantines a thread, the error banner now offers a safe Unblock thread action.":
     "当提供商是否送达无法确认而导致对话被隔离时，错误横幅现在会提供安全的“解除对话阻塞”操作。",
@@ -591,8 +593,8 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "Synara loads expensive provider and diff machinery only when needed and computes working-tree statistics without transferring full patches.":
     "Synara 只在需要时加载开销较大的提供商和差异处理机制，并且无需传输完整补丁就能计算工作目录统计。",
   "Shell environment probes and orchestration startup state are reused, route chunks are preloaded selectively, supervised process scans are throttled, and React Compiler coverage protects chat, picker, hook, and UI hot paths.":
-    "命令行环境探测和编排启动状态会被复用，路由分块会按需预加载，受监管的进程扫描会节流，React Compiler 的覆盖范围也扩展到对话、选择器、钩子和界面热点路径。",
-  "Local state stays safer": "本地状态更安全",
+    "命令行环境探测和会话启动状态会被复用，路由分块会按需预加载，受监管的进程扫描会节流，React Compiler 的覆盖范围也扩展到对话、选择器、钩子和界面热点路径。",
+  "Local state stays safer": "本地状态更可靠",
   "Exclusive SQLite locking and stricter migration-artifact cleanup reduce the chance of competing writers or abandoned update files.":
     "SQLite 独占锁和更严格的迁移产物清理，降低了多个写入者竞争或遗留更新文件的风险。",
   "Database access now proves exclusive ownership, migration backups and resumable artifacts receive broader retention and reclamation coverage, and orphan cleanup stays bounded to verified Synara-owned paths.":
@@ -630,9 +632,9 @@ export const WHATS_NEW_PART_A_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "本版本修复了 Pi 针对当前运行时 SDK 的模型发现，忽略过期的 OpenCode 计划 Agent，强化 Claude 恢复和权限处理，在重连边界保留 WebSocket 请求，并在替换桌面或提供商后端前确认进程树已彻底退出。",
   "Live work is easier to read": "实时工作状态更易读",
   "Automation rows show state-specific icons, task hydration is calmer, and active conversations avoid unnecessary projection and subscription churn.":
-    "自动化行会显示对应状态图标，任务状态恢复更平稳，活动对话也减少不必要的投影和订阅波动。",
+    "自动化行会显示对应状态图标，任务状态恢复更平稳，活动对话也减少不必要的状态同步和订阅波动。",
   "Automation status now distinguishes running, attention, failure, and settled states at a glance. Store projection, thread-detail retention, terminal cleanup, and sidebar updates were tightened so busy workspaces remain responsive and predictable.":
-    "自动化状态现在可以一眼区分运行中、需要关注、失败和已结束。存储投影、对话详情保留、终端清理和侧边栏更新都得到进一步优化，让繁忙工作区仍保持响应和稳定。",
+    "自动化状态现在可以一眼区分运行中、需要关注、失败和已结束。状态存储同步、对话详情保留、终端清理和侧边栏更新都得到进一步优化，让繁忙工作区仍保持响应和稳定。",
 
   "Bring Synara to any MCP-capable agent": "让任何支持 MCP 的 Agent 都能使用 Synara",
   "Connect Codex, Claude Code, Claude Desktop, or another local MCP app, then let it discover your Synara workspace, launch isolated tasks, wait for results, and bring the answer back.":

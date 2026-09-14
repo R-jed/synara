@@ -28,7 +28,7 @@ export function AdvancedSettingsPanel(props: {
   onOpenReleaseHistory: () => void;
   resetEpoch: number;
 }) {
-  const { t, tError } = useUiLanguage();
+  const { language, t, tError } = useUiLanguage();
   const configQuery = useQuery(serverConfigQueryOptions());
   const authSessionQuery = useQuery(serverAuthSessionQueryOptions());
   const syncServerReadModel = useStore((store) => store.syncServerReadModel);
@@ -143,7 +143,11 @@ export function AdvancedSettingsPanel(props: {
             description={t(
               "Revoke this browser session and close every live Synara connection it owns. A fresh pairing link is required to reconnect.",
             )}
-            status={`${t("Authenticated as")} ${t(authSessionQuery.data.role ?? "client")}.`}
+            status={
+              language === "zh-CN"
+                ? `${t("Authenticated as")}：${t(authSessionQuery.data.role ?? "client")}。`
+                : `${t("Authenticated as")} ${t(authSessionQuery.data.role ?? "client")}.`
+            }
             control={
               <Button
                 size="xs"

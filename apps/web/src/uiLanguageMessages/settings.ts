@@ -70,7 +70,7 @@ export const SETTINGS_ZH_CN_MESSAGES: Readonly<Record<string, string>> = {
   "Sign out failed": "退出失败",
   "Unable to revoke this session.": "无法撤销此会话。",
   "This browser": "当前浏览器",
-  "Authenticated as": "登录身份",
+  "Authenticated as": "当前登录身份",
   owner: "所有者",
   client: "客户端",
   "Signing out...": "正在退出...",
@@ -251,7 +251,7 @@ export const SETTINGS_ZH_CN_MESSAGES: Readonly<Record<string, string>> = {
   "Unknown project": "未知项目",
   Archived: "已归档",
   "Generation defaults": "生成默认设置",
-  "Git writing model": "Git 写作模型",
+  "Git writing model": "Git 文本生成模型",
   "Used for generated commit messages, PR titles, and branch names.":
     "用于生成提交说明、PR 标题和分支名称。",
   "Git text generation model": "Git 文本生成模型",
@@ -404,6 +404,7 @@ export const SETTINGS_ZH_CN_MESSAGES: Readonly<Record<string, string>> = {
   "Paired. The prompt now covers only registration and verification.":
     "已完成配对。现在这段提示词只负责注册和验证。",
   "Pairing code expires": "配对码到期",
+  "No description available.": "暂无描述。",
   "Setup prompt copied": "设置提示词已复制",
   "Copy setup prompt": "复制设置提示词",
   "Copy the prompt and paste it into the agent you want to connect (Codex, Claude Code, or any MCP-capable app). The agent pairs this computer, registers Synara in its own configuration, and verifies the connection by itself.":

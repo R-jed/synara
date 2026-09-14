@@ -14,7 +14,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
   "Conversation updates do less repeated reconciliation work, keeping busy transcripts and sidebar-driven changes more responsive.":
     "对话更新减少了重复的状态协调工作，让高频更新的对话记录和边栏变化响应更快。",
   "Chat state now avoids redundant scans and projections during live updates, bundled theme seeds reset consistently, and common transcript behavior remains on the simpler rendering path without introducing new measurement loops.":
-    "实时更新时，聊天状态会避免重复扫描和投影；内置主题种子也会稳定重置。常见的对话记录仍走更简单的渲染路径，没有引入新的测量循环。",
+    "实时更新时，聊天状态会避免重复扫描和重复计算；内置主题种子也会稳定重置。常见的对话记录仍走更简单的渲染路径，没有引入新的测量循环。",
   "Dropped paths become reliable mentions": "拖入路径现在会稳定变成提及",
   "Drop files and folders whose names contain spaces or parentheses into the composer without losing or mangling the path.":
     "即使文件或文件夹名称包含空格或括号，也可以直接拖入输入框，路径不会丢失或被改坏。",
@@ -36,7 +36,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
   "Comment, merge, close, reopen, and pin pull requests while keeping the latest repository state close at hand.":
     "可以直接评论、合并、关闭、重新打开和置顶拉取请求，同时随时查看仓库最新状态。",
   "Mutations use shared cache coordination, single-flight refreshes, guarded optimistic state, and recovery paths so overlapping actions and refreshes remain predictable. Pinned pull requests stay easy to return to from the project workspace.":
-    "写操作现在统一协调缓存、合并并发刷新，并使用受保护的乐观更新和恢复路径，让重叠操作与刷新保持可预期。置顶后的拉取请求也能从项目工作区快速返回。",
+    "写操作现在统一协调缓存、合并并发刷新，并使用受保护的乐观更新和恢复路径，让重叠操作与刷新保持稳定。置顶后的拉取请求也能从项目工作区快速返回。",
   "Repository failures stay contained": "单个仓库故障不会影响其他结果",
   "One unavailable repository no longer prevents useful pull-request results from the rest of your workspace.":
     "某个仓库不可用时，不会再阻止工作区其余仓库返回可用的拉取请求结果。",
@@ -56,7 +56,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
   "Agent sessions, transcript rendering, model discovery, and reasoning controls now stay aligned across more providers.":
     "更多提供商之间的 Agent 会话、对话记录渲染、模型发现和推理控制现在能保持一致。",
   "Session orchestration and transcript rendering share a cleaner lifecycle, Pi custom-provider authentication follows auth.json semantics, Cursor transport-only variants stay out of the picker, and Grok reasoning-effort options match provider capabilities. The interface also adopts the system UI font more consistently.":
-    "会话编排与对话记录渲染采用了更清晰的生命周期；Pi 自定义提供商认证遵循 auth.json 语义；Cursor 仅用于传输的变体不会出现在选择器中；Grok 的推理强度选项也与提供商能力一致。界面使用系统界面字体的方式也更加统一。",
+    "会话处理与对话记录渲染采用了更清晰的生命周期；Pi 自定义提供商认证遵循 auth.json 语义；Cursor 仅用于传输的变体不会出现在选择器中；Grok 的推理强度选项也与提供商能力一致。界面使用系统界面字体的方式也更加统一。",
 
   // 0.5.3
   "Capture any Mac app straight into your task": "直接把任意 Mac 应用窗口截进任务",
@@ -78,7 +78,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
   "ACP errors preserve more useful detail, and session and transcript state stay steadier during active work.":
     "ACP 错误会保留更多有用细节，工作进行时的会话与对话记录状态也更稳定。",
   "ACP request failures now retain structured provider context, while session orchestration and transcript handling avoid redundant state transitions and keep live output presentation predictable.":
-    "ACP 请求失败时会保留结构化的提供商上下文；会话编排和对话记录处理则减少重复状态切换，让实时输出的呈现更稳定。",
+    "ACP 请求失败时会保留结构化的提供商上下文；会话处理和对话记录处理则减少重复状态切换，让实时输出的呈现更稳定。",
 
   // 0.5.2
   "Factory Droid is now a first-class provider": "Factory Droid 现已成为正式支持的提供商",
@@ -100,7 +100,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
   "Task lists now remain in the transcript after a turn completes, making follow-up work easier to resume.":
     "轮次结束后，任务列表仍会保留在对话记录中，方便继续后续工作。",
   "Runtime task projections preserve unfinished items after completion while keeping finished and resumed task state consistent.":
-    "运行时任务投影会在轮次完成后保留未完成项目，同时确保已完成和恢复后的任务状态一致。",
+    "运行时任务状态会在轮次完成后保留未完成项目，同时确保已完成和恢复后的任务状态一致。",
   "File undo leaves chat history intact": "撤销文件改动不会删除聊天记录",
   "Undoing an agent turn now rolls back its files without deleting the conversation that explains the change.":
     "撤销某个 Agent 轮次时，现在只回退该轮次修改的文件，不会删除用于说明这些改动的对话内容。",
@@ -130,7 +130,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
   "Claude task tools and Codex task events now appear through one shared progress stream, so resumable work is easier to follow while it runs.":
     "Claude 任务工具和 Codex 任务事件现在会汇入同一条进度流，让可恢复任务在执行过程中更容易跟踪。",
   "Claude TaskCreate, TaskUpdate, TaskGet, TaskList, and TodoWrite results are normalized into the shared runtime task list and persisted in the resume cursor. Codex task events and provider summaries use the same projection, with coverage for reconnects and resumed sessions.":
-    "Claude 的 TaskCreate、TaskUpdate、TaskGet、TaskList 和 TodoWrite 结果会统一转换到共享运行时任务列表，并写入恢复游标。Codex 任务事件和提供商摘要使用同一套投影，同时覆盖重连和会话恢复场景。",
+    "Claude 的 TaskCreate、TaskUpdate、TaskGet、TaskList 和 TodoWrite 结果会统一转换到共享运行时任务列表，并写入恢复游标。Codex 任务事件和提供商摘要使用同一套状态同步机制，同时覆盖重连和会话恢复场景。",
   "Codex reasoning and streams are easier to trust": "Codex 的推理与流式输出更可靠",
   "Codex reasoning summaries, context compaction, task updates, and noisy app-server output are handled more reliably, keeping live transcripts clearer during long turns.":
     "Codex 的推理摘要、上下文压缩、任务更新以及杂乱的 app-server 输出现在处理得更稳，让长轮次中的实时对话记录更清晰。",
@@ -140,7 +140,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
   "Chat dock panels load on demand, deleted projects remain safe client tombstones, and browser profile migrations repair database sidecars transactionally instead of leaving partial state behind.":
     "聊天停靠面板改为按需加载；已删除项目会保留安全的客户端删除标记；浏览器配置迁移也会通过事务修复数据库伴随文件，避免留下半完成状态。",
   "The chat route measures LCP while deferring secondary panels, while project deletion and desktop profile repair now preserve predictable local state through reloads, retries, and interrupted migrations.":
-    "聊天路由会在延后加载次要面板的同时测量 LCP。项目删除和桌面配置修复也会在重新加载、重试和迁移中断时保持可预期的本地状态。",
+    "聊天路由会在延后加载次要面板的同时测量 LCP。项目删除和桌面配置修复也会在重新加载、重试和迁移中断时保持稳定的本地状态。",
   "Desktop updates have stronger guardrails": "桌面更新增加了更严格的保护",
   "Release automation now validates compatibility-feed manifests and protects the packaged desktop from unsafe bundle swaps across update and startup paths.":
     "发布自动化现在会校验兼容更新源清单，并在更新和启动流程中防止打包后的桌面应用发生不安全的包替换。",
@@ -179,7 +179,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
   "Files, generated images, and other agent outputs from Studio are surfaced in the Environment panel so finished work is easier to find and open.":
     "Studio 中的文件、生成图片和其他 Agent 输出会集中显示在环境面板中，完成后的结果更容易查找和打开。",
   "The server records Studio output activity and generated-image metadata, then projects it into a dedicated Environment section with resilient display helpers and targeted coverage for output ordering and presentation.":
-    "服务端会记录 Studio 输出活动和生成图片的元数据，再投影到环境面板中的专用区域。显示辅助逻辑也更稳，并针对输出顺序和呈现增加了定向覆盖。",
+    "服务端会记录 Studio 输出活动和生成图片的元数据，再同步到环境面板中的专用区域。显示辅助逻辑也更稳，并针对输出顺序和呈现增加了定向覆盖。",
   "Starting work in a worktree is more transparent": "在 Worktree 中开始工作时过程更透明",
   "Project actions now make worktree setup visible, so you can understand what is being prepared before a new workspace-backed thread starts.":
     "项目操作现在会显示 Worktree 的准备过程，让你在新工作区对话启动前就能知道系统正在准备什么。",
@@ -194,17 +194,17 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
   "Transcript rendering and active-turn behavior have been refined to keep ongoing agent work easier to follow without needless scroll or layout churn.":
     "对话记录渲染和活动轮次行为经过调整，让正在进行的 Agent 工作更容易跟踪，同时减少无意义的滚动和布局变化。",
   "The session orchestration and timeline paths were refactored with focused coverage for worktree setup, transcript rows, sidebar visibility, and workspace handoffs, preserving predictable behavior as sessions stream and reconnect.":
-    "会话编排和时间线路径经过整理，并重点覆盖 Worktree 准备、对话记录行、边栏可见性和工作区交接，让会话在流式输出和重连时保持稳定行为。",
-  "Safer provider startup and Windows launching": "提供商启动与 Windows 启动更安全",
+    "会话处理和时间线流程经过整理，并重点覆盖 Worktree 准备、对话记录行、边栏可见性和工作区交接，让会话在流式输出和重连时保持稳定行为。",
+  "Safer provider startup and Windows launching": "提供商和 Windows 启动更稳定",
   "Authentication preparation and provider launch handling are more robust, including a fix for launching Codex on Windows.":
     "认证准备和提供商启动处理更加稳健，其中包括 Windows 上启动 Codex 的修复。",
   "The release prepares the Codex auth overlay before dependent startup paths run, hardens process environment handling, and includes the Windows launcher repair alongside broader orchestration and projection reliability work.":
-    "本版本会在相关启动流程执行前准备好 Codex 认证环境，并加强进程环境处理；同时包含 Windows 启动修复，以及更广泛的编排和状态投影可靠性改进。",
+    "本版本会在相关启动流程执行前准备好 Codex 认证环境，并加强进程环境处理；同时包含 Windows 启动修复，以及更广泛的会话协调和状态同步可靠性改进。",
 
   // 0.4.0
   "Prompt history keeps drafts and attachments together": "提示词历史会保留草稿与附件",
   "Browsing your previous prompts no longer strips the attachments from the draft you are building, so history navigation is safer for image- and file-heavy follow-ups.":
-    "浏览以前的提示词时，不会再把当前草稿中的附件移除。对于包含大量图片和文件的后续消息，历史导航更安全。",
+    "浏览历史提示词时不会再误删当前草稿中的附件，包含大量图片和文件的后续消息也能可靠保留附件。",
   "Composer draft history now preserves attachment state while you move through previous prompts, resets stale navigation state more carefully, and avoids duplicate optimistic history entries after sends.":
     "输入框草稿历史会在切换旧提示词时保留附件状态，更谨慎地重置过期的导航状态，并避免发送后出现重复的临时历史记录。",
   "Pull request context is clearer in the Environment panel": "环境面板中的拉取请求上下文更清楚",
@@ -216,7 +216,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
   "When Claude reports usage or rate-limit trouble, Synara now presents the condition more calmly instead of turning it into a generic provider failure.":
     "Claude 报告用量或速率限制问题时，Synara 现在会直接显示对应状态，不再把它当成笼统的提供商故障。",
   "Provider usage handling now narrows usage summary types more safely and treats Claude usage limit responses as a recoverable, user-facing state with focused parser and resilience coverage.":
-    "提供商用量处理现在会更安全地收窄用量摘要类型，并把 Claude 用量限制响应作为可恢复、面向用户的状态处理，同时补充了针对解析和恢复能力的覆盖。",
+    "提供商用量处理现在会更严格地约束用量摘要类型，并把 Claude 用量限制响应作为可恢复且面向用户的状态处理，同时补充了解析与恢复相关测试。",
   "Desktop restarts handle broken stderr pipes": "桌面重启可以处理断开的标准错误输出管道",
   "The desktop app is less likely to crash or get noisy when a restarted child process loses its stderr pipe during shutdown or relaunch.":
     "子进程在关闭或重新启动时丢失标准错误输出管道后，桌面应用现在更不容易崩溃，也不会产生大量无用错误。",
@@ -226,7 +226,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
   "This release rounds off recent agent-session and pull-request work with tighter assertions, safer formatting, and cleaner edge-case behavior.":
     "本版本继续收尾近期的 Agent 会话和拉取请求改进，加强断言与格式处理，并清理一些边缘情况。",
   "The release includes automation migration lineage assertion fixes, PR snapshot review follow-up fixes, provider usage type narrowing, and general cleanup from the prompt-history and PR environment-panel review loops.":
-    "本版本包含自动化迁移链路的断言修复、PR 快照审阅后续修复、提供商用量类型收窄，以及提示词历史和 PR 环境面板审查过程中发现的一般清理项。",
+    "本版本包含自动化迁移链路的断言修复、PR 快照审阅后续修复、提供商用量类型约束，以及提示词历史和 PR 环境面板审查过程中发现的一般清理项。",
 
   // 0.3.9
   "Export a thread as a ZIP": "将对话导出为 ZIP",
@@ -261,21 +261,21 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
     "设置现在会保存已发现的 Git 文本生成模型选项；Git 操作会通过共享契约传递所选提供商和模型；查询缓存键也会包含文本生成选择，确保生成的提交或 PR 文本发送到正确后端。",
 
   // 0.3.8
-  "Grok resume handles long sessions more safely": "Grok 恢复长会话时更安全",
+  "Grok resume handles long sessions more safely": "Grok 恢复长会话时更稳定",
   "Grok and other ACP-backed sessions are better at resuming after compaction or reconnects without replaying messages into the wrong runtime or growing memory unexpectedly.":
     "Grok 和其他 ACP 会话在上下文压缩或重连后恢复得更稳，不会把消息重放到错误的运行时，也更不容易出现意外的内存增长。",
   "ACP resume now drops replay before the event consumer is attached, seeds compaction quiet windows from response timing, hardens provider/runtime ingestion, and covers JSON-RPC/session-runtime edge cases that previously made resume replay fragile.":
-    "ACP 恢复现在会在事件消费者接入前丢弃重放内容，并根据响应时序建立压缩静默窗口，同时加强提供商与运行时事件接收。此前容易让恢复重放出问题的 JSON-RPC 和会话运行时边缘情况也已覆盖。",
+    "ACP 恢复会在事件消费者接入前丢弃重放内容，并根据响应时序判断上下文压缩后的静默期，同时加强提供商和运行时事件接收。此前容易导致恢复重放异常的 JSON-RPC 和会话运行时边缘情况也已覆盖。",
   "Worktree setup failures recover cleanly": "Worktree 准备失败后可以顺利恢复",
   "When a worktree setup step fails, Synara now shows the failed setup state, keeps the timeline from looking stuck, and resets the local dispatch when you send again.":
-    "Worktree 准备步骤失败时，Synara 会明确显示失败状态，避免时间线看起来像卡住，并在你再次发送时重置本地派发状态。",
+    "Worktree 准备步骤失败时，Synara 会明确显示失败状态，避免时间线看起来像卡住，并在你再次发送时重置本地发送状态。",
   "ChatView and timeline setup snapshots now carry explicit setup step status, targeted cleanup for failed local dispatches, and focused browser/unit coverage for new-turn reset and setup rows.":
-    "ChatView 和时间线准备快照现在会携带明确的步骤状态，并针对失败的本地派发进行定向清理，同时覆盖新轮次重置和准备状态行的浏览器与单元测试。",
+    "ChatView 和时间线准备快照现在会携带明确的步骤状态，并针对失败的本地发送状态进行清理，同时覆盖新轮次重置和准备状态行的浏览器与单元测试。",
   "Automation messages are labeled": "自动化发送的消息会明确标注",
   "Prompts sent by an automation now carry a lightweight 'Sent via Automation' label above the bubble, so you can tell at a glance which turns you typed and which a scheduled or heartbeat run kicked off.":
     "由自动化发送的提示词现在会在气泡上方显示轻量的“由自动化发送”标签，方便一眼区分哪些轮次是你手动输入的，哪些来自定时或心跳运行。",
   "User turns dispatched by the automation engine now persist a `dispatchOrigin` on the message end to end (command → event → projection → snapshot), and the transcript renders a clock-marked chip that mirrors the existing steering label.":
-    "自动化引擎派发的用户轮次现在会让 `dispatchOrigin` 从命令、事件、投影一直保留到快照，对话记录则显示带时钟图标的标签，并与现有的引导标签保持一致。",
+    "自动化发送的用户消息现在会完整保留 `dispatchOrigin` 来源信息；聊天记录会显示带时钟图标的标签，并与现有的引导标签保持一致。",
   "Approval prompts are easier to answer": "审批提示更容易操作",
   "Pending approvals now use a clearer shared choice-row layout, with steadier panel behavior and browser coverage for allow/deny decisions.":
     "待处理审批现在使用更清晰的统一选项行布局，面板行为也更稳定，并覆盖允许和拒绝操作的浏览器测试。",
@@ -283,7 +283,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
     "ComposerPendingApprovalPanel 现在与待输入提示共用 ComposerChoiceRow 结构，浏览器测试会跟踪审批操作，同时移除了重复的操作样式。",
   "Startup does less surprise work": "启动时减少了意外的后台工作",
   "Synara avoids unnecessary provider refresh work during startup and gates Claude keepalive behavior more carefully, so opening the app is calmer and less likely to fight credential checks.":
-    "Synara 启动时会避免不必要的提供商刷新，并更谨慎地控制 Claude 保活行为，让应用打开过程更安静，也减少与凭据检查互相干扰的情况。",
+    "Synara 启动时会避免不必要的提供商刷新，并更谨慎地控制 Claude 保活行为，让应用启动时干扰更少，也减少与凭据检查互相冲突的情况。",
   "Server startup no longer runs provider refresh eagerly, Claude keepalive respects auth-state timing, provider usage hooks handle inactive summaries more predictably, and related settings/server query invalidation paths have tests.":
     "服务端启动时不再主动执行提供商刷新；Claude 保活会遵循认证状态时序；提供商用量逻辑也能更稳定地处理非活动摘要。相关设置和服务端查询失效路径均已有测试覆盖。",
   "Folded work rows report time more accurately": "折叠后的工作行会更准确地显示时长",
@@ -483,7 +483,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
   "Transcript scrolling, session state, sidebar routing, and draft equality checks were refactored so active work stays calmer across thread and project changes.":
     "对话记录滚动、会话状态、边栏路由和草稿一致性检查都经过整理，让活动工作在切换对话和项目时更稳定。",
   "ChatView now separates more browser-specific behavior, route inset layout has focused coverage, draft-thread comparisons are stricter, and project/chat container helpers handle exact optional state more safely.":
-    "ChatView 现在进一步隔离浏览器专用行为，路由内嵌布局有了定向覆盖，草稿对话比较更严格，项目与聊天容器辅助逻辑也能更安全地处理精确可选状态。",
+    "ChatView 现在进一步隔离浏览器专用行为，路由内嵌布局有了定向覆盖，草稿对话比较更严格，项目与聊天容器辅助逻辑也能更稳妥地处理可选状态。",
 
   // 0.3.1
   "Tool calls are easier to inspect": "工具调用更容易检查",
@@ -493,7 +493,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
     "Synara 现在会格式化工具命令记录，统一补丁和变更输出，对更多工具类型使用一致标签，并在时间线中保留结构化工作元数据，同时补充工具调用标签和格式化的定向覆盖。",
   "Long chats stay calmer while work is running": "工作运行时，长聊天更稳定",
   "Transcript grouping and scroll behavior were refined so live assistant text, collapsed work rows, sidechat panes, and tool-only activity behave more predictably.":
-    "对话记录分组和滚动行为经过调整，让助手实时文本、折叠工作行、侧聊面板和纯工具活动的表现更可预期。",
+    "对话记录分组和滚动行为经过调整，让助手实时文本、折叠工作行、侧聊面板和纯工具活动的表现更稳定。",
   "This release tightens message timeline derivation, keeps real assistant text separate from tool/work rows, improves collapsed-turn signatures, preserves assistant selection actions, and adds focused tests for timeline rows and ChatView state.":
     "本版本改进消息时间线生成逻辑，将真实助手文本与工具和工作行分开，改进折叠轮次标识，并保留助手文本选择操作，同时增加时间线行和 ChatView 状态的定向测试。",
   "Multi-pane work is quicker to navigate": "多面板工作切换更快",
@@ -503,7 +503,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
     "最近视图切换、边栏悬停卡片锚点、对话与项目悬停内容、置顶开关、聊天标题操作、项目快捷键目标以及分屏与侧聊控件，现在拥有更稳定的状态和键盘路由。",
   "Keyboard shortcuts got stricter": "键盘快捷键规则更严谨",
   "Shortcut defaults and migrations are now safer, with better handling for chat creation, terminal actions, navigation, and stale keybinding rows.":
-    "快捷键默认值和迁移现在更安全，并更妥善地处理新建聊天、终端操作、导航以及过期快捷键记录。",
+    "快捷键默认值和迁移现在更稳妥，并更妥善地处理新建聊天、终端操作、导航以及过期快捷键记录。",
   "Server and web keybinding logic now validates persisted bindings more carefully, avoids carrying conflicting defaults forward, improves new-chat/new-terminal command resolution, and has expanded regression coverage.":
     "服务端和网页端快捷键逻辑现在会更谨慎地校验已保存的按键绑定，避免继续带入冲突默认值，并改进新建聊天与新建终端命令解析，同时扩大回归覆盖。",
   "Providers recover from more edge cases": "提供商可从更多边缘情况中恢复",
@@ -515,7 +515,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
   "Automation creation and updates now separate setup prompts, update-only flows, approval fallbacks, and risk acknowledgement more carefully.":
     "自动化创建与更新现在会更清楚地区分设置提示、仅更新流程、审批回退和风险确认。",
   "This release hardens conversational automation setup, preserves update-only approval paths, restores the approval fallback, strips carried setup filler from prompts, and keeps the risk acknowledgement gate attached to dispatch.":
-    "本版本加强对话式自动化设置，保留仅更新场景的审批路径，恢复审批回退，清理提示词中被带入的多余设置内容，并确保风险确认门槛始终绑定在派发流程上。",
+    "本版本加强对话式自动化设置，保留仅更新场景的审批路径，恢复审批回退，清理提示词中被带入的多余设置内容，并确保风险确认始终发生在任务发送前。",
   "Desktop updates and startup are quieter": "桌面更新与启动减少无关提示",
   "The desktop shell now suppresses noisy Node warnings in more places and hardens electron-updater command handling on Windows.":
     "桌面外壳现在会在更多位置抑制无关的 Node 警告，并加强 Windows 上 electron-updater 的命令处理。",
@@ -545,7 +545,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
     "自动化意图解析现在覆盖明确输入和生成式提示、英语与意大利语的停止或计划表达、受限快速循环保护、草稿审阅、来源对话处理、恢复后的计划来源元数据、直接从输入框文本行内编辑，以及对 LLM 生成自动化更严格的确认。",
   "Scheduled runs are harder to lose or corrupt": "定时运行更不容易丢失或损坏",
   "Automation scheduling, recovery, and run reconciliation were hardened so crashes, duplicate wakes, approval waits, stale cache updates, and cleanup failures are handled more predictably.":
-    "自动化调度、恢复和运行协调都得到加强，让崩溃、重复唤醒、等待审批、过期缓存更新和清理失败的处理更可预期。",
+    "自动化调度、恢复和运行协调都得到加强，让崩溃、重复唤醒、等待审批、过期缓存更新和清理失败的处理更稳定。",
   "The automation service now has occurrence dedupe, scheduler leases, crash replay, failed-run rollback, startup recovery, bounded completion-evaluation queues, recovery/lease observability, approval ownership re-checks, standalone worktree cleanup, equal-timestamp cache merging, and DST/long-downtime schedule coverage.":
     "自动化服务现在可去除重复运行，使用调度器租约，恢复崩溃或失败的运行，并限制完成评估队列容量；同时补充恢复与租约状态监测、审批归属复查、独立 Worktree 清理、同时间戳缓存合并，以及夏令时和长时间停机后的调度处理。",
   "Files attach, preview, and download more reliably": "文件附件、预览和下载更可靠",
@@ -562,7 +562,7 @@ export const whatsNewPartBMessages: Readonly<Record<string, string>> = {
   "Deleted chats disappear immediately, the Environment panel behaves better in constrained layouts, automation cards show up in the transcript, and file previews avoid extra full-thread subscriptions.":
     "删除聊天后会立即从界面消失；环境面板在狭窄布局下表现更好；自动化卡片会显示在对话记录中；文件预览也不再额外订阅整条对话。",
   "Client projections now use delete tombstones and responsive archived bulk-delete updates, environment-panel open/close preferences survive chat switches, constrained/floating layouts stay calmer by default, thread automation summaries appear in the environment panel, created automation cards render in chat, and file preview routing avoids unnecessary full thread subscriptions.":
-    "客户端投影现在使用删除标记，并及时处理归档批量删除更新；环境面板开关偏好会在切换聊天后保留；受限和浮动布局默认更稳定；对话自动化摘要会出现在环境面板中；新建自动化卡片会渲染到聊天里；文件预览路由也会避免不必要的整条对话订阅。",
+    "客户端状态同步现在使用删除标记，并及时处理归档批量删除更新；环境面板开关偏好会在切换聊天后保留；受限和浮动布局默认更稳定；对话自动化摘要会出现在环境面板中；新建自动化卡片会渲染到聊天里；文件预览路由也会避免不必要的整条对话订阅。",
   "Profile skill counts reflect more real work": "个人资料中的技能计数更贴近实际使用",
   "Profile stats now count repeated `/skill` and `$skill` usage more accurately, including retained history that should still contribute to your local activity picture.":
     "个人统计现在能更准确地计算重复使用的 `/skill` 和 `$skill`，并把仍应计入本地活动统计的保留历史纳入其中。",

@@ -1078,7 +1078,7 @@ function SidebarNavCustomizeRow({
   visible: boolean;
   onVisibleChange: (visible: boolean) => void;
 }) {
-  const { t } = useUiLanguage();
+  const { language, t } = useUiLanguage();
   const {
     attributes,
     listeners,
@@ -1105,9 +1105,13 @@ function SidebarNavCustomizeRow({
           checked={visible}
           onCheckedChange={(checked) => onVisibleChange(Boolean(checked))}
           aria-label={
-            visible
-              ? `${t("Hide")} ${label} ${t("from the sidebar")}`
-              : `${t("Show")} ${label} ${t("in the sidebar")}`
+            language === "zh-CN"
+              ? visible
+                ? `从边栏中隐藏“${label}”`
+                : `在边栏中显示“${label}”`
+              : visible
+                ? `${t("Hide")} ${label} ${t("from the sidebar")}`
+                : `${t("Show")} ${label} ${t("in the sidebar")}`
           }
         />
         <SidebarLeadingIcon size="sm" tone="text-inherit">

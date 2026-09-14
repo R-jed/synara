@@ -13,7 +13,7 @@ export const WHATS_NEW_PART_C_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "Synara now waits for one fresh server snapshot before giving up on a remembered chat route, so app restarts are less likely to dump you onto an empty fallback screen.":
     "Synara 现在会等待一次新的服务端快照，再决定是否放弃记住的聊天路由，因此应用重启后更少跳到空白的备用页面。",
   "Chat route restore now validates remembered thread/split routes against refreshed orchestration state, holds fallback while startup data is still empty, and has focused coverage for missing-thread and empty-startup recovery paths.":
-    "恢复聊天路由时，现在会用更新后的编排状态校验记住的对话/分屏路由；启动数据仍为空时会暂缓进入备用页面，并为对话缺失和启动数据为空的恢复路径加入针对性测试。",
+    "恢复聊天路由时，现在会用更新后的会话状态校验记住的对话/分屏路由；启动数据仍为空时会暂缓进入备用页面，并为对话缺失和启动数据为空的恢复路径加入针对性测试。",
   "Disabled providers recover more predictably": "已禁用的提供商恢复更稳定",
   "Provider health refreshes now have regression coverage around re-enabling disabled providers, making settings changes less likely to leave stale unavailable states behind.":
     "提供商健康状态刷新现在覆盖了重新启用已禁用提供商的回归场景，设置变更后更不容易残留过期的“不可用”状态。",
@@ -28,7 +28,7 @@ export const WHATS_NEW_PART_C_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "Synara now tracks richer local profile stats, including your most worked project, skill and agent usage, active hours, provider/model mix, and prompt activity.":
     "Synara 现在会记录更丰富的本地个人统计，包括最常使用的项目、技能和 Agent 使用情况、活跃时段、提供商/模型分布，以及提示词活动。",
   "Profile stats now derive more signal from Synara's local projection database: most-worked project, prompt/thread activity, skill and agent usage, provider/model usage, reasoning patterns, active-hour windows, and token heatmap data are all represented in the profile contract and settings panel.":
-    "个人资料统计现在会从 Synara 的本地投影数据库提取更多信息：最常使用的项目、提示词/对话活动、技能和 Agent 使用、提供商/模型使用、推理模式、活跃时段和词元热力图数据，都会进入个人资料协议和设置面板。",
+    "个人资料统计现在会从 Synara 的本地状态数据库提取更多信息：最常使用的项目、提示词/对话活动、技能和 Agent 使用、提供商/模型使用、推理模式、活跃时段和词元热力图数据，都会进入个人资料协议和设置面板。",
   "Large pastes become cleaner composer cards": "大段粘贴内容会变成更整洁的输入卡片",
   "Big pasted blocks now collapse into tidy attachment-style cards, keeping the composer readable while still letting you restore or remove the full text.":
     "大段粘贴内容现在会折叠为整洁的附件式卡片，输入区更清楚，同时仍可恢复或删除完整文本。",
@@ -44,7 +44,7 @@ export const WHATS_NEW_PART_C_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "个人资料设置现在包含更丰富的身份信息、活动统计和更清晰的编辑流程，让 Synara 更贴合你的工作空间。",
   "This release adds profile stats aggregation, profile settings UI polish, activity heatmap refinements, avatar/profile editing updates, and focused coverage for the new profile data paths.":
     "本版本加入个人资料统计汇总、个人资料设置界面优化、活动热力图调整、头像/个人资料编辑更新，并为新的个人资料数据流程增加针对性测试。",
-  "Deleted threads get a safer recovery window": "已删除对话有更安全的恢复窗口",
+  "Deleted threads get a safer recovery window": "已删除对话有更充足的恢复时间",
   "Thread deletion now keeps soft-deleted data around long enough to avoid accidental loss while still letting cleanup happen predictably.":
     "删除对话后，软删除数据现在会保留足够时间，降低误删风险，同时仍会按预期清理。",
   "Synara now tracks thread retention state explicitly, covers soft-delete cleanup behavior with server tests, and keeps deletion/recovery semantics more predictable for early WIP data.":
@@ -63,7 +63,7 @@ export const WHATS_NEW_PART_C_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "You can now leave focused line comments from composer and preview surfaces, then send them with the prompt so agents get clearer file-specific context.":
     "现在可以从输入区和预览界面对具体文件行添加评论，再随提示词一起发送，让 Agent 获得更明确的文件上下文。",
   "This release adds file-line comment boxes, summary chips, draft persistence, reference attachment handling, preview/editor entry points, chat timeline support, and focused tests for comment parsing, composer drafts, terminal context, kanban dispatch, and chat-view logic.":
-    "本版本加入文件行评论框、摘要标签、草稿持久化、引用附件处理、预览/编辑器入口和聊天时间线支持，并为评论解析、输入区草稿、终端上下文、看板派发和聊天视图逻辑增加针对性测试。",
+    "本版本加入文件行评论框、摘要标签、草稿持久化、引用附件处理、预览/编辑器入口和聊天时间线支持，并为评论解析、输入区草稿、终端上下文、看板任务发送和聊天视图逻辑增加针对性测试。",
   "Live file changes stay scoped to the active turn": "实时文件变更只跟随当前轮次",
   "The live changed-files panel now follows the turn that is actually running, avoiding stale or unrelated file edits when sessions overlap or recover.":
     "实时文件变更面板现在会跟随真正正在运行的轮次，多个会话重叠或恢复时，不再混入过期或无关的文件编辑。",
@@ -197,7 +197,7 @@ export const WHATS_NEW_PART_C_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "桌面应用加入集中式 Windows 标题栏控件、顶部栏边距处理、预加载 IPC 支持、字体族清理和后端 Node 选项测试；官网下载安装页也已改用当前版本使用的 `-x64` AppImage 命名。",
   "Long-running sessions recover under pressure": "长时间会话在高负载下恢复更稳定",
   "Backend memory diagnostics, WebSocket backpressure handling, and live stream recovery were tightened so heavy sessions stay predictable.":
-    "后端内存诊断、WebSocket 背压处理和实时流恢复都已加强，让高负载会话的状态更可预期。",
+    "后端内存诊断、WebSocket 背压处理和实时流恢复都已加强，让高负载会话的状态更稳定。",
   "This release adds memory diagnostics, stream backpressure guards, buffered provider-runtime ingestion coverage, and Codex app-server recovery fixes to keep partial streams and reconnects from leaving the UI stale.":
     "本版本加入内存诊断、流背压保护、提供商运行时缓冲接入测试和 Codex 应用服务恢复修复，避免流数据不完整或重新连接时界面停留在旧状态。",
   "Small UI fixes landed across chat and navigation": "聊天和导航修复了一批小问题",
@@ -209,7 +209,7 @@ export const WHATS_NEW_PART_C_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "You can now mark important transcript moments, jump back to them, and manage them from the Environment panel without losing your place in busy threads.":
     "现在可以标记聊天记录中的重要位置、快速跳回，并在环境面板中管理它们，浏览繁忙对话时不会丢失当前位置。",
   "Markers now round-trip through orchestration events, projection storage, migrations, shared validation helpers, transcript selection actions, highlighted markdown spans, marker-aware scrolling, and focused browser/unit coverage.":
-    "标记现在会贯穿编排事件、投影存储、迁移、共用校验辅助函数、聊天记录选择操作、高亮 Markdown 片段和标记感知滚动，并有针对性的浏览器/单元测试覆盖。",
+    "标记现在会贯穿会话事件、状态存储、迁移、共用校验辅助函数、聊天记录选择操作、高亮 Markdown 片段和标记感知滚动，并有针对性的浏览器/单元测试覆盖。",
   "Links show real site identity": "链接会显示真实网站标识",
   "AI response links, source lists, composer chips, and sent user bubbles now share the same link parsing path with website favicons instead of generic globe icons.":
     "AI 回答中的链接、来源列表、输入区标签和已发送的用户气泡现在共用同一套链接解析流程，并显示网站图标，不再使用通用地球图标。",
@@ -222,14 +222,14 @@ export const WHATS_NEW_PART_C_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "服务端现在会监控监听中的进程并记录地址族元数据，跟踪项目运行归属，通过 WebSocket/RPC 协议同步本地服务器状态，并在边栏/项目运行界面提供启动、查看和停止开发服务器的操作。",
   "Transcript scrolling is calmer": "聊天记录滚动更稳定",
   "Collapsed work sections no longer drag the transcript tail, marker navigation is more predictable, and thread rendering does less surprising work while sessions update.":
-    "已折叠的工作区段不再拖动聊天记录尾部；标记导航更可预期；会话更新时，对话渲染也减少了意外变化。",
+    "已折叠的工作区段不再拖动聊天记录尾部；标记导航更稳定；会话更新时，对话渲染也减少了意外变化。",
   "The timeline path now separates marker scroll behavior from live-output sticking, avoids retriggering tail scrolls for collapsed work disclosure changes, and has extra coverage around marker selection, rendering, and scrolling.":
     "时间线逻辑现在把标记滚动与实时输出跟随分开，不会因已折叠工作区段的展开状态变化反复触发尾部滚动，并补充标记选择、渲染和滚动测试。",
-  "Small orchestration and shortcut fixes landed too": "编排和快捷键也修复了一批小问题",
+  "Small orchestration and shortcut fixes landed too": "会话处理和快捷键也修复了一批小问题",
   "Thread orchestration, terminal identity, recent view switching, retired-model shortcuts, and local-server cleanup picked up focused reliability fixes.":
-    "对话编排、终端标识、最近视图切换、已退役模型快捷键和本地服务器清理都做了针对性的稳定性修复。",
+    "对话处理、终端标识、最近视图切换、已退役模型快捷键和本地服务器清理都做了针对性的稳定性修复。",
   "This release tightens provider/runtime event projection, terminal visual identity, local-server process cleanup, recent-view key handling, and retired model picker shortcuts, with new tests for the affected contracts and stores.":
-    "本版本改进提供商/运行时事件投影、终端视觉标识、本地服务器进程清理、最近视图按键处理和已退役模型选择器快捷键，并为相关协议和存储加入新测试。",
+    "本版本改进提供商和运行时事件处理、终端视觉标识、本地服务器进程清理、最近视图按键处理和已退役模型选择器快捷键，并为相关协议和存储加入新测试。",
   "Desktop updates are packaged more reliably": "桌面更新打包更可靠",
   "The macOS release path now has stronger artifact smoke checks, zip finalization helpers, and updater download coverage so new builds are easier to trust before they ship.":
     "macOS 发布流程现在增加了更严格的产物冒烟检查、ZIP 收尾辅助函数和更新器下载测试，新构建在发布前更容易验证。",
@@ -259,12 +259,12 @@ export const WHATS_NEW_PART_C_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
   "Projects, threads, and specific transcript messages can now be pinned so the context you keep returning to stays close at hand across sessions.":
     "现在可以固定项目、对话和具体聊天记录消息，让经常返回的上下文在多次会话之间一直触手可及。",
   "Pin state is now projected through the orchestration model, stored in dedicated persistence columns, reconciled for older databases, and shared with focused client stores so sidebar ordering, project rows, and thread detail all agree after reloads.":
-    "固定状态现在会通过编排模型投影，存入专用持久化列，为旧数据库执行校准，并与专用客户端存储共享，因此重新加载后边栏排序、项目行和对话详情会保持一致。",
+    "置顶状态现在会通过会话状态模型同步，存入专用持久化列，为旧数据库执行校准，并与专用客户端存储共享，因此重新加载后边栏排序、项目行和对话详情会保持一致。",
   "Thread context has a memory shelf": "对话上下文有了长期记忆区",
   "The environment panel now carries pinned messages and editable notes, giving long-running chats a durable place for decisions, constraints, and useful references.":
     "环境面板现在会保存已置顶消息和可编辑备注，为长期聊天提供一个持久位置，用来记录决策、约束和重要引用。",
   "Pinned message actions round-trip through server commands and snapshots, while thread notes autosave through the same projected thread detail path. This keeps the side panel useful without turning the transcript itself into a scratchpad.":
-    "置顶消息操作会通过服务端命令和快照往返同步；对话备注则通过同一套投影对话详情流程自动保存。这样可以让侧面板承载长期信息，而不用把聊天记录本身变成草稿区。",
+    "置顶消息操作会通过服务端命令和快照往返同步；对话备注则通过同一套对话详情同步流程自动保存。这样可以让侧面板承载长期信息，而不用把聊天记录本身变成草稿区。",
   "Jump between recent views faster": "更快切换最近视图",
   "A new recent-view switcher lets you move through recent chats, terminals, and workspace surfaces with keyboard-first navigation and visible keycap hints.":
     "新的最近视图切换器可用键盘快速在最近的聊天、终端和工作区界面之间移动，并显示按键提示。",
@@ -292,9 +292,9 @@ export const WHATS_NEW_PART_C_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "Claude 收到来自 Synara 外部的 SIGTERM 时，现在会按正常挂起处理；终端进程清理增加更强测试；WebSocket RPC 失败处理也更少让界面误以为请求仍在进行。",
   "Migrations and release checks got sharper": "迁移和发布检查更严谨",
   "Pinned-state migrations, snapshot projection tests, browser release tests, shortcut tests, and shared pinning logic were expanded to keep this deeper state model predictable.":
-    "扩展了置顶状态迁移、快照投影、浏览器发布、快捷键以及共用置顶逻辑的测试覆盖，使这些更复杂的状态变化保持稳定。",
+    "扩展了置顶状态迁移、快照状态同步、浏览器发布、快捷键以及共用置顶逻辑的测试覆盖，使这些更复杂的状态变化保持稳定。",
   "New migrations cover pinned messages, thread notes, and project pins; legacy pinned-thread reconciliation was tightened; and the release suite now exercises the new state through contracts, server projection, shared helpers, and web UI logic.":
-    "新迁移覆盖置顶消息、对话备注和项目置顶；旧版置顶对话状态的校准更严格；发布测试套件现在会从协议、服务端投影、共用辅助函数和网页界面多层验证这些状态。",
+    "新迁移覆盖置顶消息、对话备注和项目置顶；旧版置顶对话状态的校准更严格；发布测试套件现在会从协议、服务端状态同步、共用辅助函数和网页界面多层验证这些状态。",
   "The chat side panel is clearer": "聊天侧面板更清楚",
   "Thread activity, agent detail rows, environment controls, Git actions, branch controls, and queued composer state were tightened so the main chat and side panel stay easier to scan during busy sessions.":
     "对话活动、Agent 详情行、环境控件、Git 操作、分支控件和排队输入状态均已优化，让繁忙会话中主聊天和侧面板更容易查看。",
@@ -312,7 +312,7 @@ export const WHATS_NEW_PART_C_ZH_CN_MESSAGES: Readonly<Record<string, string>> =
     "终端运行时清理、提供商活动接入、聊天记录渲染和会话转交逻辑都加入更多保护，覆盖重新连接、命令行摘要、Agent 活动和活动任务渲染。",
   "Desktop update prompts are quieter": "桌面更新提示减少打扰",
   "Background update polling no longer exposes a manual check button at the wrong time, update state is restored more predictably, and production builds keep source maps off unless a diagnostic release opts in.":
-    "后台更新轮询不再在不合适的时机显示手动检查按钮；更新状态恢复更可预期；生产构建默认关闭源映射，除非诊断版本明确启用。",
+    "后台更新轮询不再在不合适的时机显示手动检查按钮；更新状态恢复更稳定；生产构建默认关闭源映射，除非诊断版本明确启用。",
   "Small release-readiness fixes landed too": "还加入了一批发布前的小修复",
   "Image attachment expectations, optional callback typing, recap test doubles, composer spacing, reference chips, and queued row styling were aligned with the current UI so the final check suite stays green.":
     "图片附件预期、可选回调类型、摘要测试替身、输入区间距、引用标签和排队行样式都已与当前界面对齐，让最终检查套件保持通过。",

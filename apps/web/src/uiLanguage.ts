@@ -154,7 +154,7 @@ const ZH_CN_MESSAGES: Readonly<Record<string, string>> = {
   "Default (JetBrains Mono)": "默认（JetBrains Mono）",
   "No matching suggested fonts.": "没有匹配的推荐字体。",
   "Use macOS-style antialiasing for lighter, crisper text rendering.":
-    "使用 macOS 风格抗锯齿，让文字显示更轻、更清晰。",
+    "使用 macOS 风格抗锯齿，让文字显示更纤细、更清晰。",
   "Restore defaults": "恢复默认设置",
   "Restore default settings?": "恢复默认设置？",
   "This will reset:": "将重置：",

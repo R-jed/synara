@@ -7,6 +7,7 @@ import { useState } from "react";
 
 import { StarFilledIcon, StarIcon } from "~/lib/icons";
 import { cn } from "~/lib/utils";
+import { useUiLanguage } from "~/uiLanguage";
 import {
   resolveModelGroupDefaultOpen,
   shouldUseCollapsibleModelGroups,
@@ -49,6 +50,7 @@ function ProviderModelRadioItem(
     onAfterSelection?: () => void;
   }>,
 ) {
+  const { language } = useUiLanguage();
   const {
     provider,
     modelOption,
@@ -81,9 +83,13 @@ function ProviderModelRadioItem(
           <button
             type="button"
             aria-label={
-              isFavorite
-                ? `Remove ${accessibleModelName} from favourites`
-                : `Add ${accessibleModelName} to favourites`
+              language === "zh-CN"
+                ? isFavorite
+                  ? `从收藏中移除 ${accessibleModelName}`
+                  : `将 ${accessibleModelName} 加入收藏`
+                : isFavorite
+                  ? `Remove ${accessibleModelName} from favourites`
+                  : `Add ${accessibleModelName} to favourites`
             }
             className={cn(
               "inline-flex size-5 shrink-0 items-center justify-center text-muted-foreground/50 transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/60",

@@ -174,7 +174,7 @@ function rowSubtitle(
     const nextRun = formatNextRunForLanguage(definition.nextRunAt, language, now);
     if (nextRun) segments.push(`${translate("Next run")} ${nextRun}`);
   } else {
-    const stopped = stoppedReasonLabel(definition, translate);
+    const stopped = stoppedReasonLabel(definition, language, translate);
     if (stopped) {
       segments.push(stopped);
       return segments.join(" · ");
@@ -191,13 +191,16 @@ function rowSubtitle(
 // the row already reads "Done" / renders dimmed as paused for those.
 function stoppedReasonLabel(
   definition: AutomationDefinition,
+  language: "en" | "zh-CN",
   translate: (text: string) => string,
 ): string | null {
   switch (definition.disabledReason) {
     case "failures":
       return definition.consecutiveFailureCount === 1
         ? translate("Stopped after a failed run")
-        : `${translate("Stopped after")} ${definition.consecutiveFailureCount} ${translate("failed runs")}`;
+        : language === "zh-CN"
+          ? `连续失败 ${definition.consecutiveFailureCount} 次后已停止`
+          : `${translate("Stopped after")} ${definition.consecutiveFailureCount} ${translate("failed runs")}`;
     case "max-iterations":
       return translate("Stopped at run limit");
     case "completion":

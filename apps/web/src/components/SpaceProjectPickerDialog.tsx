@@ -37,7 +37,7 @@ export function SpaceProjectPickerDialog(props: {
     projectIds: ReadonlyArray<ProjectId>,
   ) => Promise<ReadonlyArray<ProjectId> | void> | ReadonlyArray<ProjectId> | void;
 }) {
-  const { t, tError } = useUiLanguage();
+  const { language, t, tError } = useUiLanguage();
   const [query, setQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<ProjectId>>(() => new Set());
   const [submitting, setSubmitting] = useState(false);
@@ -105,8 +105,11 @@ export function SpaceProjectPickerDialog(props: {
       const failedProjectIds = (await props.onSubmit([...selectedIds])) ?? [];
       if (failedProjectIds.length > 0) {
         setSelectedIds(new Set(failedProjectIds));
+        const targetName = props.targetSpace?.name ?? t("the target space");
         setError(
-          `${failedProjectIds.length} could not be moved. Projects processed before the failure remain in ${props.targetSpace?.name ?? "the target space"}. Try again.`,
+          language === "zh-CN"
+            ? `有 ${failedProjectIds.length} 个项目未能移动。失败前已处理的项目仍保留在${targetName}中，请重试。`
+            : `${failedProjectIds.length} could not be moved. Projects processed before the failure remain in ${targetName}. Try again.`,
         );
         setSubmitting(false);
         return;
@@ -123,7 +126,9 @@ export function SpaceProjectPickerDialog(props: {
     props.projects.length === 0
       ? t("No projects yet.")
       : movableProjects.length === 0
-        ? `Every project is already in ${props.targetSpace?.name ?? "this space"}.`
+        ? language === "zh-CN"
+          ? `所有项目都已在${props.targetSpace?.name ?? t("this space")}中。`
+          : `Every project is already in ${props.targetSpace?.name ?? "this space"}.`
         : t("No matching projects.");
 
   return (
@@ -131,7 +136,9 @@ export function SpaceProjectPickerDialog(props: {
       <DialogPopup className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {t("Move projects to")} {props.targetSpace?.name ?? t("space")}
+            {language === "zh-CN"
+              ? `将项目移到${props.targetSpace?.name ?? t("space")}`
+              : `${t("Move projects to")} ${props.targetSpace?.name ?? t("space")}`}
           </DialogTitle>
           <DialogDescription>
             {t("Choose existing projects. Their chats and pinned state move with them.")}
@@ -223,7 +230,9 @@ export function SpaceProjectPickerDialog(props: {
               ? t("Moving…")
               : selectedIds.size === 0
                 ? t("Move projects")
-                : `Move ${selectedIds.size} project${selectedIds.size === 1 ? "" : "s"}`}
+                : language === "zh-CN"
+                  ? `移动 ${selectedIds.size} 个项目`
+                  : `Move ${selectedIds.size} project${selectedIds.size === 1 ? "" : "s"}`}
           </Button>
         </DialogFooter>
       </DialogPopup>

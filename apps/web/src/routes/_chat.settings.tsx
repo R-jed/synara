@@ -198,7 +198,7 @@ type BooleanSettingKey = {
 // ── Route screen ───────────────────────────────────────────────────────────
 
 function SettingsRouteView() {
-  const { t, tError } = useUiLanguage();
+  const { language, t, tError } = useUiLanguage();
   const routeSearch = useSearch({ strict: false }) as Record<string, unknown>;
   const activeSection = normalizeSettingsSection(routeSearch.section);
   const settingsTarget = typeof routeSearch.target === "string" ? routeSearch.target : null;
@@ -401,10 +401,15 @@ function SettingsRouteView() {
     if (changedSettingLabels.length === 0) return;
 
     const api = readNativeApi();
+    const changedSettingsSummary = changedSettingLabels
+      .map(t)
+      .join(language === "zh-CN" ? "、" : ", ");
     const confirmed = await (api ?? ensureNativeApi()).dialogs.confirm(
       [
         t("Restore default settings?"),
-        `${t("This will reset:")} ${changedSettingLabels.map(t).join(", ")}.`,
+        language === "zh-CN"
+          ? `${t("This will reset:")}${changedSettingsSummary}。`
+          : `${t("This will reset:")} ${changedSettingsSummary}.`,
       ].join("\n"),
     );
     if (!confirmed) return;

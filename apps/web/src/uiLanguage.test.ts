@@ -31,9 +31,36 @@ describe("uiLanguage", () => {
   });
 
   it("uses the intended Chinese permission labels", () => {
-    expect(translateUiText("zh-CN", "Ask for approval")).toBe("操作前询问");
-    expect(translateUiText("zh-CN", "Approve for me")).toBe("替我批准");
-    expect(translateUiText("zh-CN", "Full access")).toBe("完全访问");
+    expect(translateUiText("zh-CN", "Ask for approval")).toBe("请求批准");
+    expect(translateUiText("zh-CN", "Approve for me")).toBe("帮我批准");
+    expect(translateUiText("zh-CN", "Full access")).toBe("完全访问权限");
+  });
+
+  it("localizes reviewed workspace and settings fallback copy", () => {
+    expect(translateUiText("zh-CN", "No projects yet")).toBe("暂无项目");
+    expect(translateUiText("zh-CN", "No matching projects")).toBe("没有匹配的项目");
+    expect(translateUiText("zh-CN", "Shared skills")).toBe("共享技能");
+    expect(translateUiText("zh-CN", "No matching files")).toBe("没有匹配的文件");
+    expect(translateUiText("zh-CN", "File search failed. Try again.")).toBe(
+      "文件搜索失败，请重试。",
+    );
+    expect(translateUiText("zh-CN", "Code search failed. Try again.")).toBe(
+      "代码搜索失败，请重试。",
+    );
+    expect(translateUiText("zh-CN", "Large files are read-only.")).toBe("大文件仅支持只读。");
+    expect(
+      translateUiText(
+        "zh-CN",
+        "Files with mixed line endings are read-only to preserve their exact format.",
+      ),
+    ).toBe("为保留原始格式，使用混合换行符的文件仅支持只读。");
+    expect(translateUiText("zh-CN", "Only files inside the project can be edited.")).toBe(
+      "只能编辑项目内的文件。",
+    );
+    expect(translateUiText("zh-CN", "Git writing model")).toBe("Git 文本生成模型");
+    expect(
+      translateUiText("zh-CN", "Use macOS-style antialiasing for lighter, crisper text rendering."),
+    ).toBe("使用 macOS 风格抗锯齿，让文字显示更纤细、更清晰。");
   });
 
   it("keeps raw diagnostics in English but never leaks unknown English errors into Chinese UI", () => {
